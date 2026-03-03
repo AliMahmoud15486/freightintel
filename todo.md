@@ -46,3 +46,6 @@
 
 ## Change Requests
 - [x] Remove Landing Cost Calculator from Retailer Action Panel
+- [x] Remove user profile (Alexis Sedoser) from NavigationSidebar
+- [x] Remove login/user profile from TopHeader
+- [x] Make dashboard fully public (no auth required)

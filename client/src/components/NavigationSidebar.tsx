@@ -10,7 +10,6 @@ import {
   TrendingUp,
   Bell,
   FileText,
-  ChevronDown,
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -200,61 +199,7 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
         })}
       </nav>
 
-      {/* User profile */}
-      <div
-        style={{
-          padding: "12px 12px",
-          borderTop: "1px solid rgba(255,255,255,0.07)",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          cursor: "pointer",
-        }}
-        onClick={() => toast.info("Profile settings coming soon")}
-      >
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            color: "white",
-            flexShrink: 0,
-          }}
-        >
-          AS
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "0.75rem",
-              fontWeight: 500,
-              color: "rgba(255,255,255,0.8)",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            Alexis Sedoser
-          </div>
-          <div
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "0.65rem",
-              color: "rgba(255,255,255,0.35)",
-            }}
-          >
-            Dashboard
-          </div>
-        </div>
-        <ChevronDown size={12} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
-      </div>
+
     </aside>
   );
 }

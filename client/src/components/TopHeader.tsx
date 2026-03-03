@@ -1,14 +1,16 @@
 /* TopHeader — Margin Sentinel
- * Design: Dark Intelligence — top bar with breadcrumb, live indicator, alerts badge, user info
+ * Design: Dark Intelligence — top bar with breadcrumb, live indicator, alerts badge
+ * No auth / user profile — publicly accessible dashboard
  */
-import { Bell, Gift, ChevronDown } from "lucide-react";
+import { Bell } from "lucide-react";
 import { toast } from "sonner";
 
 interface TopHeaderProps {
   alertCount?: number;
+  pageTitle?: string;
 }
 
-export default function TopHeader({ alertCount = 1 }: TopHeaderProps) {
+export default function TopHeader({ alertCount = 1, pageTitle = "Dashboard" }: TopHeaderProps) {
   return (
     <div
       style={{
@@ -49,7 +51,7 @@ export default function TopHeader({ alertCount = 1 }: TopHeaderProps) {
             textTransform: "uppercase",
           }}
         >
-          Dashboard
+          {pageTitle}
         </span>
       </div>
 
@@ -81,31 +83,10 @@ export default function TopHeader({ alertCount = 1 }: TopHeaderProps) {
         {/* Divider */}
         <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)" }} />
 
-        {/* Gift / Upgrade */}
-        <button
-          onClick={() => toast.info("Upgrade to Pro — coming soon")}
-          style={{
-            background: "none",
-            border: "none",
-            color: "rgba(255,255,255,0.4)",
-            display: "flex",
-            alignItems: "center",
-            padding: "6px",
-            borderRadius: "6px",
-            transition: "color 0.15s",
-          }}
-          className="hover:text-white/70"
-        >
-          <Gift size={18} />
-        </button>
-
         {/* Notifications */}
         <button
           onClick={() =>
-            toast.warning(
-              `You have ${alertCount} critical margin risk alert`,
-              { duration: 3000 }
-            )
+            toast.warning(`You have ${alertCount} critical margin risk alert`, { duration: 3000 })
           }
           style={{
             background: "none",
@@ -117,6 +98,7 @@ export default function TopHeader({ alertCount = 1 }: TopHeaderProps) {
             borderRadius: "6px",
             transition: "color 0.15s",
             position: "relative",
+            cursor: "pointer",
           }}
           className="hover:text-white/70"
         >
@@ -144,66 +126,6 @@ export default function TopHeader({ alertCount = 1 }: TopHeaderProps) {
               {alertCount}
             </span>
           )}
-        </button>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)" }} />
-
-        {/* User */}
-        <button
-          onClick={() => toast.info("Profile settings coming soon")}
-          style={{
-            background: "none",
-            border: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            cursor: "pointer",
-            padding: "4px 6px",
-            borderRadius: "6px",
-          }}
-          className="hover:bg-white/5"
-        >
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              color: "white",
-            }}
-          >
-            AS
-          </div>
-          <div style={{ textAlign: "left" }}>
-            <div
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "0.75rem",
-                fontWeight: 500,
-                color: "rgba(255,255,255,0.85)",
-                lineHeight: 1.2,
-              }}
-            >
-              Alexis Sedoser
-            </div>
-            <div
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "0.65rem",
-                color: "rgba(255,255,255,0.35)",
-                lineHeight: 1.2,
-              }}
-            >
-              Dashboard
-            </div>
-          </div>
-          <ChevronDown size={12} style={{ color: "rgba(255,255,255,0.3)" }} />
         </button>
       </div>
     </div>
