@@ -1,70 +1,82 @@
 /* GlobalPulseBar — Margin Sentinel
  * Design: Dark Intelligence theme — orange/amber accent, monospace data values
- * Live data from tRPC marketData.pulseBar, falls back to simulated values
+ * Live data from tRPC marketData.pulseBar (9 real symbols + port congestion)
+ * Auto-refreshes every 60s; falls back to static values if API is unavailable
  */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TrendingUp, TrendingDown, Minus, X, RefreshCw } from "lucide-react";
-import { usePulseBar } from "@/hooks/useMarketData";
+import { trpc } from "@/lib/trpc";
 
-interface TickerItem {
+// ─── types ────────────────────────────────────────────────────────────────────
+
+interface DisplayTicker {
   label: string;
   value: string;
-  change: string;
-  changePercent: string;
+  changePct: string;
   trend: "up" | "down" | "neutral";
   status?: string;
   statusColor?: string;
-  isLive?: boolean;
+  isLive: boolean;
 }
 
-const FALLBACK_DATA: TickerItem[] = [
-  { label: "BRENT CRUDE", value: "$84.50", change: "+2.60", changePercent: "+3.1%", trend: "up" },
-  { label: "FBX CONTAINER INDEX", value: "$4,120", change: "+97", changePercent: "+2.4%", trend: "up" },
-  { label: "US PORT CONGESTION", value: "", change: "", changePercent: "", trend: "neutral", status: "Amber", statusColor: "#f59e0b" },
-  { label: "WTI CRUDE", value: "$80.25", change: "+1.85", changePercent: "+2.3%", trend: "up" },
-  { label: "SHANGHAI FREIGHT", value: "$2,890", change: "-45", changePercent: "-1.5%", trend: "down" },
-  { label: "BALTIC DRY INDEX", value: "1,842", change: "+23", changePercent: "+1.3%", trend: "up" },
-  { label: "EU CARBON PRICE", value: "€62.40", change: "-0.80", changePercent: "-1.3%", trend: "down" },
-  { label: "SUEZ CANAL STATUS", value: "", change: "", changePercent: "", trend: "neutral", status: "Disrupted", statusColor: "#ef4444" },
+// ─── static fallback (shown while loading or on API error) ───────────────────
+
+const FALLBACK: DisplayTicker[] = [
+  { label: "BRENT CRUDE",      value: "$84.50",  changePct: "+3.1%",  trend: "up",      isLive: false },
+  { label: "WTI CRUDE",        value: "$80.25",  changePct: "+2.3%",  trend: "up",      isLive: false },
+  { label: "NATURAL GAS",      value: "$3.12",   changePct: "+10.3%", trend: "up",      isLive: false },
+  { label: "GOLD",             value: "$2,950",  changePct: "-0.3%",  trend: "down",    isLive: false },
+  { label: "DRY BULK FREIGHT", value: "$12.22",  changePct: "+3.8%",  trend: "up",      isLive: false },
+  { label: "ZIM SHIPPING",     value: "$28.83",  changePct: "+0.6%",  trend: "up",      isLive: false },
+  { label: "MAERSK",           value: "17,025",  changePct: "+11.0%", trend: "up",      isLive: false },
+  { label: "CH ROBINSON",      value: "$187.24", changePct: "+5.7%",  trend: "up",      isLive: false },
+  { label: "ENERGY ETF",       value: "$57.04",  changePct: "+3.4%",  trend: "up",      isLive: false },
+  { label: "US PORT CONGESTION", value: "", changePct: "", trend: "neutral", status: "Amber", statusColor: "#f59e0b", isLive: false },
 ];
 
-function formatPrice(price: number, prefix = "$", decimals = 2): string {
-  if (price >= 1000) {
-    return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  }
-  return prefix + price.toFixed(decimals);
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function fmtPrice(price: number, unit: string): string {
+  const prefix = unit.startsWith("$") ? "$" : unit.startsWith("€") ? "€" : "";
+  if (price >= 10000) return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (price >= 100)   return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return prefix + price.toFixed(2);
 }
 
-function formatChange(change: number, decimals = 2): string {
-  return (change >= 0 ? "+" : "") + change.toFixed(decimals);
-}
-
-function formatPct(pct: number): string {
+function fmtPct(pct: number): string {
   return (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%";
 }
 
-function TickerItemDisplay({ item }: { item: TickerItem }) {
+function portColor(level: 1 | 2 | 3): string {
+  return level === 3 ? "#ef4444" : level === 2 ? "#f59e0b" : "#10b981";
+}
+
+// ─── sub-component ────────────────────────────────────────────────────────────
+
+function TickerCell({ item }: { item: DisplayTicker }) {
   const trendColor =
     item.trend === "up" ? "#10b981" : item.trend === "down" ? "#ef4444" : "#6b7280";
 
   return (
-    <div className="flex items-center gap-3 px-6 border-r border-white/10 shrink-0">
+    <div className="flex items-center gap-2 px-5 border-r border-white/10 shrink-0">
       <span
         style={{
           fontFamily: "'Rajdhani', sans-serif",
           fontWeight: 700,
           letterSpacing: "0.08em",
-          fontSize: "0.72rem",
-          color: "rgba(255,255,255,0.5)",
+          fontSize: "0.7rem",
+          color: "rgba(255,255,255,0.45)",
           textTransform: "uppercase",
+          whiteSpace: "nowrap",
         }}
       >
         {item.label}
       </span>
+
       {item.isLive && (
         <span
           style={{
-            fontSize: "0.55rem",
+            fontSize: "0.52rem",
             color: "#10b981",
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 700,
@@ -77,6 +89,7 @@ function TickerItemDisplay({ item }: { item: TickerItem }) {
           LIVE
         </span>
       )}
+
       {item.status ? (
         <span
           style={{
@@ -94,25 +107,31 @@ function TickerItemDisplay({ item }: { item: TickerItem }) {
           <span
             style={{
               fontFamily: "'JetBrains Mono', monospace",
-              fontSize: "0.85rem",
+              fontSize: "0.82rem",
               color: "rgba(255,255,255,0.9)",
               fontWeight: 500,
+              whiteSpace: "nowrap",
             }}
           >
             {item.value}
           </span>
           <span
             className="flex items-center gap-1"
-            style={{ color: trendColor, fontSize: "0.78rem", fontFamily: "'JetBrains Mono', monospace" }}
+            style={{
+              color: trendColor,
+              fontSize: "0.75rem",
+              fontFamily: "'JetBrains Mono', monospace",
+              whiteSpace: "nowrap",
+            }}
           >
             {item.trend === "up" ? (
-              <TrendingUp size={12} />
+              <TrendingUp size={11} />
             ) : item.trend === "down" ? (
-              <TrendingDown size={12} />
+              <TrendingDown size={11} />
             ) : (
-              <Minus size={12} />
+              <Minus size={11} />
             )}
-            {item.changePercent}
+            {item.changePct}
           </span>
         </>
       )}
@@ -120,93 +139,42 @@ function TickerItemDisplay({ item }: { item: TickerItem }) {
   );
 }
 
+// ─── main component ───────────────────────────────────────────────────────────
+
 export default function GlobalPulseBar() {
   const [dismissed, setDismissed] = useState(false);
-  const [simulatedData, setSimulatedData] = useState(FALLBACK_DATA);
 
-  // Live data from tRPC
-  const { data: liveData, isLoading, dataUpdatedAt } = usePulseBar();
+  const { data, isLoading, dataUpdatedAt } = trpc.marketData.pulseBar.useQuery(undefined, {
+    refetchInterval: 60_000, // refresh every 60 seconds
+    staleTime: 55_000,
+  });
 
-  // Build ticker items from live data when available
-  const liveTickerItems: TickerItem[] = liveData
+  // Build display items from live tickers
+  const liveItems: DisplayTicker[] = data
     ? [
+        ...data.tickers.map((t) => ({
+          label:     t.label,
+          value:     fmtPrice(t.price, t.unit),
+          changePct: fmtPct(t.changePct),
+          trend:     (t.changePct > 0 ? "up" : t.changePct < 0 ? "down" : "neutral") as "up" | "down" | "neutral",
+          isLive:    true,
+        })),
         {
-          label: liveData.brentCrude.label,
-          value: formatPrice(liveData.brentCrude.price),
-          change: formatChange(liveData.brentCrude.change),
-          changePercent: formatPct(liveData.brentCrude.changePct),
-          trend: liveData.brentCrude.changePct >= 0 ? "up" : "down",
-          isLive: true,
+          label:       data.usPortCongestion.label,
+          value:       "",
+          changePct:   "",
+          trend:       "neutral" as const,
+          status:      data.usPortCongestion.status,
+          statusColor: portColor(data.usPortCongestion.level),
+          isLive:      true,
         },
-        {
-          label: liveData.fbxContainer.label,
-          value: formatPrice(liveData.fbxContainer.price, "", 0),
-          change: formatChange(liveData.fbxContainer.change, 0),
-          changePercent: formatPct(liveData.fbxContainer.changePct),
-          trend: liveData.fbxContainer.changePct >= 0 ? "up" : "down",
-          isLive: true,
-        },
-        {
-          label: liveData.usPortCongestion.label,
-          value: "",
-          change: "",
-          changePercent: "",
-          trend: "neutral",
-          status: liveData.usPortCongestion.status,
-          statusColor:
-            liveData.usPortCongestion.level === 3
-              ? "#ef4444"
-              : liveData.usPortCongestion.level === 2
-              ? "#f59e0b"
-              : "#10b981",
-        },
-        {
-          label: liveData.wtiCrude.label,
-          value: formatPrice(liveData.wtiCrude.price),
-          change: formatChange(liveData.wtiCrude.change),
-          changePercent: formatPct(liveData.wtiCrude.changePct),
-          trend: liveData.wtiCrude.changePct >= 0 ? "up" : "down",
-          isLive: true,
-        },
-        // Keep static items for non-API data
-        { label: "SHANGHAI FREIGHT", value: "$2,890", change: "-45", changePercent: "-1.5%", trend: "down" },
-        { label: "EU CARBON PRICE", value: "€62.40", change: "-0.80", changePercent: "-1.3%", trend: "down" },
-        { label: "SUEZ CANAL STATUS", value: "", change: "", changePercent: "", trend: "neutral", status: "Disrupted", statusColor: "#ef4444" },
       ]
-    : simulatedData;
+    : FALLBACK;
 
-  // Simulate micro-fluctuations when no live data
-  useEffect(() => {
-    if (liveData) return; // skip simulation when live data is available
-    const interval = setInterval(() => {
-      setSimulatedData((prev) =>
-        prev.map((item) => {
-          if (item.trend === "neutral" || !item.value) return item;
-          const base = parseFloat(item.value.replace(/[$,€]/g, ""));
-          const fluctuation = (Math.random() - 0.48) * base * 0.002;
-          const newBase = base + fluctuation;
-          const prefix = item.value.match(/^[$€]/)?.[0] || "";
-          const formatted =
-            newBase > 1000
-              ? prefix + newBase.toLocaleString("en-US", { maximumFractionDigits: 0 })
-              : prefix + newBase.toFixed(2);
-          const changePct = ((fluctuation / base) * 100).toFixed(1);
-          return {
-            ...item,
-            value: formatted,
-            change: (fluctuation >= 0 ? "+" : "") + fluctuation.toFixed(2),
-            changePercent: (fluctuation >= 0 ? "+" : "") + changePct + "%",
-            trend: fluctuation >= 0 ? "up" : "down",
-          };
-        })
-      );
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [liveData]);
+  // Duplicate for seamless infinite scroll
+  const allItems = [...liveItems, ...liveItems];
 
   if (dismissed) return null;
-
-  const allItems = [...liveTickerItems, ...liveTickerItems];
 
   return (
     <div
@@ -221,7 +189,7 @@ export default function GlobalPulseBar() {
         flexShrink: 0,
       }}
     >
-      {/* Label */}
+      {/* Orange label */}
       <div
         style={{
           background: "#f97316",
@@ -247,7 +215,7 @@ export default function GlobalPulseBar() {
         </span>
       </div>
 
-      {/* Live dot / loading indicator */}
+      {/* Live indicator */}
       {isLoading ? (
         <RefreshCw
           size={12}
@@ -261,20 +229,25 @@ export default function GlobalPulseBar() {
             width: 7,
             height: 7,
             borderRadius: "50%",
-            background: liveData ? "#10b981" : "#f59e0b",
+            background: data ? "#10b981" : "#f59e0b",
             margin: "0 12px",
             flexShrink: 0,
-            boxShadow: `0 0 6px ${liveData ? "#10b981" : "#f59e0b"}`,
+            boxShadow: `0 0 6px ${data ? "#10b981" : "#f59e0b"}`,
+            cursor: "default",
           }}
-          title={liveData ? `Live data — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}` : "Simulated data"}
+          title={
+            data
+              ? `Live — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}`
+              : "Fallback data"
+          }
         />
       )}
 
-      {/* Scrolling ticker */}
+      {/* Scrolling ticker track */}
       <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
         <div className="ms-ticker-track">
           {allItems.map((item, i) => (
-            <TickerItemDisplay key={i} item={item} />
+            <TickerCell key={i} item={item} />
           ))}
         </div>
       </div>

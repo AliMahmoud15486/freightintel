@@ -54,3 +54,6 @@
 - [x] LLM-powered severity classification and tag extraction for news items
 - [x] Update ImpactNewsFeed component to consume live news from tRPC
 - [x] 15-minute server-side cache to avoid over-fetching RSS feeds
+- [x] Expand backend pulseBar endpoint with all ticker symbols (Brent, WTI, Nat Gas, Shipping ETF)
+- [x] Fix daily change % to use accurate prev-close comparison for all symbols
+- [x] Rewrite GlobalPulseBar to consume all live ticker data with real prices and changes
