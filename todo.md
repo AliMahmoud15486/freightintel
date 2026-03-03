@@ -70,3 +70,6 @@
 - [x] Add live Categories at Risk list to RetailerActionPanel right sidebar
 - [x] Make Categories at Risk items clickable to filter the Impact News Feed
 - [x] Multi-category selection: allow selecting multiple categories to filter the news feed simultaneously
+- [x] Extend news LLM classification to extract geographic locations from each article
+- [x] Rewrite SupplyChainMap to render live disruption markers from news data
+- [x] Add coordinate-based marker positioning on equirectangular map projection

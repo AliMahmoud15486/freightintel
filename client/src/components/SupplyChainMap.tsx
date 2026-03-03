@@ -1,136 +1,158 @@
 /* SupplyChainMap — Margin Sentinel
- * Design: Dark Intelligence — navy map background with glowing shipping routes
- * Interactive heatmap with disruption overlays, severity indicators, tooltips
- * Uses generated map background image + SVG overlay for routes and hotspots
+ * Real-time disruption map: markers are derived from live LLM-classified news feed.
+ * Geographic locations are extracted by the LLM from each news article and plotted
+ * as pulsing hotspots on the map background.
  */
 import { useState } from "react";
-import { MoreHorizontal, ZoomIn, ZoomOut, Layers } from "lucide-react";
+import { MoreHorizontal, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 const MAP_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663201940453/ahZanQ69csJtVFtyEk4qAc/map-bg-J8FdW8j5LNYHoKYjXTpykf.webp";
 
-interface Disruption {
-  id: string;
+// Convert lat/lng to percentage position on the equirectangular map image
+// Map spans roughly: lng -170 to +180, lat +75 to -60
+const MAP_LNG_MIN = -170;
+const MAP_LNG_MAX = 180;
+const MAP_LAT_MAX = 75;
+const MAP_LAT_MIN = -60;
+
+function lngToX(lng: number): number {
+  return ((lng - MAP_LNG_MIN) / (MAP_LNG_MAX - MAP_LNG_MIN)) * 100;
+}
+
+function latToY(lat: number): number {
+  return ((MAP_LAT_MAX - lat) / (MAP_LAT_MAX - MAP_LAT_MIN)) * 100;
+}
+
+interface LiveDisruption {
   name: string;
-  subtitle: string;
-  delay: string;
-  cost: string;
-  costColor: string;
-  severity: "critical" | "warning";
-  // Position as percentage of map container
-  x: number;
-  y: number;
+  lat: number;
+  lng: number;
+  severity: "critical" | "warning" | "info";
+  delayDays?: number | null;
+  costImpact?: string | null;
+  description: string;
 }
 
-const disruptions: Disruption[] = [
-  {
-    id: "suez",
-    name: "SUEZ CANAL BREAK",
-    subtitle: "Vessel Stoppage",
-    delay: "+14 Day Delay",
-    cost: "High cost",
-    costColor: "#ef4444",
-    severity: "critical",
-    x: 56,
-    y: 38,
-  },
-  {
-    id: "ningbo",
-    name: "NINGBO PORT STRIKE",
-    subtitle: "Operations Slow",
-    delay: "+7 Day Delay",
-    cost: "Moderate cost",
-    costColor: "#f59e0b",
-    severity: "warning",
-    x: 80,
-    y: 35,
-  },
-  {
-    id: "losangeles",
-    name: "LA PORT CONGESTION",
-    subtitle: "High Vessel Queue",
-    delay: "+5 Day Delay",
-    cost: "Moderate cost",
-    costColor: "#f59e0b",
-    severity: "warning",
-    x: 12,
-    y: 37,
-  },
-];
-
-interface DisruptionTooltipProps {
-  disruption: Disruption;
-  onClose: () => void;
+interface TooltipProps {
+  disruption: LiveDisruption;
 }
 
-function DisruptionTooltip({ disruption, onClose }: DisruptionTooltipProps) {
+function DisruptionTooltip({ disruption }: TooltipProps) {
+  const isCritical = disruption.severity === "critical";
+  const isWarning = disruption.severity === "warning";
+  const accentColor = isCritical ? "#ef4444" : isWarning ? "#f59e0b" : "#10b981";
+  const borderColor = isCritical
+    ? "rgba(239,68,68,0.4)"
+    : isWarning
+    ? "rgba(245,158,11,0.4)"
+    : "rgba(16,185,129,0.4)";
+
   return (
     <div
       style={{
         position: "absolute",
-        background: "rgba(10, 14, 26, 0.95)",
-        border: `1px solid ${disruption.severity === "critical" ? "rgba(239,68,68,0.4)" : "rgba(245,158,11,0.4)"}`,
+        background: "rgba(10, 14, 26, 0.97)",
+        border: `1px solid ${borderColor}`,
         borderRadius: "6px",
         padding: "10px 14px",
-        minWidth: "180px",
-        zIndex: 10,
+        minWidth: "190px",
+        maxWidth: "240px",
+        zIndex: 20,
         backdropFilter: "blur(8px)",
-        boxShadow: disruption.severity === "critical"
-          ? "0 0 20px rgba(239,68,68,0.2)"
-          : "0 0 20px rgba(245,158,11,0.2)",
+        boxShadow: `0 0 20px ${accentColor}33`,
         pointerEvents: "none",
         transform: "translate(-50%, -130%)",
+        whiteSpace: "nowrap",
       }}
     >
-      <div
-        style={{
-          fontFamily: "'Rajdhani', sans-serif",
-          fontWeight: 700,
-          fontSize: "0.8rem",
-          letterSpacing: "0.06em",
-          color: disruption.severity === "critical" ? "#ef4444" : "#f59e0b",
-          marginBottom: "2px",
-        }}
-      >
-        {disruption.name}
+      {/* Severity badge */}
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+        <div
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: accentColor,
+            boxShadow: `0 0 6px ${accentColor}`,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.78rem",
+            letterSpacing: "0.06em",
+            color: accentColor,
+            textTransform: "uppercase",
+          }}
+        >
+          {disruption.name}
+        </span>
       </div>
+
       <div
         style={{
           fontFamily: "'Inter', sans-serif",
-          fontSize: "0.72rem",
-          color: "rgba(255,255,255,0.6)",
+          fontSize: "0.7rem",
+          color: "rgba(255,255,255,0.65)",
           marginBottom: "6px",
+          whiteSpace: "normal",
+          lineHeight: 1.4,
         }}
       >
-        {disruption.subtitle}
+        {disruption.description}
       </div>
-      <div
-        style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#10b981",
-          marginBottom: "2px",
-        }}
-      >
-        {disruption.delay}
-      </div>
-      <div
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "0.72rem",
-          color: disruption.costColor,
-        }}
-      >
-        {disruption.cost}
+
+      <div style={{ display: "flex", gap: "12px" }}>
+        {disruption.delayDays != null && (
+          <div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.72rem",
+                color: "#10b981",
+              }}
+            >
+              +{disruption.delayDays} day delay
+            </div>
+          </div>
+        )}
+        {disruption.costImpact && (
+          <div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.72rem",
+                color: accentColor,
+              }}
+            >
+              {disruption.costImpact} cost
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default function SupplyChainMap() {
-  const [activeDisruption, setActiveDisruption] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState("Interland Monitor");
 
-  const activeData = disruptions.find((d) => d.id === activeDisruption);
+  const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.disruptions.useQuery(undefined, {
+    refetchInterval: 5 * 60 * 1000, // refresh every 5 minutes
+    staleTime: 4 * 60 * 1000,
+  });
+
+  const locations: LiveDisruption[] = (data?.locations ?? []) as LiveDisruption[];
+  const criticalCount = locations.filter((l) => l.severity === "critical").length;
+  const warningCount = locations.filter((l) => l.severity === "warning").length;
+
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : null;
 
   return (
     <div
@@ -159,6 +181,51 @@ export default function SupplyChainMap() {
           >
             (Heatmap)
           </span>
+          {/* Live badge */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              background: "rgba(16,185,129,0.1)",
+              border: "1px solid rgba(16,185,129,0.25)",
+              borderRadius: "4px",
+              padding: "2px 6px",
+            }}
+          >
+            <div
+              className="animate-blink"
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: "#10b981",
+                boxShadow: "0 0 4px #10b981",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: "0.65rem",
+                color: "#10b981",
+                letterSpacing: "0.06em",
+              }}
+            >
+              LIVE
+            </span>
+          </div>
+          {lastUpdated && (
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.65rem",
+                color: "rgba(255,255,255,0.25)",
+              }}
+            >
+              {lastUpdated}
+            </span>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <select
@@ -180,6 +247,21 @@ export default function SupplyChainMap() {
             <option value="Port Status">Port Status</option>
             <option value="Weather Impact">Weather Impact</option>
           </select>
+          <button
+            onClick={() => refetch()}
+            title="Refresh disruptions"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+          </button>
           <button
             style={{
               background: "none",
@@ -217,65 +299,103 @@ export default function SupplyChainMap() {
           }}
         />
 
-        {/* Disruption hotspots overlay */}
-        {disruptions.map((disruption) => {
-          const isActive = activeDisruption === disruption.id;
-          const isCritical = disruption.severity === "critical";
+        {/* Loading overlay */}
+        {isLoading && locations.length === 0 && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(6,11,20,0.5)",
+              zIndex: 10,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: "0.8rem",
+                color: "rgba(255,255,255,0.4)",
+                letterSpacing: "0.1em",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            >
+              LOADING LIVE DISRUPTIONS...
+            </div>
+          </div>
+        )}
+
+        {/* Live disruption hotspots */}
+        {locations.map((loc, idx) => {
+          const x = lngToX(loc.lng);
+          const y = latToY(loc.lat);
+          const id = `${loc.name}-${idx}`;
+          const isActive = activeId === id;
+          const isCritical = loc.severity === "critical";
+          const isWarning = loc.severity === "warning";
+          const dotColor = isCritical ? "#ef4444" : isWarning ? "#f59e0b" : "#10b981";
+          const glowColor = isCritical
+            ? "rgba(239,68,68,0.35)"
+            : isWarning
+            ? "rgba(245,158,11,0.3)"
+            : "rgba(16,185,129,0.25)";
+          const pulseAnim = isCritical
+            ? "pulse-red 2s ease-in-out infinite"
+            : isWarning
+            ? "pulse-amber 2.5s ease-in-out infinite"
+            : "pulse-green 3s ease-in-out infinite";
+          const dotSize = isCritical ? 14 : isWarning ? 12 : 10;
+          const glowSize = isCritical ? 52 : isWarning ? 44 : 36;
+
+          // Keep markers inside the map bounds
+          if (x < 2 || x > 98 || y < 2 || y > 98) return null;
+
           return (
             <div
-              key={disruption.id}
+              key={id}
               style={{
                 position: "absolute",
-                left: `${disruption.x}%`,
-                top: `${disruption.y}%`,
+                left: `${x}%`,
+                top: `${y}%`,
                 transform: "translate(-50%, -50%)",
                 cursor: "pointer",
-                zIndex: isActive ? 5 : 3,
+                zIndex: isActive ? 15 : 3,
               }}
-              onMouseEnter={() => setActiveDisruption(disruption.id)}
-              onMouseLeave={() => setActiveDisruption(null)}
+              onMouseEnter={() => setActiveId(id)}
+              onMouseLeave={() => setActiveId(null)}
             >
               {/* Outer glow ring */}
               <div
                 style={{
-                  width: isCritical ? 48 : 40,
-                  height: isCritical ? 48 : 40,
+                  width: glowSize,
+                  height: glowSize,
                   borderRadius: "50%",
-                  background: isCritical
-                    ? "radial-gradient(circle, rgba(239,68,68,0.35) 0%, rgba(239,68,68,0) 70%)"
-                    : "radial-gradient(circle, rgba(245,158,11,0.3) 0%, rgba(245,158,11,0) 70%)",
+                  background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
                   position: "absolute",
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  animation: isCritical
-                    ? "pulse-red 2s ease-in-out infinite"
-                    : "pulse-amber 2.5s ease-in-out infinite",
+                  animation: pulseAnim,
                 }}
               />
               {/* Inner dot */}
               <div
                 style={{
-                  width: isCritical ? 14 : 12,
-                  height: isCritical ? 14 : 12,
+                  width: dotSize,
+                  height: dotSize,
                   borderRadius: "50%",
-                  background: isCritical ? "#ef4444" : "#f59e0b",
-                  border: `2px solid ${isCritical ? "rgba(239,68,68,0.8)" : "rgba(245,158,11,0.8)"}`,
-                  boxShadow: isCritical
-                    ? "0 0 10px rgba(239,68,68,0.8)"
-                    : "0 0 8px rgba(245,158,11,0.7)",
+                  background: dotColor,
+                  border: `2px solid ${dotColor}cc`,
+                  boxShadow: `0 0 10px ${dotColor}cc`,
                   position: "relative",
                   zIndex: 2,
                 }}
               />
 
               {/* Tooltip */}
-              {isActive && (
-                <DisruptionTooltip
-                  disruption={disruption}
-                  onClose={() => setActiveDisruption(null)}
-                />
-              )}
+              {isActive && <DisruptionTooltip disruption={loc} />}
             </div>
           );
         })}
@@ -292,10 +412,7 @@ export default function SupplyChainMap() {
             zIndex: 5,
           }}
         >
-          {[
-            { icon: <ZoomIn size={14} />, label: "+" },
-            { icon: <ZoomOut size={14} />, label: "−" },
-          ].map((btn, i) => (
+          {[ZoomIn, ZoomOut].map((Icon, i) => (
             <button
               key={i}
               style={{
@@ -312,7 +429,7 @@ export default function SupplyChainMap() {
               }}
               onClick={() => {}}
             >
-              {btn.icon}
+              <Icon size={14} />
             </button>
           ))}
         </div>
@@ -365,7 +482,8 @@ export default function SupplyChainMap() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)",
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)",
             pointerEvents: "none",
             zIndex: 1,
           }}
@@ -385,7 +503,7 @@ export default function SupplyChainMap() {
           }}
         />
 
-        {/* Active disruptions count */}
+        {/* Active disruptions count badge */}
         <div
           style={{
             position: "absolute",
@@ -420,7 +538,9 @@ export default function SupplyChainMap() {
               letterSpacing: "0.06em",
             }}
           >
-            3 ACTIVE DISRUPTIONS
+            {isLoading && locations.length === 0
+              ? "LOADING..."
+              : `${criticalCount} CRITICAL · ${warningCount} WARNING`}
           </span>
         </div>
       </div>

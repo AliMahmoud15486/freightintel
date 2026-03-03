@@ -1,6 +1,6 @@
 /* news.ts — Margin Sentinel
  * Aggregates real-time supply chain news from multiple RSS feeds.
- * Uses LLM to classify severity and extract relevant tags.
+ * Uses LLM to classify severity, extract tags, and identify geographic disruption locations.
  * Results are cached for 15 minutes to avoid over-fetching.
  *
  * Sources:
@@ -14,6 +14,16 @@ import { invokeLLM } from "../_core/llm";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
+export interface DisruptionLocation {
+  name: string;        // e.g. "Strait of Hormuz"
+  lat: number;
+  lng: number;
+  severity: "critical" | "warning" | "info";
+  delayDays?: number;  // estimated delay in days
+  costImpact?: string; // e.g. "+10%"
+  description: string; // short description for tooltip
+}
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -26,6 +36,7 @@ export interface NewsItem {
   affectedCategories: string[];
   etaImpact?: string;
   costImpact?: string;
+  locations?: DisruptionLocation[]; // geographic disruption points
 }
 
 interface RawFeedItem {
@@ -68,14 +79,12 @@ async function fetchRssFeed(url: string, sourceName: string): Promise<RawFeedIte
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const xml = await resp.text();
 
-    // Parse XML items
     const items: RawFeedItem[] = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     let match;
 
     while ((match = itemRegex.exec(xml)) !== null) {
       const block = match[1];
-
       const title = extractXmlText(block, "title");
       const link = extractXmlText(block, "link") || extractXmlAttr(block, "link", "href");
       const pubDate = extractXmlText(block, "pubDate");
@@ -116,7 +125,6 @@ function stripHtml(html: string): string {
 async function classifyNewsItems(rawItems: RawFeedItem[]): Promise<NewsItem[]> {
   if (rawItems.length === 0) return [];
 
-  // Batch up to 12 items per LLM call to stay within token limits
   const batch = rawItems.slice(0, 12);
 
   const prompt = `You are a supply chain analyst. Classify each news headline for a retail margin intelligence dashboard.
@@ -132,6 +140,18 @@ For each item, return a JSON array with objects containing:
 - "etaImpact": string like "+7 days" or "+14 days" if there's a delay impact, otherwise null
 - "costImpact": string like "+2.3%" or "+8%" if there's a cost/price impact, otherwise null
 - "summary": 1-sentence plain-English summary of the supply chain impact (max 120 chars)
+- "locations": array of geographic disruption points mentioned or implied in the article. Each location:
+  {
+    "name": "location name (e.g. Strait of Hormuz, Suez Canal, Port of Shanghai)",
+    "lat": latitude as number,
+    "lng": longitude as number,
+    "severity": same as article severity,
+    "delayDays": estimated delay days as number or null,
+    "costImpact": cost impact string or null,
+    "description": 1 short phrase describing the disruption at this location (max 60 chars)
+  }
+  Only include locations that are genuinely mentioned or strongly implied. Use accurate coordinates.
+  If no specific location is identifiable, return an empty array.
 
 News items:
 ${batch.map((item, i) => `${i}. [${item.source}] ${item.title}. ${item.description.slice(0, 150)}`).join("\n")}
@@ -154,12 +174,10 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
     try {
       parsed = JSON.parse(content);
     } catch {
-      // Try to extract JSON array from response
       const arrayMatch = /\[[\s\S]*\]/.exec(content);
       parsed = arrayMatch ? JSON.parse(arrayMatch[0]) : [];
     }
 
-    // Handle both {items: [...]} and [...] response shapes
     const classifications: any[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray(parsed.items)
@@ -170,6 +188,19 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
 
     return batch.map((raw, i) => {
       const cls = classifications.find((c: any) => c.index === i) ?? {};
+      const rawLocs: any[] = Array.isArray(cls.locations) ? cls.locations : [];
+      const locations: DisruptionLocation[] = rawLocs
+        .filter((l: any) => l.name && typeof l.lat === "number" && typeof l.lng === "number")
+        .map((l: any) => ({
+          name: l.name,
+          lat: l.lat,
+          lng: l.lng,
+          severity: (l.severity as DisruptionLocation["severity"]) || cls.severity || "info",
+          delayDays: typeof l.delayDays === "number" ? l.delayDays : undefined,
+          costImpact: l.costImpact || cls.costImpact || undefined,
+          description: l.description || cls.summary?.slice(0, 60) || raw.title.slice(0, 60),
+        }));
+
       return {
         id: `${Date.now()}-${i}`,
         title: raw.title,
@@ -182,11 +213,11 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
         affectedCategories: Array.isArray(cls.affectedCategories) ? cls.affectedCategories : [],
         etaImpact: cls.etaImpact || undefined,
         costImpact: cls.costImpact || undefined,
+        locations: locations.length > 0 ? locations : undefined,
       };
     });
   } catch (err) {
     console.warn("[news] LLM classification failed:", err);
-    // Fallback: return items with basic heuristic classification
     return batch.map((raw, i) => ({
       id: `${Date.now()}-${i}`,
       title: raw.title,
@@ -199,6 +230,7 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
       affectedCategories: [],
       etaImpact: undefined,
       costImpact: undefined,
+      locations: undefined,
     }));
   }
 }
@@ -222,35 +254,56 @@ function heuristicTags(title: string): string[] {
   return tags.length > 0 ? tags : ["#Trade"];
 }
 
+// ─── aggregate disruption locations ──────────────────────────────────────────
+
+export function aggregateDisruptionLocations(items: NewsItem[]): DisruptionLocation[] {
+  const locationMap = new Map<string, DisruptionLocation>();
+
+  for (const item of items) {
+    if (!item.locations) continue;
+    for (const loc of item.locations) {
+      const key = loc.name.toLowerCase();
+      const existing = locationMap.get(key);
+      if (!existing) {
+        locationMap.set(key, { ...loc });
+      } else {
+        // Escalate severity if a more severe article mentions the same location
+        const order = { critical: 2, warning: 1, info: 0 };
+        if (order[loc.severity] > order[existing.severity]) {
+          locationMap.set(key, { ...loc });
+        }
+      }
+    }
+  }
+
+  return Array.from(locationMap.values());
+}
+
 // ─── main fetch + classify pipeline ──────────────────────────────────────────
 
 async function fetchAndClassifyNews(): Promise<NewsItem[]> {
-  // Return cache if still fresh
   if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
     return cache.items;
   }
 
   console.log("[news] Fetching RSS feeds...");
 
-  // Fetch all feeds in parallel
   const feedResults = await Promise.all(
     RSS_FEEDS.map((f) => fetchRssFeed(f.url, f.name))
   );
 
-  // Merge and deduplicate by title similarity, sort by date
   const allRaw: RawFeedItem[] = feedResults
     .flat()
     .filter((item, idx, arr) => {
-      // Deduplicate by title prefix (first 60 chars)
       const key = item.title.slice(0, 60).toLowerCase();
       return arr.findIndex((x) => x.title.slice(0, 60).toLowerCase() === key) === idx;
     })
     .sort((a, b) => {
       const da = a.pubDate ? new Date(a.pubDate).getTime() : 0;
       const db = b.pubDate ? new Date(b.pubDate).getTime() : 0;
-      return db - da; // newest first
+      return db - da;
     })
-    .slice(0, 12); // top 12 most recent
+    .slice(0, 12);
 
   if (allRaw.length === 0) {
     console.warn("[news] No RSS items fetched — returning empty");
@@ -260,7 +313,6 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
   console.log(`[news] Classifying ${allRaw.length} items with LLM...`);
   const classified = await classifyNewsItems(allRaw);
 
-  // Sort: critical first, then warning, then info
   const sorted = classified.sort((a, b) => {
     const order = { critical: 0, warning: 1, info: 2 };
     return order[a.severity] - order[b.severity];
@@ -292,8 +344,28 @@ export const newsRouter = router({
     }
   }),
 
+  disruptions: publicProcedure.query(async () => {
+    try {
+      const items = await fetchAndClassifyNews();
+      const locations = aggregateDisruptionLocations(items);
+      return {
+        locations,
+        lastUpdated: cache?.fetchedAt ? new Date(cache.fetchedAt).toISOString() : new Date().toISOString(),
+        totalItems: items.length,
+        criticalCount: items.filter((i) => i.severity === "critical").length,
+      };
+    } catch (err) {
+      console.error("[news] Disruptions query failed:", err);
+      return {
+        locations: [] as DisruptionLocation[],
+        lastUpdated: new Date().toISOString(),
+        totalItems: 0,
+        criticalCount: 0,
+      };
+    }
+  }),
+
   refresh: publicProcedure.mutation(async () => {
-    // Force cache invalidation
     cache = null;
     const items = await fetchAndClassifyNews();
     return { success: true, count: items.length };
