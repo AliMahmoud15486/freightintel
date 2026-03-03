@@ -43,7 +43,7 @@ export default function Dashboard() {
         }}
       >
         {/* Top header */}
-        <TopHeader alertCount={1} />
+        <TopHeader />
 
         {/* Global Pulse Bar */}
         <GlobalPulseBar />

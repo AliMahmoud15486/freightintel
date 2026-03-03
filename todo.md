@@ -60,3 +60,4 @@
 - [x] Wire Critical Margin Risks counter to live news critical count
 - [x] Wire alert strip headlines to live critical news items
 - [x] Update navigation sidebar alerts badge to reflect live critical count
+- [x] Remove alert bell icon from top-right header

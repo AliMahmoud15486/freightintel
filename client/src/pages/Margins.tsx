@@ -176,7 +176,7 @@ export default function Margins() {
       <NavigationSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-        <TopHeader alertCount={2} />
+        <TopHeader />
         <GlobalPulseBar />
 
         {/* Page header */}
