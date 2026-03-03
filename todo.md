@@ -57,3 +57,6 @@
 - [x] Expand backend pulseBar endpoint with all ticker symbols (Brent, WTI, Nat Gas, Shipping ETF)
 - [x] Fix daily change % to use accurate prev-close comparison for all symbols
 - [x] Rewrite GlobalPulseBar to consume all live ticker data with real prices and changes
+- [x] Wire Critical Margin Risks counter to live news critical count
+- [x] Wire alert strip headlines to live critical news items
+- [x] Update navigation sidebar alerts badge to reflect live critical count

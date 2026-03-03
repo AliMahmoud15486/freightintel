@@ -1,7 +1,7 @@
 /* NavigationSidebar — Margin Sentinel
  * Design: Dark Intelligence — orange active border, icon+label nav items
- * Fixed left sidebar with branding, nav links, and user profile
- * Uses wouter Link for routing to implemented pages
+ * Fixed left sidebar with branding and nav links.
+ * alertCount prop drives the live badge on the Alerts nav item.
  */
 import {
   LayoutDashboard,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 interface NavItem {
   icon: React.ReactNode;
@@ -24,15 +25,6 @@ interface NavItem {
   implemented: boolean;
 }
 
-const navItems: NavItem[] = [
-  { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", href: "/", implemented: true },
-  { icon: <Map size={16} />, label: "Maps", id: "maps", href: "/maps", implemented: false },
-  { icon: <Droplets size={16} />, label: "Oil Data", id: "oil", href: "/oil", implemented: false },
-  { icon: <TrendingUp size={16} />, label: "Margins", id: "margins", href: "/margins", implemented: true },
-  { icon: <Bell size={16} />, label: "Alerts", id: "alerts", href: "/alerts", badge: 2, implemented: false },
-  { icon: <FileText size={16} />, label: "Reports", id: "reports", href: "/reports", implemented: false },
-];
-
 interface NavigationSidebarProps {
   activeSection?: string;
   onSectionChange?: (id: string) => void;
@@ -40,6 +32,22 @@ interface NavigationSidebarProps {
 
 export default function NavigationSidebar({ activeSection, onSectionChange }: NavigationSidebarProps) {
   const [location] = useLocation();
+
+  // Live critical count from news feed — same cache, no extra request
+  const { data: newsData } = trpc.news.feed.useQuery(undefined, {
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 4 * 60 * 1000,
+  });
+  const liveCriticalCount = (newsData?.items ?? []).filter((i) => i.severity === "critical").length;
+
+  const navItems: NavItem[] = [
+    { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", href: "/",        implemented: true  },
+    { icon: <Map size={16} />,            label: "Maps",       id: "maps",      href: "/maps",     implemented: false },
+    { icon: <Droplets size={16} />,       label: "Oil Data",   id: "oil",       href: "/oil",      implemented: false },
+    { icon: <TrendingUp size={16} />,     label: "Margins",    id: "margins",   href: "/margins",  implemented: true  },
+    { icon: <Bell size={16} />,           label: "Alerts",     id: "alerts",    href: "/alerts",   badge: liveCriticalCount || undefined, implemented: false },
+    { icon: <FileText size={16} />,       label: "Reports",    id: "reports",   href: "/reports",  implemented: false },
+  ];
 
   const isActive = (item: NavItem) => {
     if (item.href === "/") return location === "/";
@@ -164,7 +172,7 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
               >
                 {item.label}
               </span>
-              {item.badge && (
+              {item.badge != null && item.badge > 0 && (
                 <span className="alert-badge" style={{ flexShrink: 0 }}>
                   {item.badge}
                 </span>
@@ -198,8 +206,6 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
           );
         })}
       </nav>
-
-
     </aside>
   );
 }
