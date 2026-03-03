@@ -49,3 +49,4 @@
 - [x] Remove user profile (Alexis Sedoser) from NavigationSidebar
 - [x] Remove login/user profile from TopHeader
 - [x] Make dashboard fully public (no auth required)
+- [x] Remove My Watchlist from Retailer Action Panel

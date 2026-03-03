@@ -1,41 +1,13 @@
 /* RetailerActionPanel — Margin Sentinel
  * Design: Dark Intelligence — right sidebar panel
- * Sections: My Watchlist, Alerts
+ * Sections: Alerts only (Watchlist removed)
  */
 import { useState } from "react";
-import { MoreHorizontal, X, Plus } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
-interface WatchlistItem {
-  id: string;
-  name: string;
-  risk: "high" | "medium" | "low";
-  change: string;
-}
-
-const initialWatchlist: WatchlistItem[] = [
-  { id: "1", name: "Electronics", risk: "high", change: "+4.2%" },
-  { id: "2", name: "Apparel", risk: "medium", change: "+2.8%" },
-  { id: "3", name: "Toys", risk: "high", change: "+3.5%" },
-];
-
 export default function RetailerActionPanel() {
-  const [watchlist, setWatchlist] = useState(initialWatchlist);
   const [alertCount] = useState(2);
-
-  const removeWatchlistItem = (id: string) => {
-    setWatchlist((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const addWatchlistItem = () => {
-    toast.info("Add category — coming soon");
-  };
-
-  const getRiskColor = (risk: string) => {
-    if (risk === "high") return "#ef4444";
-    if (risk === "medium") return "#f59e0b";
-    return "#10b981";
-  };
 
   return (
     <div
@@ -46,8 +18,8 @@ export default function RetailerActionPanel() {
         height: "100%",
       }}
     >
-      {/* === MY WATCHLIST + ALERTS === */}
       <div className="ms-panel">
+        {/* Panel header */}
         <div
           style={{
             display: "flex",
@@ -65,110 +37,8 @@ export default function RetailerActionPanel() {
           </button>
         </div>
 
-        {/* Watchlist */}
-        <div style={{ padding: "10px 14px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "8px",
-            }}
-          >
-            <span className="section-label">MY WATCHLIST</span>
-            <button
-              onClick={addWatchlistItem}
-              style={{
-                background: "none",
-                border: "none",
-                color: "rgba(255,255,255,0.3)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "2px",
-                fontSize: "0.65rem",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              <Plus size={12} />
-              Add
-            </button>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {watchlist.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "5px",
-                  padding: "7px 10px",
-                  transition: "background 0.15s",
-                }}
-                className="hover:bg-white/[0.07]"
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <div
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: getRiskColor(item.risk),
-                      boxShadow: `0 0 5px ${getRiskColor(item.risk)}`,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: "0.78rem",
-                      color: "rgba(255,255,255,0.8)",
-                    }}
-                  >
-                    {item.name}
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: "0.72rem",
-                      color: "#f97316",
-                    }}
-                  >
-                    {item.change}
-                  </span>
-                  <button
-                    onClick={() => removeWatchlistItem(item.id)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "rgba(255,255,255,0.2)",
-                      cursor: "pointer",
-                      padding: "0",
-                      display: "flex",
-                    }}
-                    className="hover:text-white/50"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Alerts section */}
-        <div
-          style={{
-            padding: "10px 14px",
-            borderTop: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
+        <div style={{ padding: "10px 14px" }}>
           <div
             style={{
               display: "flex",
