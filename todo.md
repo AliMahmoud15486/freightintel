@@ -80,3 +80,7 @@
 - [x] Fix Shipping Routes overlay — render animated SVG polylines for major shipping lanes
 - [x] Fix Port Status overlay — show major world ports with congestion/open/closed status
 - [x] Fix Weather Status overlay — show weather disruption zones with impact indicators
+- [x] Datajar rebrand: apply magenta-to-orange gradient to logo wordmark and key accents
+- [x] Datajar rebrand: update CSS variables and global accent color to gradient palette
+- [x] Datajar rebrand: update pulse bar, alert strip, KPI cards, and panel headers with new palette
+- [x] Datajar rebrand: update buttons and interactive elements with pill-shaped gradient style

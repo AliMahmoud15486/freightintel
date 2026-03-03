@@ -794,7 +794,7 @@ export default function SupplyChainMap() {
   const badgeColor = filterMode === "Shipping Routes"
     ? "#ef4444"
     : filterMode === "Port Status"
-    ? "#f97316"
+    ? "#E91E8C"
     : filterMode === "Weather Impact"
     ? "#f59e0b"
     : "#ef4444";

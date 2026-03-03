@@ -117,14 +117,14 @@ export default function Dashboard() {
       label: "Avg Delay Impact",
       value: newsLoading ? "—" : (kpis.avgDelayStr ?? "N/A"),
       change: newsLoading ? "Loading..." : kpis.delayCount > 0 ? `Based on ${kpis.delayCount} disruption${kpis.delayCount !== 1 ? "s" : ""}` : "No delay data",
-      color: "#f59e0b",
+      color: "#E91E8C",
       live: !newsLoading,
     },
     {
       label: "Freight Cost Index",
       value: kpiLoading ? "—" : (kpiData?.freightCostIndex ?? "+0.0%"),
       change: kpiLoading ? "Loading..." : (kpiData?.freightSubtext ?? "vs. prior close"),
-      color: (kpiData?.freightChangePct ?? 0) >= 5 ? "#ef4444" : (kpiData?.freightChangePct ?? 0) >= 2 ? "#f97316" : "#10b981",
+      color: (kpiData?.freightChangePct ?? 0) >= 5 ? "#ef4444" : (kpiData?.freightChangePct ?? 0) >= 2 ? "#E91E8C" : "#10b981",
       live: !kpiLoading,
     },
   ];
@@ -136,7 +136,7 @@ export default function Dashboard() {
         height: "100vh",
         overflow: "hidden",
         background: "#0a0e1a",
-        backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.03) 0%, transparent 50%)",
+        backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(233,30,140,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.04) 0%, transparent 50%)",
       }}
     >
       {/* Left Navigation Sidebar — hidden for now, kept for future use */}

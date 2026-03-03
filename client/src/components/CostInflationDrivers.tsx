@@ -28,10 +28,10 @@ const barData = [
 
 const CHART_COLORS = {
   oil: "#3b82f6",
-  freight: "#f97316",
+  freight: "#E91E8C",
   rawMaterials: "#3b82f6",
-  fuel: "#f97316",
-  logistics: "#ef4444",
+  fuel: "#E91E8C",
+  logistics: "#f97316",
   overhead: "#6b7280",
 };
 

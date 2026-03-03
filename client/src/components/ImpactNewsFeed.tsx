@@ -37,7 +37,7 @@ const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string
 
 const SOURCE_COLORS: Record<string, string> = {
   "Supply Chain Dive": "#6366f1",
-  "FT Commodities": "#f97316",
+  "FT Commodities": "#E91E8C",
   "Splash247": "#06b6d4",
 };
 

@@ -23,28 +23,34 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
         zIndex: 20,
       }}
     >
-      {/* Page breadcrumb */}
+      {/* Datajar-branded wordmark */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {/* Logo wordmark with gradient */}
         <span
           style={{
             fontFamily: "'Rajdhani', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            letterSpacing: "0.08em",
-            color: "rgba(255,255,255,0.5)",
-            textTransform: "uppercase",
+            fontWeight: 800,
+            fontSize: "1.05rem",
+            letterSpacing: "0.04em",
+            background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            textTransform: "none",
           }}
         >
-          MARGIN SENTINEL
+          Margin Sentinel
         </span>
-        <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.8rem" }}>/</span>
+        {/* Sparkle — Datajar signature */}
+        <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>✨</span>
+        <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "0.8rem" }}>/</span>
         <span
           style={{
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 700,
-            fontSize: "0.9rem",
+            fontSize: "0.82rem",
             letterSpacing: "0.08em",
-            color: "#f97316",
+            color: "rgba(255,255,255,0.45)",
             textTransform: "uppercase",
           }}
         >

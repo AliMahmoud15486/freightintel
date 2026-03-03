@@ -171,9 +171,9 @@ export default function RetailerActionPanel({ selectedCategories, onCategoryTogg
 
           {/* Helper text when a filter is active */}
               {(selectedCategories?.size ?? 0) > 0 && (
-            <div style={{ marginBottom: "6px", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(249,115,22,0.7)", letterSpacing: "0.03em", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ marginBottom: "6px", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(233,30,140,0.7)", letterSpacing: "0.03em", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>{selectedCategories!.size} selected — click to deselect</span>
-              <button onClick={onClearCategories} style={{ background: "none", border: "none", color: "rgba(249,115,22,0.6)", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", padding: 0 }}>Clear all</button>
+              <button onClick={onClearCategories} style={{ background: "none", border: "none", color: "rgba(233,30,140,0.6)", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", padding: 0 }}>Clear all</button>
             </div>
           )}
 

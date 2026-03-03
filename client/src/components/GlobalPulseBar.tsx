@@ -189,16 +189,17 @@ export default function GlobalPulseBar() {
         flexShrink: 0,
       }}
     >
-      {/* Orange label */}
+      {/* Datajar gradient label */}
       <div
         style={{
-          background: "#f97316",
+          background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
           height: "100%",
           display: "flex",
           alignItems: "center",
           padding: "0 16px",
           flexShrink: 0,
           zIndex: 2,
+          gap: "6px",
         }}
       >
         <span
@@ -207,7 +208,7 @@ export default function GlobalPulseBar() {
             fontWeight: 700,
             fontSize: "0.72rem",
             letterSpacing: "0.1em",
-            color: "rgba(0,0,0,0.85)",
+            color: "rgba(255,255,255,0.95)",
             textTransform: "uppercase",
           }}
         >
@@ -220,7 +221,7 @@ export default function GlobalPulseBar() {
         <RefreshCw
           size={12}
           className="animate-spin"
-          style={{ color: "#f97316", margin: "0 12px", flexShrink: 0 }}
+          style={{ color: "#E91E8C", margin: "0 12px", flexShrink: 0 }}
         />
       ) : (
         <div
