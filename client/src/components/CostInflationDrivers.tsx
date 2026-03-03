@@ -1,9 +1,8 @@
 /* CostInflationDrivers — Margin Sentinel
  * Design: Dark Intelligence — dual charts panel
- * Left: 6-month line chart (WTI Crude & Shipping Rates)
+ * Left: 6-month line chart (WTI Crude & Brent) — LIVE data from Yahoo Finance
  * Right: Stacked bar chart (Estimated Item Cost Impact by Category)
  */
-import { useState } from "react";
 import {
   LineChart,
   Line,
@@ -14,57 +13,17 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Cell,
   LabelList,
-  Legend,
 } from "recharts";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, RefreshCw } from "lucide-react";
+import { useOilHistory } from "@/hooks/useMarketData";
 
-// 6-month line chart data
-const lineData = [
-  { month: "Jun", oil: 2100, freight: 1800 },
-  { month: "Jul", oil: 2800, freight: 2200 },
-  { month: "Aug", oil: 3200, freight: 2600 },
-  { month: "Sep", oil: 4100, freight: 3400 },
-  { month: "Oct", oil: 5200, freight: 4100 },
-  { month: "Nov", oil: 5800, freight: 4800 },
-  { month: "Dec", oil: 6200, freight: 5400 },
-];
-
-// Stacked bar chart data — cost impact by category
+// Stacked bar chart data — cost impact by category (static, domain knowledge)
 const barData = [
-  {
-    category: "Raw\nmaterials",
-    rawMaterials: 90,
-    fuel: 60,
-    logistics: 50,
-    overhead: 40,
-    total: 6.2,
-  },
-  {
-    category: "Home &\nGarden",
-    rawMaterials: 70,
-    fuel: 55,
-    logistics: 45,
-    overhead: 30,
-    total: 4.8,
-  },
-  {
-    category: "Logistics",
-    rawMaterials: 60,
-    fuel: 65,
-    logistics: 55,
-    overhead: 35,
-    total: 4.8,
-  },
-  {
-    category: "Overhead",
-    rawMaterials: 50,
-    fuel: 45,
-    logistics: 40,
-    overhead: 50,
-    total: 3.9,
-  },
+  { category: "Raw\nMaterials", rawMaterials: 90, fuel: 60, logistics: 50, overhead: 40, total: 6.2 },
+  { category: "Home &\nGarden", rawMaterials: 70, fuel: 55, logistics: 45, overhead: 30, total: 4.8 },
+  { category: "Logistics", rawMaterials: 60, fuel: 65, logistics: 55, overhead: 35, total: 4.8 },
+  { category: "Overhead", rawMaterials: 50, fuel: 45, logistics: 40, overhead: 50, total: 3.9 },
 ];
 
 const CHART_COLORS = {
@@ -92,9 +51,9 @@ const CustomTooltipLine = ({ active, payload, label }: any) => {
         <div style={{ color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>{label}</div>
         {payload.map((p: any) => (
           <div key={p.name} style={{ color: p.color, display: "flex", gap: "8px" }}>
-            <span>{p.name === "oil" ? "Oil Cost" : "Freight Cost"}:</span>
+            <span>{p.name === "oilCost" ? "WTI Crude" : "Brent Crude"}:</span>
             <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-              ${p.value.toLocaleString()}
+              ${p.value?.toFixed(2)}
             </span>
           </div>
         ))}
@@ -132,7 +91,6 @@ const CustomTooltipBar = ({ active, payload, label }: any) => {
   return null;
 };
 
-// Custom label for total % on top of bars
 const renderCustomBarLabel = (props: any) => {
   const { x, y, width, value } = props;
   if (!value) return null;
@@ -152,6 +110,15 @@ const renderCustomBarLabel = (props: any) => {
 };
 
 export default function CostInflationDrivers() {
+  const { data: oilHistory, isLoading, dataUpdatedAt } = useOilHistory(6);
+
+  const lineData = oilHistory?.data ?? [];
+
+  // Compute Y-axis domain from live data
+  const allValues = lineData.flatMap((d) => [d.oilCost, d.freightCost]).filter(Boolean);
+  const minVal = allValues.length > 0 ? Math.floor(Math.min(...allValues) * 0.9) : 0;
+  const maxVal = allValues.length > 0 ? Math.ceil(Math.max(...allValues) * 1.1) : 100;
+
   return (
     <div className="ms-panel" style={{ height: "100%" }}>
       {/* Header */}
@@ -164,7 +131,32 @@ export default function CostInflationDrivers() {
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        <span className="panel-header">COST INFLATION DRIVERS</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span className="panel-header">COST INFLATION DRIVERS</span>
+          {isLoading ? (
+            <RefreshCw size={11} className="animate-spin" style={{ color: "#f97316" }} />
+          ) : oilHistory ? (
+            <span
+              style={{
+                fontSize: "0.55rem",
+                color: "#10b981",
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                background: "rgba(16,185,129,0.12)",
+                padding: "1px 5px",
+                borderRadius: "3px",
+              }}
+            >
+              LIVE
+            </span>
+          ) : null}
+          {oilHistory && dataUpdatedAt && (
+            <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.25)", fontFamily: "'Inter', sans-serif" }}>
+              {new Date(dataUpdatedAt).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
         <button
           style={{
             background: "none",
@@ -187,7 +179,7 @@ export default function CostInflationDrivers() {
           height: "calc(100% - 48px)",
         }}
       >
-        {/* Line Chart */}
+        {/* Line Chart — Live Oil Prices */}
         <div style={{ padding: "0 8px" }}>
           <div
             style={{
@@ -199,70 +191,68 @@ export default function CostInflationDrivers() {
               letterSpacing: "0.06em",
             }}
           >
-            WTI CRUDE & SHIPPING RATES (6 Months)
+            WTI CRUDE & BRENT (6 Months)
           </div>
           {/* Legend */}
           <div style={{ display: "flex", gap: "12px", marginBottom: "6px" }}>
             {[
-              { color: CHART_COLORS.oil, label: "Oil Cost" },
-              { color: CHART_COLORS.freight, label: "Freight Cost" },
+              { color: CHART_COLORS.oil, label: "WTI Crude" },
+              { color: CHART_COLORS.freight, label: "Brent Crude" },
             ].map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <div
-                  style={{
-                    width: 16,
-                    height: 2,
-                    background: item.color,
-                    borderRadius: 1,
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "0.65rem",
-                    color: "rgba(255,255,255,0.45)",
-                  }}
-                >
+                <div style={{ width: 16, height: 2, background: item.color, borderRadius: 1 }} />
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.45)" }}>
                   {item.label}
                 </span>
               </div>
             ))}
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={lineData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis
-                dataKey="month"
-                tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
-                axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                domain={[0, 7000]}
-              />
-              <Tooltip content={<CustomTooltipLine />} />
-              <Line
-                type="monotone"
-                dataKey="oil"
-                stroke={CHART_COLORS.oil}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: CHART_COLORS.oil }}
-              />
-              <Line
-                type="monotone"
-                dataKey="freight"
-                stroke={CHART_COLORS.freight}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: CHART_COLORS.freight }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {isLoading ? (
+            <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <RefreshCw size={20} className="animate-spin" style={{ color: "#f97316", margin: "0 auto 8px" }} />
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" }}>
+                  Loading live data...
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={lineData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
+                  axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `$${v.toFixed(0)}`}
+                  domain={[minVal, maxVal]}
+                />
+                <Tooltip content={<CustomTooltipLine />} />
+                <Line
+                  type="monotone"
+                  dataKey="oilCost"
+                  stroke={CHART_COLORS.oil}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: CHART_COLORS.oil }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="freightCost"
+                  stroke={CHART_COLORS.freight}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: CHART_COLORS.freight }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Stacked Bar Chart */}
@@ -288,21 +278,8 @@ export default function CostInflationDrivers() {
               { color: CHART_COLORS.overhead, label: "Overhead" },
             ].map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <div
-                  style={{
-                    width: 8,
-                    height: 8,
-                    background: item.color,
-                    borderRadius: 2,
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "0.62rem",
-                    color: "rgba(255,255,255,0.45)",
-                  }}
-                >
+                <div style={{ width: 8, height: 8, background: item.color, borderRadius: 2 }} />
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.62rem", color: "rgba(255,255,255,0.45)" }}>
                   {item.label}
                 </span>
               </div>

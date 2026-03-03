@@ -1,8 +1,8 @@
 /* NavigationSidebar — Margin Sentinel
  * Design: Dark Intelligence — orange active border, icon+label nav items
  * Fixed left sidebar with branding, nav links, and user profile
+ * Uses wouter Link for routing to implemented pages
  */
-import { useState } from "react";
 import {
   LayoutDashboard,
   Map,
@@ -10,44 +10,48 @@ import {
   TrendingUp,
   Bell,
   FileText,
-  Settings,
   ChevronDown,
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link, useLocation } from "wouter";
 
 interface NavItem {
   icon: React.ReactNode;
   label: string;
   id: string;
+  href: string;
   badge?: number;
-  implemented?: boolean;
+  implemented: boolean;
 }
 
 const navItems: NavItem[] = [
-  { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", implemented: true },
-  { icon: <Map size={16} />, label: "Maps", id: "maps", implemented: false },
-  { icon: <Droplets size={16} />, label: "Oil Data", id: "oil", implemented: false },
-  { icon: <TrendingUp size={16} />, label: "Margins", id: "margins", implemented: false },
-  { icon: <Bell size={16} />, label: "Alerts", id: "alerts", badge: 2, implemented: false },
-  { icon: <FileText size={16} />, label: "Reports", id: "reports", implemented: false },
+  { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", href: "/", implemented: true },
+  { icon: <Map size={16} />, label: "Maps", id: "maps", href: "/maps", implemented: false },
+  { icon: <Droplets size={16} />, label: "Oil Data", id: "oil", href: "/oil", implemented: false },
+  { icon: <TrendingUp size={16} />, label: "Margins", id: "margins", href: "/margins", implemented: true },
+  { icon: <Bell size={16} />, label: "Alerts", id: "alerts", href: "/alerts", badge: 2, implemented: false },
+  { icon: <FileText size={16} />, label: "Reports", id: "reports", href: "/reports", implemented: false },
 ];
 
 interface NavigationSidebarProps {
-  activeSection: string;
-  onSectionChange: (id: string) => void;
+  activeSection?: string;
+  onSectionChange?: (id: string) => void;
 }
 
 export default function NavigationSidebar({ activeSection, onSectionChange }: NavigationSidebarProps) {
-  const handleNavClick = (item: NavItem) => {
-    if (item.implemented) {
-      onSectionChange(item.id);
-    } else {
-      toast.info(`${item.label} — Feature coming soon`, {
-        description: "This section is under development.",
-        duration: 2500,
-      });
-    }
+  const [location] = useLocation();
+
+  const isActive = (item: NavItem) => {
+    if (item.href === "/") return location === "/";
+    return location.startsWith(item.href);
+  };
+
+  const handleUnimplementedClick = (item: NavItem) => {
+    toast.info(`${item.label} — Feature coming soon`, {
+      description: "This section is under development.",
+      duration: 2500,
+    });
   };
 
   return (
@@ -127,30 +131,28 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
       {/* Nav items */}
       <nav style={{ flex: 1, padding: "0 8px" }}>
         {navItems.map((item) => {
-          const isActive = activeSection === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "9px 10px",
-                borderRadius: "6px",
-                marginBottom: "2px",
-                border: "none",
-                cursor: "pointer",
-                background: isActive ? "rgba(249,115,22,0.1)" : "transparent",
-                borderLeft: isActive ? "3px solid #f97316" : "3px solid transparent",
-                color: isActive ? "#f97316" : "rgba(255,255,255,0.55)",
-                transition: "all 0.15s ease",
-                textAlign: "left",
-                position: "relative",
-              }}
-              className={isActive ? "" : "hover:bg-white/5 hover:text-white/80"}
-            >
+          const active = isActive(item);
+          const navStyle: React.CSSProperties = {
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "9px 10px",
+            borderRadius: "6px",
+            marginBottom: "2px",
+            border: "none",
+            cursor: "pointer",
+            background: active ? "rgba(249,115,22,0.1)" : "transparent",
+            borderLeft: active ? "3px solid #f97316" : "3px solid transparent",
+            color: active ? "#f97316" : "rgba(255,255,255,0.55)",
+            transition: "all 0.15s ease",
+            textAlign: "left",
+            position: "relative",
+            textDecoration: "none",
+          };
+
+          const content = (
+            <>
               <span style={{ flexShrink: 0 }}>{item.icon}</span>
               <span
                 style={{
@@ -168,6 +170,31 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
                   {item.badge}
                 </span>
               )}
+            </>
+          );
+
+          if (item.implemented) {
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                style={navStyle}
+                className={active ? "" : "hover:bg-white/5 hover:text-white/80"}
+                onClick={() => onSectionChange?.(item.id)}
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleUnimplementedClick(item)}
+              style={navStyle}
+              className={active ? "" : "hover:bg-white/5 hover:text-white/80"}
+            >
+              {content}
             </button>
           );
         })}
