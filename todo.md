@@ -43,3 +43,6 @@
 - [x] Vitest tests for marketData.oilHistory (data points, fallback)
 - [x] Vitest tests for marketData.currentPrices
 - [x] Auth logout test (existing)
+
+## Change Requests
+- [x] Remove Landing Cost Calculator from Retailer Action Panel
