@@ -9,7 +9,7 @@
  *   Freight Cost Index  → avg daily % change of BDRY + ZIM + CHRW shipping proxies
  *   Categories at Risk  → derived from union of affectedCategories in critical/warning news
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import NavigationSidebar from "@/components/NavigationSidebar";
 import TopHeader from "@/components/TopHeader";
 import GlobalPulseBar from "@/components/GlobalPulseBar";
@@ -36,6 +36,9 @@ function parseDelayDays(etaImpact: string | undefined): number | null {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  // Shared category filter — lifted state shared between sidebar and news feed
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   // Live news for Active Disruptions, Avg Delay Impact, Categories at Risk
   const { data: newsData, isLoading: newsLoading } = trpc.news.feed.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
@@ -266,7 +269,7 @@ export default function Dashboard() {
               }}
             >
               <CostInflationDrivers />
-              <ImpactNewsFeed />
+              <ImpactNewsFeed selectedCategory={selectedCategory} onClearCategory={() => setSelectedCategory(null)} />
             </div>
           </div>
 
@@ -281,7 +284,7 @@ export default function Dashboard() {
               overflowY: "auto",
             }}
           >
-            <RetailerActionPanel />
+            <RetailerActionPanel selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} />
           </div>
         </div>
       </div>

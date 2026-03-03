@@ -68,3 +68,4 @@
 - [x] Update Dashboard stats cards to consume live KPI tRPC procedure
 - [x] Remove Categories at Risk KPI card from Dashboard stats row
 - [x] Add live Categories at Risk list to RetailerActionPanel right sidebar
+- [x] Make Categories at Risk items clickable to filter the Impact News Feed
