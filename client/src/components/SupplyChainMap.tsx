@@ -157,7 +157,13 @@ export default function SupplyChainMap() {
   return (
     <div
       className="ms-panel"
-      style={{ overflow: "hidden", position: "relative" }}
+      style={{
+        overflow: "hidden",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "460px",
+      }}
     >
       {/* Panel Header */}
       <div
@@ -276,14 +282,13 @@ export default function SupplyChainMap() {
         </div>
       </div>
 
-      {/* Map Container — full-width responsive with generous height */}
+      {/* Map Container — explicit height so it always renders visibly */}
       <div
         style={{
           position: "relative",
           width: "100%",
-          aspectRatio: "21 / 9",
-          minHeight: "380px",
-          maxHeight: "600px",
+          height: "clamp(380px, 45vh, 560px)",
+          flex: "0 0 auto",
           overflow: "hidden",
           background: "#060b14",
         }}

@@ -76,3 +76,4 @@
 - [x] Hide left navigation sidebar (keep code, just not rendered)
 - [x] Make heatmap fully responsive — fill available width and use proportional height
 - [x] Make heatmap wide, tall, and fully responsive across all screen sizes
+- [x] Fix Supply Chain Disruption Map — restored as full-width panel with min-height 460px
