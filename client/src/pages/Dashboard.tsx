@@ -169,10 +169,16 @@ export default function Dashboard() {
             overflowX: "hidden",
             padding: "12px",
             display: "flex",
+            flexDirection: "column",
             gap: "12px",
           }}
         >
-          {/* Center content (map + stats + bottom panels) */}
+          {/* Full-width Supply Chain Disruption Map */}
+          <SupplyChainMap />
+
+          {/* Below-map row: center panels + right sidebar */}
+          <div style={{ display: "flex", gap: "12px", minWidth: 0 }}>
+          {/* Center content (stats + bottom panels) */}
           <div
             style={{
               flex: 1,
@@ -182,9 +188,6 @@ export default function Dashboard() {
               minWidth: 0,
             }}
           >
-            {/* Supply Chain Disruption Map */}
-            <SupplyChainMap />
-
             {/* Live KPI Stats row */}
             <div
               style={{
@@ -300,8 +303,9 @@ export default function Dashboard() {
           >
             <RetailerActionPanel selectedCategories={selectedCategories} onCategoryToggle={toggleCategory} onClearCategories={clearCategories} />
           </div>
-        </div>
-      </div>
+          </div>{/* end below-map row */}
+        </div>{/* end scrollable content */}
+      </div>{/* end main column */}
     </div>
   );
 }
