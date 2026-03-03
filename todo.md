@@ -77,3 +77,6 @@
 - [x] Make heatmap fully responsive — fill available width and use proportional height
 - [x] Make heatmap wide, tall, and fully responsive across all screen sizes
 - [x] Fix Supply Chain Disruption Map — restored as full-width panel with min-height 460px
+- [x] Fix Shipping Routes overlay — render animated SVG polylines for major shipping lanes
+- [x] Fix Port Status overlay — show major world ports with congestion/open/closed status
+- [x] Fix Weather Status overlay — show weather disruption zones with impact indicators
