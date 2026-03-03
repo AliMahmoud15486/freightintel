@@ -9,7 +9,6 @@ import {
   Droplets,
   TrendingUp,
   Bell,
-  FileText,
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -46,7 +45,6 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
     { icon: <Droplets size={16} />,       label: "Oil Data",   id: "oil",       href: "/oil",      implemented: false },
     { icon: <TrendingUp size={16} />,     label: "Margins",    id: "margins",   href: "/margins",  implemented: true  },
     { icon: <Bell size={16} />,           label: "Alerts",     id: "alerts",    href: "/alerts",   badge: liveCriticalCount || undefined, implemented: false },
-    { icon: <FileText size={16} />,       label: "Reports",    id: "reports",   href: "/reports",  implemented: false },
   ];
 
   const isActive = (item: NavItem) => {
