@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { MoreHorizontal, ExternalLink, RefreshCw, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 const SEVERITY_COLORS: Record<string, { bg: string; border: string; dot: string; text: string }> = {
   critical: { bg: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.25)",  dot: "#ef4444", text: "#ef4444" },
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function RetailerActionPanel({ selectedCategories, onCategoryToggle, onClearCategories }: Props) {
+  const { isMobile } = useBreakpoint();
   const { data, isLoading, refetch } = trpc.news.feed.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
     staleTime: 4 * 60 * 1000,
@@ -64,7 +66,7 @@ export default function RetailerActionPanel({ selectedCategories, onCategoryTogg
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: isMobile ? "auto" : "100%" }}>
       <div className="ms-panel">
         {/* Panel header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>

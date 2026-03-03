@@ -1,16 +1,10 @@
 /* Dashboard — Margin Sentinel
- * Design: Dark Intelligence / Cyber-Industrial Analytics
- * Layout: Fixed left nav → top header → pulse bar → alerts → main content grid
- * Main content: Full-width map → stats cards → bottom split (charts | news) + right sidebar
- *
- * KPI cards are live:
- *   Active Disruptions  → count of critical news items from live RSS feed
- *   Avg Delay Impact    → parsed from LLM-extracted etaImpact fields
- *   Freight Cost Index  → avg daily % change of BDRY + ZIM + CHRW shipping proxies
- *   Categories at Risk  → derived from union of affectedCategories in critical/warning news
+ * Responsive: mobile (< 640px), tablet (640–1023px), desktop (≥ 1024px)
+ * Mobile:  single column, stacked panels, collapsible sidebar
+ * Tablet:  KPI 3-col, charts stacked, sidebar below news
+ * Desktop: full layout with right sidebar
  */
 import { useMemo, useState } from "react";
-import NavigationSidebar from "@/components/NavigationSidebar";
 import TopHeader from "@/components/TopHeader";
 import GlobalPulseBar from "@/components/GlobalPulseBar";
 import AlertsSystem from "@/components/AlertsSystem";
@@ -19,6 +13,7 @@ import CostInflationDrivers from "@/components/CostInflationDrivers";
 import ImpactNewsFeed from "@/components/ImpactNewsFeed";
 import RetailerActionPanel from "@/components/RetailerActionPanel";
 import { trpc } from "@/lib/trpc";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -36,6 +31,8 @@ function parseDelayDays(etaImpact: string | undefined): number | null {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const { isMobile, isTablet, isDesktop } = useBreakpoint();
+
   // Shared category filter — multi-select Set lifted to Dashboard
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
 
@@ -72,35 +69,22 @@ export default function Dashboard() {
     const critical = items.filter((i) => i.severity === "critical");
     const impactful = items.filter((i) => i.severity === "critical" || i.severity === "warning");
 
-    // Active Disruptions = count of critical news items
     const activeDisruptions = critical.length;
 
-    // Avg Delay Impact = mean of parsed ETA delay fields across critical+warning items
     const delayValues = impactful
       .map((i) => parseDelayDays(i.etaImpact))
       .filter((d): d is number => d !== null);
     const avgDelay = delayValues.length > 0
       ? delayValues.reduce((a, b) => a + b, 0) / delayValues.length
       : null;
-    const avgDelayStr = avgDelay !== null
-      ? `+${avgDelay.toFixed(1)} days`
-      : null;
+    const avgDelayStr = avgDelay !== null ? `+${avgDelay.toFixed(1)} days` : null;
 
-    // Categories at Risk = unique affected categories across critical+warning items
     const allCategories = impactful.flatMap((i) => i.affectedCategories ?? []);
     const uniqueCategories = Array.from(new Set(allCategories));
-    const totalCategories = 12;
     const categoriesAtRisk = uniqueCategories.length;
     const topCats = uniqueCategories.slice(0, 2).join(", ");
 
-    return {
-      activeDisruptions,
-      avgDelayStr,
-      delayCount: delayValues.length,
-      categoriesAtRisk,
-      totalCategories,
-      topCats,
-    };
+    return { activeDisruptions, avgDelayStr, delayCount: delayValues.length, categoriesAtRisk, totalCategories: 12, topCats };
   }, [newsData]);
 
   // ── Stat card definitions ───────────────────────────────────────────────────
@@ -129,6 +113,15 @@ export default function Dashboard() {
     },
   ];
 
+  // ── Layout helpers ──────────────────────────────────────────────────────────
+
+  // KPI grid: 1 col on mobile, 3 cols on tablet+
+  const kpiGridCols = isMobile ? "1fr" : "repeat(3, 1fr)";
+
+  // Content padding
+  const contentPadding = isMobile ? "8px" : "12px";
+  const contentGap = isMobile ? "8px" : "12px";
+
   return (
     <div
       style={{
@@ -139,9 +132,6 @@ export default function Dashboard() {
         backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(233,30,140,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.04) 0%, transparent 50%)",
       }}
     >
-      {/* Left Navigation Sidebar — hidden for now, kept for future use */}
-      {/* <NavigationSidebar /> */}
-
       {/* Main content area */}
       <div
         style={{
@@ -167,145 +157,163 @@ export default function Dashboard() {
             flex: 1,
             overflowY: "auto",
             overflowX: "hidden",
-            padding: "12px",
+            padding: contentPadding,
             display: "flex",
             flexDirection: "column",
-            gap: "12px",
-          }}
+            gap: contentGap,
+            // Smooth momentum scrolling on iOS
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
         >
           {/* Full-width Supply Chain Disruption Map */}
           <SupplyChainMap />
 
-          {/* Below-map row: center panels + right sidebar */}
-          <div style={{ display: "flex", gap: "12px", minWidth: 0 }}>
-          {/* Center content (stats + bottom panels) */}
+          {/* Desktop/Tablet: side-by-side center + right sidebar */}
+          {/* Mobile: single column */}
           <div
             style={{
-              flex: 1,
               display: "flex",
-              flexDirection: "column",
-              gap: "12px",
+              flexDirection: isDesktop ? "row" : "column",
+              gap: contentGap,
               minWidth: 0,
             }}
           >
-            {/* Live KPI Stats row */}
+            {/* Center content (stats + bottom panels) */}
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "10px",
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: contentGap,
+                minWidth: 0,
               }}
             >
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="ms-panel"
-                  style={{ padding: "10px 14px", position: "relative" }}
-                >
-                  {/* LIVE badge */}
-                  {stat.live && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "10px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "3px",
-                      }}
-                    >
+              {/* Live KPI Stats row */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: kpiGridCols,
+                  gap: isMobile ? "8px" : "10px",
+                }}
+              >
+                {stats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="ms-panel"
+                    style={{ padding: isMobile ? "12px" : "10px 14px", position: "relative" }}
+                  >
+                    {/* LIVE badge */}
+                    {stat.live && (
                       <div
-                        className="animate-blink"
                         style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: "50%",
-                          background: "#10b981",
-                          boxShadow: "0 0 4px #10b981",
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: "0.55rem",
-                          color: "rgba(16,185,129,0.7)",
-                          letterSpacing: "0.06em",
+                          position: "absolute",
+                          top: "8px",
+                          right: "10px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "3px",
                         }}
                       >
-                        LIVE
-                      </span>
+                        <div
+                          className="animate-blink"
+                          style={{
+                            width: 4,
+                            height: 4,
+                            borderRadius: "50%",
+                            background: "#10b981",
+                            boxShadow: "0 0 4px #10b981",
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "'Inter', sans-serif",
+                            fontSize: "0.55rem",
+                            color: "rgba(16,185,129,0.7)",
+                            letterSpacing: "0.06em",
+                          }}
+                        >
+                          LIVE
+                        </span>
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: "0.68rem",
+                        color: "rgba(255,255,255,0.4)",
+                        marginBottom: "4px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      {stat.label}
                     </div>
-                  )}
-                  <div
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: "0.68rem",
-                      color: "rgba(255,255,255,0.4)",
-                      marginBottom: "4px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    {stat.label}
+                    <div
+                      style={{
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontWeight: 700,
+                        fontSize: isMobile ? "1.5rem" : "1.2rem",
+                        color: stat.color,
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      {stat.value}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: "0.65rem",
+                        color: "rgba(255,255,255,0.3)",
+                        marginTop: "2px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {stat.change}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      fontFamily: "'Rajdhani', sans-serif",
-                      fontWeight: 700,
-                      fontSize: "1.2rem",
-                      color: stat.color,
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    {stat.value}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: "0.65rem",
-                      color: "rgba(255,255,255,0.3)",
-                      marginTop: "2px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {stat.change}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              {/* Bottom row: Cost Inflation Drivers + Impact News Feed */}
+              {/* Desktop: side by side | Mobile/Tablet: stacked */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr",
+                  gap: contentGap,
+                  minHeight: isMobile ? "auto" : "380px",
+                }}
+              >
+                <CostInflationDrivers />
+                <ImpactNewsFeed
+                  selectedCategories={selectedCategories}
+                  onClearCategories={clearCategories}
+                />
+              </div>
             </div>
 
-            {/* Bottom row: Cost Inflation Drivers + Impact News Feed */}
+            {/* Right sidebar — Retailer Action Panel */}
+            {/* Desktop: fixed 260px right column | Mobile/Tablet: full-width below */}
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-                minHeight: "380px",
+                width: isDesktop ? "260px" : "100%",
+                minWidth: isDesktop ? "260px" : "0",
+                display: "flex",
+                flexDirection: "column",
+                gap: contentGap,
               }}
             >
-              <CostInflationDrivers />
-              <ImpactNewsFeed selectedCategories={selectedCategories} onClearCategories={clearCategories} />
+              <RetailerActionPanel
+                selectedCategories={selectedCategories}
+                onCategoryToggle={toggleCategory}
+                onClearCategories={clearCategories}
+              />
             </div>
           </div>
-
-          {/* Right sidebar — Retailer Action Panel */}
-          <div
-            style={{
-              width: "260px",
-              minWidth: "260px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              overflowY: "auto",
-            }}
-          >
-            <RetailerActionPanel selectedCategories={selectedCategories} onCategoryToggle={toggleCategory} onClearCategories={clearCategories} />
-          </div>
-          </div>{/* end below-map row */}
-        </div>{/* end scrollable content */}
-      </div>{/* end main column */}
+        </div>
+      </div>
     </div>
   );
 }

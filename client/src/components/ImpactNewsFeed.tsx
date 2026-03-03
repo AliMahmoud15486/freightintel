@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { MoreHorizontal, RefreshCw, ExternalLink, Clock, Rss, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 type Severity = "all" | "critical" | "warning" | "info";
 
@@ -43,6 +44,7 @@ const SOURCE_COLORS: Record<string, string> = {
 
 export default function ImpactNewsFeed({ selectedCategories, onClearCategories }: Props) {
   const [filter, setFilter] = useState<Severity>("all");
+  const { isMobile } = useBreakpoint();
 
   const { data, isLoading, isError, refetch, isFetching } = trpc.news.feed.useQuery(undefined, {
     refetchInterval: 15 * 60 * 1000,
@@ -141,41 +143,43 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
         </div>
       </div>
 
-      {/* Subtitle + sources */}
-      <div
-        style={{
-          padding: "5px 14px",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "8px",
-        }}
-      >
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.3)" }}>
-          Prioritized costs with landing impacts and per-costs.
-        </span>
-        <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
-          {(data?.sources ?? ["Supply Chain Dive", "FT Commodities", "Splash247"]).map((src) => (
-            <span
-              key={src}
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "0.55rem",
-                color: SOURCE_COLORS[src] ?? "rgba(255,255,255,0.4)",
-                background: `${SOURCE_COLORS[src] ?? "#666"}18`,
-                border: `1px solid ${SOURCE_COLORS[src] ?? "#666"}30`,
-                borderRadius: "3px",
-                padding: "1px 5px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {src}
-            </span>
-          ))}
+      {/* Subtitle + sources — hidden on mobile to save vertical space */}
+      {!isMobile && (
+        <div
+          style={{
+            padding: "5px 14px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+          }}
+        >
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.3)" }}>
+            Prioritized costs with landing impacts and per-costs.
+          </span>
+          <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
+            {(data?.sources ?? ["Supply Chain Dive", "FT Commodities", "Splash247"]).map((src) => (
+              <span
+                key={src}
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.55rem",
+                  color: SOURCE_COLORS[src] ?? "rgba(255,255,255,0.4)",
+                  background: `${SOURCE_COLORS[src] ?? "#666"}18`,
+                  border: `1px solid ${SOURCE_COLORS[src] ?? "#666"}30`,
+                  borderRadius: "3px",
+                  padding: "1px 5px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {src}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Active category filter banner */}
       {hasFilter && (

@@ -7,11 +7,13 @@ import { useState, useEffect, useRef } from "react";
 import { AlertTriangle, X, ChevronRight, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 export default function AlertsSystem() {
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const prevCriticalCount = useRef<number>(0);
+  const { isMobile } = useBreakpoint();
 
   // Pull live news — same cache as the news feed, so no extra API cost
   const { data, isLoading } = trpc.news.feed.useQuery(undefined, {
@@ -135,24 +137,30 @@ export default function AlertsSystem() {
           {criticalCount} CRITICAL MARGIN RISK{criticalCount !== 1 ? "S" : ""}
         </span>
 
-        {/* Scrolling headline preview */}
-        <div style={{ display: "flex", gap: "6px", flex: 1, overflow: "hidden" }}>
-          {activeAlerts.slice(0, 3).map((alert) => (
-            <span
-              key={alert.id}
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "0.7rem",
-                color: "rgba(255,255,255,0.45)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              · {alert.title}
-            </span>
-          ))}
-        </div>
+        {/* Scrolling headline preview — hidden on mobile to save space */}
+        {!isMobile && (
+          <div style={{ display: "flex", gap: "6px", flex: 1, overflow: "hidden" }}>
+            {activeAlerts.slice(0, 3).map((alert) => (
+              <span
+                key={alert.id}
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.7rem",
+                  color: "rgba(255,255,255,0.45)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                · {alert.title}
+              </span>
+            ))}
+          </div>
+        )}
+        {/* Mobile: show count badge instead */}
+        {isMobile && (
+          <div style={{ flex: 1 }} />
+        )}
 
         <ChevronRight
           size={14}

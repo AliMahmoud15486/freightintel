@@ -84,3 +84,13 @@
 - [x] Datajar rebrand: update CSS variables and global accent color to gradient palette
 - [x] Datajar rebrand: update pulse bar, alert strip, KPI cards, and panel headers with new palette
 - [x] Datajar rebrand: update buttons and interactive elements with pill-shaped gradient style
+- [x] Responsive: Fix Dashboard main layout (flex row → column on mobile)
+- [x] Responsive: Fix TopHeader for mobile (compact logo, hide breadcrumb)
+- [x] Responsive: Fix GlobalPulseBar for mobile (scrollable ticker)
+- [x] Responsive: Fix AlertStrip for mobile
+- [x] Responsive: Fix SupplyChainMap for mobile (reduce map height, stack controls)
+- [x] Responsive: Fix KPI cards for mobile (single column)
+- [x] Responsive: Fix CostInflationDrivers charts for mobile (stack vertically)
+- [x] Responsive: Fix ImpactNewsFeed for mobile (full width, readable cards)
+- [x] Responsive: Fix RetailerActionPanel for mobile (full width below news feed)
+- [x] Responsive: Add mobile navigation menu / hamburger for small screens

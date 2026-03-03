@@ -8,6 +8,7 @@
 import { useState, useMemo } from "react";
 import { MoreHorizontal, ZoomIn, ZoomOut, RefreshCw, Anchor, Wind, Ship } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 const MAP_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663201940453/ahZanQ69csJtVFtyEk4qAc/map-bg-J8FdW8j5LNYHoKYjXTpykf.webp";
@@ -758,6 +759,7 @@ function MapLegend({ mode }: { mode: string }) {
 
 export default function SupplyChainMap() {
   const [filterMode, setFilterMode] = useState("Interland Monitor");
+  const { isMobile, isTablet } = useBreakpoint();
 
   const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.disruptions.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
@@ -810,21 +812,23 @@ export default function SupplyChainMap() {
   return (
     <div
       className="ms-panel"
-      style={{ overflow: "hidden", position: "relative", display: "flex", flexDirection: "column", minHeight: "460px" }}
+      style={{ overflow: "hidden", position: "relative", display: "flex", flexDirection: "column", minHeight: isMobile ? "320px" : "460px" }}
     >
       {/* Panel Header */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: isMobile ? "flex-start" : "center",
+          flexDirection: isMobile ? "column" : "row",
           justifyContent: "space-between",
-          padding: "12px 16px",
+          padding: isMobile ? "10px 12px" : "12px 16px",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           background: "rgba(10,14,26,0.6)",
+          gap: isMobile ? "8px" : "0",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span className="panel-header">SUPPLY CHAIN DISRUPTION MAP</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span className="panel-header" style={{ fontSize: isMobile ? "0.7rem" : undefined }}>SUPPLY CHAIN MAP</span>
           <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)" }}>
             ({modeSubtitle[filterMode] ?? filterMode})
           </span>
@@ -832,35 +836,37 @@ export default function SupplyChainMap() {
             <div className="animate-blink" style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 4px #10b981" }} />
             <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.65rem", color: "#10b981", letterSpacing: "0.06em" }}>LIVE</span>
           </div>
-          {lastUpdated && (
+          {lastUpdated && !isMobile && (
             <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.25)" }}>
               {lastUpdated}
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", width: isMobile ? "100%" : "auto" }}>
           <select
             value={filterMode}
             onChange={(e) => setFilterMode(e.target.value)}
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "rgba(255,255,255,0.7)", fontSize: "0.72rem", padding: "4px 8px", fontFamily: "'Inter', sans-serif", cursor: "pointer" }}
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "rgba(255,255,255,0.7)", fontSize: "0.72rem", padding: isMobile ? "6px 8px" : "4px 8px", fontFamily: "'Inter', sans-serif", cursor: "pointer", flex: isMobile ? 1 : "none" }}
           >
             <option value="Interland Monitor">Interland Monitor</option>
             <option value="Shipping Routes">Shipping Routes</option>
             <option value="Port Status">Port Status</option>
             <option value="Weather Impact">Weather Impact</option>
           </select>
-          <button onClick={() => refetch()} title="Refresh" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center" }}>
+          <button onClick={() => refetch()} title="Refresh" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "6px", display: "flex", alignItems: "center" }}>
             <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
           </button>
-          <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px" }}>
-            <MoreHorizontal size={16} />
-          </button>
+          {!isMobile && (
+            <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px" }}>
+              <MoreHorizontal size={16} />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Map Container */}
       <div
-        style={{ position: "relative", width: "100%", height: "clamp(380px, 45vh, 560px)", flex: "0 0 auto", overflow: "hidden", background: "#060b14" }}
+        style={{ position: "relative", width: "100%", height: isMobile ? "clamp(240px, 55vw, 340px)" : isTablet ? "clamp(300px, 40vh, 420px)" : "clamp(380px, 45vh, 560px)", flex: "0 0 auto", overflow: "hidden", background: "#060b14" }}
       >
         {/* Background map image */}
         <img
@@ -884,11 +890,11 @@ export default function SupplyChainMap() {
         {filterMode === "Port Status"       && <PortStatusOverlay disruptions={locations} />}
         {filterMode === "Weather Impact"    && <WeatherOverlay />}
 
-        {/* Zoom controls */}
+        {/* Zoom controls — larger touch targets on mobile */}
         <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "2px", zIndex: 5 }}>
           {[ZoomIn, ZoomOut].map((Icon, i) => (
-            <button key={i} style={{ width: 28, height: 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => {}}>
-              <Icon size={14} />
+            <button key={i} style={{ width: isMobile ? 36 : 28, height: isMobile ? 36 : 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => {}}>
+              <Icon size={isMobile ? 16 : 14} />
             </button>
           ))}
         </div>

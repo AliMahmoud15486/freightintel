@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { TrendingUp, TrendingDown, Minus, X, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ function TickerCell({ item }: { item: DisplayTicker }) {
 
 export default function GlobalPulseBar() {
   const [dismissed, setDismissed] = useState(false);
+  const { isMobile } = useBreakpoint();
 
   const { data, isLoading, dataUpdatedAt } = trpc.marketData.pulseBar.useQuery(undefined, {
     refetchInterval: 60_000, // refresh every 60 seconds
@@ -181,7 +183,7 @@ export default function GlobalPulseBar() {
       style={{
         background: "rgba(10, 14, 26, 0.95)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        height: "44px",
+        height: isMobile ? "38px" : "44px",
         display: "flex",
         alignItems: "center",
         overflow: "hidden",
@@ -196,7 +198,7 @@ export default function GlobalPulseBar() {
           height: "100%",
           display: "flex",
           alignItems: "center",
-          padding: "0 16px",
+          padding: isMobile ? "0 10px" : "0 16px",
           flexShrink: 0,
           zIndex: 2,
           gap: "6px",
@@ -206,13 +208,14 @@ export default function GlobalPulseBar() {
           style={{
             fontFamily: "'Rajdhani', sans-serif",
             fontWeight: 700,
-            fontSize: "0.72rem",
-            letterSpacing: "0.1em",
+            fontSize: isMobile ? "0.62rem" : "0.72rem",
+            letterSpacing: "0.08em",
             color: "rgba(255,255,255,0.95)",
             textTransform: "uppercase",
+            whiteSpace: "nowrap",
           }}
         >
-          GLOBAL PULSE BAR
+          {isMobile ? "PULSE" : "GLOBAL PULSE BAR"}
         </span>
       </div>
 

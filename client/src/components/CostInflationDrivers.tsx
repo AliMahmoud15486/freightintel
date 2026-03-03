@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { MoreHorizontal, RefreshCw } from "lucide-react";
 import { useOilHistory } from "@/hooks/useMarketData";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 // Stacked bar chart data — cost impact by category (static, domain knowledge)
 const barData = [
@@ -111,6 +112,8 @@ const renderCustomBarLabel = (props: any) => {
 
 export default function CostInflationDrivers() {
   const { data: oilHistory, isLoading, dataUpdatedAt } = useOilHistory(6);
+  const { isMobile, isTablet } = useBreakpoint();
+  const stackCharts = isMobile || isTablet;
 
   const lineData = oilHistory?.data ?? [];
 
@@ -173,10 +176,10 @@ export default function CostInflationDrivers() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: stackCharts ? "1fr" : "1fr 1fr",
           gap: "0",
           padding: "12px 8px 8px",
-          height: "calc(100% - 48px)",
+          height: stackCharts ? "auto" : "calc(100% - 48px)",
         }}
       >
         {/* Line Chart — Live Oil Prices */}
@@ -256,7 +259,7 @@ export default function CostInflationDrivers() {
         </div>
 
         {/* Stacked Bar Chart */}
-        <div style={{ padding: "0 8px", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ padding: stackCharts ? "12px 8px 0" : "0 8px", borderLeft: stackCharts ? "none" : "1px solid rgba(255,255,255,0.06)", borderTop: stackCharts ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
           <div
             style={{
               fontFamily: "'Inter', sans-serif",
