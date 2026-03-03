@@ -73,3 +73,4 @@
 - [x] Extend news LLM classification to extract geographic locations from each article
 - [x] Rewrite SupplyChainMap to render live disruption markers from news data
 - [x] Add coordinate-based marker positioning on equirectangular map projection
+- [x] Hide left navigation sidebar (keep code, just not rendered)

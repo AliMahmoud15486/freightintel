@@ -139,8 +139,8 @@ export default function Dashboard() {
         backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.03) 0%, transparent 50%)",
       }}
     >
-      {/* Left Navigation Sidebar */}
-      <NavigationSidebar />
+      {/* Left Navigation Sidebar — hidden for now, kept for future use */}
+      {/* <NavigationSidebar /> */}
 
       {/* Main content area */}
       <div
