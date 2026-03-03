@@ -94,3 +94,4 @@
 - [x] Responsive: Fix ImpactNewsFeed for mobile (full width, readable cards)
 - [x] Responsive: Fix RetailerActionPanel for mobile (full width below news feed)
 - [x] Responsive: Add mobile navigation menu / hamburger for small screens
+- [x] Responsive: On mobile, show RetailerActionPanel (Alerts + Categories) above ImpactNewsFeed\n
