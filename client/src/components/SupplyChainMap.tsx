@@ -276,12 +276,14 @@ export default function SupplyChainMap() {
         </div>
       </div>
 
-      {/* Map Container */}
+      {/* Map Container — responsive: uses aspect ratio so it fills available width */}
       <div
         style={{
           position: "relative",
           width: "100%",
-          height: "360px",
+          aspectRatio: "16 / 7",
+          minHeight: "320px",
+          maxHeight: "520px",
           overflow: "hidden",
           background: "#060b14",
         }}

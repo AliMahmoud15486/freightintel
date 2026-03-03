@@ -74,3 +74,4 @@
 - [x] Rewrite SupplyChainMap to render live disruption markers from news data
 - [x] Add coordinate-based marker positioning on equirectangular map projection
 - [x] Hide left navigation sidebar (keep code, just not rendered)
+- [x] Make heatmap fully responsive — fill available width and use proportional height
