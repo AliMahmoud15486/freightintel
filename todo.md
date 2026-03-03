@@ -66,3 +66,5 @@
 - [x] Derive Avg Delay Impact from LLM-extracted ETA fields in news items
 - [x] Derive Freight Cost Index from live shipping market data (BDRY, ZIM, Maersk)
 - [x] Update Dashboard stats cards to consume live KPI tRPC procedure
+- [x] Remove Categories at Risk KPI card from Dashboard stats row
+- [x] Add live Categories at Risk list to RetailerActionPanel right sidebar

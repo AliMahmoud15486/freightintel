@@ -110,13 +110,6 @@ export default function Dashboard() {
       color: (kpiData?.freightChangePct ?? 0) >= 5 ? "#ef4444" : (kpiData?.freightChangePct ?? 0) >= 2 ? "#f97316" : "#10b981",
       live: !kpiLoading,
     },
-    {
-      label: "Categories at Risk",
-      value: newsLoading ? "—" : `${kpis.categoriesAtRisk} / ${kpis.totalCategories}`,
-      change: newsLoading ? "Loading..." : kpis.topCats || "No categories flagged",
-      color: "#3b82f6",
-      live: !newsLoading,
-    },
   ];
 
   return (
@@ -179,7 +172,7 @@ export default function Dashboard() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
+                gridTemplateColumns: "repeat(3, 1fr)",
                 gap: "10px",
               }}
             >
