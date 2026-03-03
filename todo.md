@@ -62,3 +62,7 @@
 - [x] Update navigation sidebar alerts badge to reflect live critical count
 - [x] Remove alert bell icon from top-right header
 - [x] Remove Reports from navigation sidebar
+- [x] Derive Active Disruptions count from live critical news items
+- [x] Derive Avg Delay Impact from LLM-extracted ETA fields in news items
+- [x] Derive Freight Cost Index from live shipping market data (BDRY, ZIM, Maersk)
+- [x] Update Dashboard stats cards to consume live KPI tRPC procedure

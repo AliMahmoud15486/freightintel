@@ -201,6 +201,39 @@ export const marketDataRouter = router({
       lastUpdated:        new Date().toISOString(),
     };
   }),
+
+  /** Live KPI stats: Active Disruptions, Avg Delay Impact, Freight Cost Index */
+  kpis: publicProcedure.query(async () => {
+    // Fetch shipping tickers for Freight Cost Index
+    const [bdry, zim, chrw] = await Promise.all([
+      fetchQuote("BDRY"),
+      fetchQuote("ZIM"),
+      fetchQuote("CHRW"),
+    ]);
+
+    const bdryData = calcChange(bdry,  { price: 12.22,  pct: 3.8 });
+    const zimData  = calcChange(zim,   { price: 28.83,  pct: 0.6 });
+    const chrwData = calcChange(chrw,  { price: 187.24, pct: 5.7 });
+
+    // Freight Cost Index = average daily % change across shipping proxies
+    const freightChangePct = (bdryData.changePct + zimData.changePct + chrwData.changePct) / 3;
+    const freightSign = freightChangePct >= 0 ? "+" : "";
+    const freightIndex = `${freightSign}${freightChangePct.toFixed(1)}%`;
+    const freightSubtext = freightChangePct >= 5
+      ? "High pressure — elevated rates"
+      : freightChangePct >= 2
+      ? "Moderate upward pressure"
+      : freightChangePct < 0
+      ? "Rates easing"
+      : "Stable freight market";
+
+    return {
+      freightCostIndex: freightIndex,
+      freightSubtext,
+      freightChangePct,
+      lastUpdated: new Date().toISOString(),
+    };
+  }),
 });
 
 // ─── time series helpers ───────────────────────────────────────────────────────

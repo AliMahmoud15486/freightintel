@@ -1,9 +1,15 @@
 /* Dashboard — Margin Sentinel
  * Design: Dark Intelligence / Cyber-Industrial Analytics
  * Layout: Fixed left nav → top header → pulse bar → alerts → main content grid
- * Main content: Full-width map → bottom split (charts | news) + right sidebar
+ * Main content: Full-width map → stats cards → bottom split (charts | news) + right sidebar
+ *
+ * KPI cards are live:
+ *   Active Disruptions  → count of critical news items from live RSS feed
+ *   Avg Delay Impact    → parsed from LLM-extracted etaImpact fields
+ *   Freight Cost Index  → avg daily % change of BDRY + ZIM + CHRW shipping proxies
+ *   Categories at Risk  → derived from union of affectedCategories in critical/warning news
  */
-import { useState } from "react";
+import { useMemo } from "react";
 import NavigationSidebar from "@/components/NavigationSidebar";
 import TopHeader from "@/components/TopHeader";
 import GlobalPulseBar from "@/components/GlobalPulseBar";
@@ -12,9 +18,106 @@ import SupplyChainMap from "@/components/SupplyChainMap";
 import CostInflationDrivers from "@/components/CostInflationDrivers";
 import ImpactNewsFeed from "@/components/ImpactNewsFeed";
 import RetailerActionPanel from "@/components/RetailerActionPanel";
+import { trpc } from "@/lib/trpc";
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+/** Parse a delay string like "+14 days", "14 days", "2 weeks" → number of days */
+function parseDelayDays(etaImpact: string | undefined): number | null {
+  if (!etaImpact) return null;
+  const clean = etaImpact.replace(/[+\s]/g, "").toLowerCase();
+  const weekMatch = clean.match(/(\d+(?:\.\d+)?)week/);
+  if (weekMatch) return Math.round(parseFloat(weekMatch[1]) * 7);
+  const dayMatch = clean.match(/(\d+(?:\.\d+)?)day/);
+  if (dayMatch) return Math.round(parseFloat(dayMatch[1]));
+  return null;
+}
+
+// ─── component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  // Live news for Active Disruptions, Avg Delay Impact, Categories at Risk
+  const { data: newsData, isLoading: newsLoading } = trpc.news.feed.useQuery(undefined, {
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 4 * 60 * 1000,
+  });
+
+  // Live market data for Freight Cost Index
+  const { data: kpiData, isLoading: kpiLoading } = trpc.marketData.kpis.useQuery(undefined, {
+    refetchInterval: 60 * 1000,
+    staleTime: 55 * 1000,
+  });
+
+  // ── Derived KPI values ──────────────────────────────────────────────────────
+
+  const kpis = useMemo(() => {
+    const items = newsData?.items ?? [];
+    const critical = items.filter((i) => i.severity === "critical");
+    const impactful = items.filter((i) => i.severity === "critical" || i.severity === "warning");
+
+    // Active Disruptions = count of critical news items
+    const activeDisruptions = critical.length;
+
+    // Avg Delay Impact = mean of parsed ETA delay fields across critical+warning items
+    const delayValues = impactful
+      .map((i) => parseDelayDays(i.etaImpact))
+      .filter((d): d is number => d !== null);
+    const avgDelay = delayValues.length > 0
+      ? delayValues.reduce((a, b) => a + b, 0) / delayValues.length
+      : null;
+    const avgDelayStr = avgDelay !== null
+      ? `+${avgDelay.toFixed(1)} days`
+      : null;
+
+    // Categories at Risk = unique affected categories across critical+warning items
+    const allCategories = impactful.flatMap((i) => i.affectedCategories ?? []);
+    const uniqueCategories = Array.from(new Set(allCategories));
+    const totalCategories = 12;
+    const categoriesAtRisk = uniqueCategories.length;
+    const topCats = uniqueCategories.slice(0, 2).join(", ");
+
+    return {
+      activeDisruptions,
+      avgDelayStr,
+      delayCount: delayValues.length,
+      categoriesAtRisk,
+      totalCategories,
+      topCats,
+    };
+  }, [newsData]);
+
+  // ── Stat card definitions ───────────────────────────────────────────────────
+
+  const stats = [
+    {
+      label: "Active Disruptions",
+      value: newsLoading ? "—" : String(kpis.activeDisruptions),
+      change: newsLoading ? "Loading..." : kpis.activeDisruptions > 0 ? `${kpis.activeDisruptions} critical events` : "No critical events",
+      color: kpis.activeDisruptions >= 5 ? "#ef4444" : kpis.activeDisruptions >= 2 ? "#f59e0b" : "#10b981",
+      live: !newsLoading,
+    },
+    {
+      label: "Avg Delay Impact",
+      value: newsLoading ? "—" : (kpis.avgDelayStr ?? "N/A"),
+      change: newsLoading ? "Loading..." : kpis.delayCount > 0 ? `Based on ${kpis.delayCount} disruption${kpis.delayCount !== 1 ? "s" : ""}` : "No delay data",
+      color: "#f59e0b",
+      live: !newsLoading,
+    },
+    {
+      label: "Freight Cost Index",
+      value: kpiLoading ? "—" : (kpiData?.freightCostIndex ?? "+0.0%"),
+      change: kpiLoading ? "Loading..." : (kpiData?.freightSubtext ?? "vs. prior close"),
+      color: (kpiData?.freightChangePct ?? 0) >= 5 ? "#ef4444" : (kpiData?.freightChangePct ?? 0) >= 2 ? "#f97316" : "#10b981",
+      live: !kpiLoading,
+    },
+    {
+      label: "Categories at Risk",
+      value: newsLoading ? "—" : `${kpis.categoriesAtRisk} / ${kpis.totalCategories}`,
+      change: newsLoading ? "Loading..." : kpis.topCats || "No categories flagged",
+      color: "#3b82f6",
+      live: !newsLoading,
+    },
+  ];
 
   return (
     <div
@@ -27,10 +130,7 @@ export default function Dashboard() {
       }}
     >
       {/* Left Navigation Sidebar */}
-      <NavigationSidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-      />
+      <NavigationSidebar />
 
       {/* Main content area */}
       <div
@@ -62,7 +162,7 @@ export default function Dashboard() {
             gap: "12px",
           }}
         >
-          {/* Center content (map + bottom panels) */}
+          {/* Center content (map + stats + bottom panels) */}
           <div
             style={{
               flex: 1,
@@ -75,7 +175,7 @@ export default function Dashboard() {
             {/* Supply Chain Disruption Map */}
             <SupplyChainMap />
 
-            {/* Stats summary row */}
+            {/* Live KPI Stats row */}
             <div
               style={{
                 display: "grid",
@@ -83,24 +183,80 @@ export default function Dashboard() {
                 gap: "10px",
               }}
             >
-              {[
-                { label: "Active Disruptions", value: "3", change: "+1 this week", color: "#ef4444" },
-                { label: "Avg Delay Impact", value: "+8.7 days", change: "Asia-EU routes", color: "#f59e0b" },
-                { label: "Freight Cost Index", value: "+18.4%", change: "vs. 6mo avg", color: "#f97316" },
-                { label: "Categories at Risk", value: "5 / 12", change: "Electronics, Toys...", color: "#3b82f6" },
-              ].map((stat) => (
+              {stats.map((stat) => (
                 <div
                   key={stat.label}
                   className="ms-panel"
-                  style={{ padding: "10px 14px" }}
+                  style={{ padding: "10px 14px", position: "relative" }}
                 >
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {/* LIVE badge */}
+                  {stat.live && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "8px",
+                        right: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "3px",
+                      }}
+                    >
+                      <div
+                        className="animate-blink"
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: "50%",
+                          background: "#10b981",
+                          boxShadow: "0 0 4px #10b981",
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: "0.55rem",
+                          color: "rgba(16,185,129,0.7)",
+                          letterSpacing: "0.06em",
+                        }}
+                      >
+                        LIVE
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: "0.68rem",
+                      color: "rgba(255,255,255,0.4)",
+                      marginBottom: "4px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
                     {stat.label}
                   </div>
-                  <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "1.2rem", color: stat.color, letterSpacing: "0.02em" }}>
+                  <div
+                    style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 700,
+                      fontSize: "1.2rem",
+                      color: stat.color,
+                      letterSpacing: "0.02em",
+                    }}
+                  >
                     {stat.value}
                   </div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>
+                  <div
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: "0.65rem",
+                      color: "rgba(255,255,255,0.3)",
+                      marginTop: "2px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {stat.change}
                   </div>
                 </div>
