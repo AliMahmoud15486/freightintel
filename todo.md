@@ -50,3 +50,7 @@
 - [x] Remove login/user profile from TopHeader
 - [x] Make dashboard fully public (no auth required)
 - [x] Remove My Watchlist from Retailer Action Panel
+- [x] Build RSS aggregator backend (Supply Chain Dive, FT Commodities, Splash247)
+- [x] LLM-powered severity classification and tag extraction for news items
+- [x] Update ImpactNewsFeed component to consume live news from tRPC
+- [x] 15-minute server-side cache to avoid over-fetching RSS feeds
