@@ -36,8 +36,22 @@ function parseDelayDays(etaImpact: string | undefined): number | null {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  // Shared category filter — lifted state shared between sidebar and news feed
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // Shared category filter — multi-select Set lifted to Dashboard
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  };
+
+  const clearCategories = () => setSelectedCategories(new Set());
 
   // Live news for Active Disruptions, Avg Delay Impact, Categories at Risk
   const { data: newsData, isLoading: newsLoading } = trpc.news.feed.useQuery(undefined, {
@@ -269,7 +283,7 @@ export default function Dashboard() {
               }}
             >
               <CostInflationDrivers />
-              <ImpactNewsFeed selectedCategory={selectedCategory} onClearCategory={() => setSelectedCategory(null)} />
+              <ImpactNewsFeed selectedCategories={selectedCategories} onClearCategories={clearCategories} />
             </div>
           </div>
 
@@ -284,7 +298,7 @@ export default function Dashboard() {
               overflowY: "auto",
             }}
           >
-            <RetailerActionPanel selectedCategory={selectedCategory} onCategorySelect={setSelectedCategory} />
+            <RetailerActionPanel selectedCategories={selectedCategories} onCategoryToggle={toggleCategory} onClearCategories={clearCategories} />
           </div>
         </div>
       </div>

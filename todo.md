@@ -69,3 +69,4 @@
 - [x] Remove Categories at Risk KPI card from Dashboard stats row
 - [x] Add live Categories at Risk list to RetailerActionPanel right sidebar
 - [x] Make Categories at Risk items clickable to filter the Impact News Feed
+- [x] Multi-category selection: allow selecting multiple categories to filter the news feed simultaneously

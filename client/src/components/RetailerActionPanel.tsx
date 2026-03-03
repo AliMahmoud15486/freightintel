@@ -14,11 +14,12 @@ const SEVERITY_COLORS: Record<string, { bg: string; border: string; dot: string;
 };
 
 interface Props {
-  selectedCategory?: string | null;
-  onCategorySelect?: (cat: string | null) => void;
+  selectedCategories?: Set<string>;
+  onCategoryToggle?: (cat: string) => void;
+  onClearCategories?: () => void;
 }
 
-export default function RetailerActionPanel({ selectedCategory, onCategorySelect }: Props) {
+export default function RetailerActionPanel({ selectedCategories, onCategoryToggle, onClearCategories }: Props) {
   const { data, isLoading, refetch } = trpc.news.feed.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
     staleTime: 4 * 60 * 1000,
@@ -57,9 +58,8 @@ export default function RetailerActionPanel({ selectedCategory, onCategorySelect
   };
 
   const handleCategoryClick = (catName: string) => {
-    if (onCategorySelect) {
-      // Toggle: clicking the active category clears the filter
-      onCategorySelect(selectedCategory === catName ? null : catName);
+    if (onCategoryToggle) {
+      onCategoryToggle(catName);
     }
   };
 
@@ -170,9 +170,10 @@ export default function RetailerActionPanel({ selectedCategory, onCategorySelect
           </div>
 
           {/* Helper text when a filter is active */}
-          {selectedCategory && (
-            <div style={{ marginBottom: "6px", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(249,115,22,0.7)", letterSpacing: "0.03em" }}>
-              Click again to clear filter
+              {(selectedCategories?.size ?? 0) > 0 && (
+            <div style={{ marginBottom: "6px", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(249,115,22,0.7)", letterSpacing: "0.03em", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span>{selectedCategories!.size} selected — click to deselect</span>
+              <button onClick={onClearCategories} style={{ background: "none", border: "none", color: "rgba(249,115,22,0.6)", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", padding: 0 }}>Clear all</button>
             </div>
           )}
 
@@ -191,7 +192,7 @@ export default function RetailerActionPanel({ selectedCategory, onCategorySelect
               {categoriesAtRisk.map((cat) => {
                 const colors = SEVERITY_COLORS[cat.severity] ?? SEVERITY_COLORS.info;
                 const sevLabel = cat.severity.charAt(0).toUpperCase() + cat.severity.slice(1);
-                const isActive = selectedCategory === cat.name;
+                const isActive = selectedCategories?.has(cat.name) ?? false;
                 return (
                   <button
                     key={cat.name}

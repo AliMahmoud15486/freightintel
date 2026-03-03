@@ -10,8 +10,8 @@ import { trpc } from "@/lib/trpc";
 type Severity = "all" | "critical" | "warning" | "info";
 
 interface Props {
-  selectedCategory?: string | null;
-  onClearCategory?: () => void;
+  selectedCategories?: Set<string>;
+  onClearCategories?: () => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -41,7 +41,7 @@ const SOURCE_COLORS: Record<string, string> = {
   "Splash247": "#06b6d4",
 };
 
-export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Props) {
+export default function ImpactNewsFeed({ selectedCategories, onClearCategories }: Props) {
   const [filter, setFilter] = useState<Severity>("all");
 
   const { data, isLoading, isError, refetch, isFetching } = trpc.news.feed.useQuery(undefined, {
@@ -58,11 +58,14 @@ export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Pr
   // Apply severity filter first
   const severityFiltered = filter === "all" ? items : items.filter((i) => i.severity === filter);
 
-  // Then apply category filter from sidebar
-  const filtered = selectedCategory
+  // Then apply multi-category filter from sidebar
+  const hasFilter = selectedCategories && selectedCategories.size > 0;
+  const filtered = hasFilter
     ? severityFiltered.filter((i) =>
-        i.affectedCategories?.some(
-          (c) => c.toLowerCase() === selectedCategory.toLowerCase()
+        i.affectedCategories?.some((c) =>
+          Array.from(selectedCategories!).some(
+            (sel) => sel.toLowerCase() === c.toLowerCase()
+          )
         )
       )
     : severityFiltered;
@@ -175,7 +178,7 @@ export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Pr
       </div>
 
       {/* Active category filter banner */}
-      {selectedCategory && (
+      {hasFilter && (
         <div
           style={{
             display: "flex",
@@ -187,40 +190,35 @@ export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Pr
             flexShrink: 0,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "0.62rem",
-                color: "rgba(255,255,255,0.4)",
-              }}
-            >
-              Filtered by category:
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", flex: 1 }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.62rem", color: "rgba(255,255,255,0.4)" }}>
+              Filtered by:
             </span>
-            <span
-              style={{
-                fontFamily: "'Rajdhani', sans-serif",
-                fontWeight: 700,
-                fontSize: "0.7rem",
-                color: "#f97316",
-                letterSpacing: "0.04em",
-              }}
-            >
-              {selectedCategory}
-            </span>
-            <span
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: "0.6rem",
-                color: "rgba(255,255,255,0.3)",
-              }}
-            >
+            {Array.from(selectedCategories ?? []).map((cat) => (
+              <span
+                key={cat}
+                style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 700,
+                  fontSize: "0.68rem",
+                  color: "#f97316",
+                  background: "rgba(249,115,22,0.12)",
+                  border: "1px solid rgba(249,115,22,0.3)",
+                  borderRadius: "3px",
+                  padding: "1px 6px",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {cat}
+              </span>
+            ))}
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem", color: "rgba(255,255,255,0.3)" }}>
               ({filtered.length} result{filtered.length !== 1 ? "s" : ""})
             </span>
           </div>
           <button
-            onClick={onClearCategory}
-            title="Clear category filter"
+            onClick={onClearCategories}
+            title="Clear all category filters"
             style={{
               display: "flex",
               alignItems: "center",
@@ -234,11 +232,12 @@ export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Pr
               fontFamily: "'Inter', sans-serif",
               fontSize: "0.6rem",
               transition: "all 0.15s",
+              flexShrink: 0,
             }}
             className="hover:bg-orange-500/20"
           >
             <X size={9} />
-            Clear
+            Clear all
           </button>
         </div>
       )}
@@ -318,13 +317,13 @@ export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Pr
         {!isLoading && !isError && filtered.length === 0 && (
           <div style={{ padding: "20px 14px", textAlign: "center" }}>
             <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
-              {selectedCategory
-                ? `No ${filter !== "all" ? filter + " " : ""}news for "${selectedCategory}".`
+              {hasFilter
+                ? `No ${filter !== "all" ? filter + " " : ""}news for the selected categories.`
                 : `No ${filter !== "all" ? filter : ""} news items found.`}
             </span>
-            {selectedCategory && (
+            {hasFilter && (
               <button
-                onClick={onClearCategory}
+                onClick={onClearCategories}
                 style={{ display: "block", margin: "8px auto 0", background: "none", border: "none", color: "#f97316", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", textDecoration: "underline" }}
               >
                 Clear filter
@@ -468,7 +467,9 @@ export default function ImpactNewsFeed({ selectedCategory, onClearCategory }: Pr
                 {item.affectedCategories.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
                     {item.affectedCategories.map((cat) => {
-                      const isActive = selectedCategory?.toLowerCase() === cat.toLowerCase();
+                      const isActive = Array.from(selectedCategories ?? []).some(
+                  (sel) => sel.toLowerCase() === cat.toLowerCase()
+                );
                       return (
                         <span
                           key={cat}
