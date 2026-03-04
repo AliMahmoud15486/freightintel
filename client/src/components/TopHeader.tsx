@@ -249,23 +249,50 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
     >
       {/* Freight Intel wordmark */}
       <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "6px" : "10px", minWidth: 0 }}>
-        <span
-          style={{
-            fontFamily: "'Nunito', 'Poppins', 'Inter', sans-serif",
-            fontWeight: 800,
-            fontSize: isMobile ? "1.1rem" : "1.35rem",
-            letterSpacing: "-0.01em",
-            background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            textTransform: "none",
-            whiteSpace: "nowrap",
-            lineHeight: 1.1,
-          }}
-        >
-          Freight Intel
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <span
+            style={{
+              fontFamily: "'Nunito', 'Poppins', 'Inter', sans-serif",
+              fontWeight: 800,
+              fontSize: isMobile ? "1.1rem" : "1.35rem",
+              letterSpacing: "-0.01em",
+              background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              lineHeight: 1.15,
+            }}
+          >
+            Freight Intel
+          </span>
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 400,
+              fontSize: isMobile ? "0.55rem" : "0.6rem",
+              letterSpacing: "0.04em",
+              color: "rgba(255,255,255,0.35)",
+              whiteSpace: "nowrap",
+              lineHeight: 1,
+              marginTop: "1px",
+            }}
+          >
+            Powered by{" "}
+            <span
+              style={{
+                background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontWeight: 700,
+              }}
+            >
+              Datajar
+            </span>
+          </span>
+        </div>
 
         {!isMobile && (
           <>
