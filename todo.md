@@ -107,3 +107,8 @@
 - [x] Subscribers: Add tRPC subscribe procedure to save name+email to DB
 - [x] Subscribers: Build Subscribe modal/form component on the dashboard
 - [x] Subscribers: Verify form submission stores data in the database
+- [x] Alert emails: Set up transactional email sending (Resend API)
+- [x] Alert emails: Build critical disruption detection logic
+- [x] Alert emails: Send alert emails to all subscribers on new critical disruptions
+- [x] Alert emails: Add sent_alerts table to DB to prevent duplicate emails
+- [x] Alert emails: Wire alert trigger into the news polling cycle

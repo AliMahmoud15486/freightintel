@@ -11,6 +11,7 @@
 
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
+import { checkAndSendAlerts } from "../_core/alertTrigger";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -281,6 +282,11 @@ export function aggregateDisruptionLocations(items: NewsItem[]): DisruptionLocat
 
 // ─── main fetch + classify pipeline ──────────────────────────────────────────
 
+/** Exported for use by the system router (admin triggerAlerts procedure) */
+export async function fetchAndClassifyNewsPublic(): Promise<NewsItem[]> {
+  return fetchAndClassifyNews();
+}
+
 async function fetchAndClassifyNews(): Promise<NewsItem[]> {
   if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
     return cache.items;
@@ -320,6 +326,16 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
 
   cache = { items: sorted, fetchedAt: Date.now() };
   console.log(`[news] Cached ${sorted.length} classified news items`);
+
+  // Fire alert emails asynchronously — do not block the news response
+  checkAndSendAlerts(sorted).then((result) => {
+    if (result.triggered) {
+      console.log(`[news] Alert triggered: ${result.criticalCount} critical items → ${result.successCount}/${result.subscriberCount} emails sent`);
+    }
+  }).catch((err) => {
+    console.error("[news] Alert trigger failed:", err);
+  });
+
   return sorted;
 }
 

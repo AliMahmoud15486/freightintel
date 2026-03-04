@@ -39,3 +39,25 @@ export const subscribers = mysqlTable("subscribers", {
 
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
+
+/**
+ * SentAlerts — tracks which disruption alert batches have already been emailed
+ * to prevent duplicate notifications on the same news cycle.
+ * The alertKey is a hash of the critical item titles, so the same batch
+ * is never sent twice even if the server restarts.
+ */
+export const sentAlerts = mysqlTable("sent_alerts", {
+  id: int("id").autoincrement().primaryKey(),
+  /** SHA-256 hash of sorted critical item titles — used as dedup key */
+  alertKey: varchar("alertKey", { length: 64 }).notNull().unique(),
+  /** Number of critical items in this batch */
+  itemCount: int("itemCount").notNull().default(1),
+  /** Number of subscribers successfully emailed */
+  recipientCount: int("recipientCount").notNull().default(0),
+  /** Short description of the alert batch for admin reference */
+  summary: text("summary"),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+});
+
+export type SentAlert = typeof sentAlerts.$inferSelect;
+export type InsertSentAlert = typeof sentAlerts.$inferInsert;

@@ -123,3 +123,38 @@ export async function getAllSubscribers() {
 
   return db.select().from(subscribers).orderBy(subscribers.createdAt);
 }
+
+// ─── Sent Alerts helpers ──────────────────────────────────────────────────────
+
+import { sentAlerts, InsertSentAlert } from "../drizzle/schema";
+
+/**
+ * Check if an alert with this key has already been sent.
+ */
+export async function getSentAlertByKey(alertKey: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(sentAlerts).where(eq(sentAlerts.alertKey, alertKey)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Record that an alert batch was sent.
+ */
+export async function insertSentAlert(data: InsertSentAlert): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.insert(sentAlerts).values(data);
+}
+
+/**
+ * Return the most recent sent alerts (for admin view).
+ */
+export async function getRecentSentAlerts(limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(sentAlerts).orderBy(sentAlerts.sentAt).limit(limit);
+}

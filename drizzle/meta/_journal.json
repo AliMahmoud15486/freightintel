@@ -15,6 +15,13 @@
       "when": 1772637063364,
       "tag": "0001_chemical_the_fallen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772643832768,
+      "tag": "0002_chemical_boom_boom",
+      "breakpoints": true
     }
   ]
 }
