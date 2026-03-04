@@ -114,3 +114,5 @@
 - [x] Alert emails: Wire alert trigger into the news polling cycle
 - [x] Email test button: Add sendTestAlert tRPC procedure (owner-only) that sends sample alert to owner email
 - [x] Email test button: Add test button to TopHeader with loading/success/error states
+- [x] Rebrand: Update logo wordmark to "Freight Intel" with bold rounded font and magenta-to-orange gradient
+- [x] Rebrand: Update page title, meta tags, subscribe modal, and email templates to Freight Intel

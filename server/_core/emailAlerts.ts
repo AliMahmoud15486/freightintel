@@ -74,7 +74,7 @@ function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Critical Supply Chain Alert — Margin Sentinel</title>
+  <title>Critical Supply Chain Alert — Freight Intel</title>
 </head>
 <body style="margin: 0; padding: 0; background: #0a0e1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background: #0a0e1a; padding: 32px 16px;">
@@ -95,7 +95,7 @@ function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string 
                         <tr>
                           <td>
                             <div style="font-size: 20px; font-weight: 800; letter-spacing: 0.04em; background: linear-gradient(90deg, #E91E8C, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                              Margin Sentinel ✨
+                              Freight Intel
                             </div>
                             <div style="font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; letter-spacing: 0.08em; text-transform: uppercase;">
                               Supply Chain Intelligence
@@ -133,7 +133,7 @@ function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string 
                   Hi ${subscriberName},
                 </div>
                 <div style="font-size: 14px; color: #94a3b8; margin-bottom: 24px; line-height: 1.6;">
-                  Margin Sentinel has detected <strong style="color: #ef4444;">${criticalItems.length} critical supply chain disruption${criticalItems.length > 1 ? "s" : ""}</strong> that may impact your margins. Here's what you need to know:
+                  Freight Intel has detected <strong style="color: #ef4444;">${criticalItems.length} critical supply chain disruption${criticalItems.length > 1 ? "s" : ""}</strong> that may impact your margins. Here's what you need to know:
                 </div>
 
                 <!-- Disruption items -->
@@ -165,7 +165,7 @@ function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string 
           <tr>
             <td style="padding-top: 24px; text-align: center;">
               <div style="font-size: 12px; color: rgba(255,255,255,0.2); line-height: 1.6;">
-                Sent by Margin Sentinel · ${now}<br/>
+                Sent by Freight Intel · ${now}<br/>
                 You're receiving this because you subscribed to critical disruption alerts.<br/>
                 <span style="color: rgba(255,255,255,0.15);">To unsubscribe, reply with "unsubscribe" to this email.</span>
               </div>
@@ -187,7 +187,7 @@ function buildAlertEmailText(items: NewsItem[], subscriberName: string): string 
   const lines = [
     `Hi ${subscriberName},`,
     ``,
-    `Margin Sentinel has detected ${criticalItems.length} critical supply chain disruption(s):`,
+    `Freight Intel has detected ${criticalItems.length} critical supply chain disruption(s):`,
     ``,
     ...criticalItems.map(
       (item, i) =>
@@ -197,7 +197,7 @@ function buildAlertEmailText(items: NewsItem[], subscriberName: string): string 
     `View the live dashboard: https://margin-sentinel.manus.space`,
     ``,
     `—`,
-    `Margin Sentinel · Supply Chain Intelligence`,
+    `Freight Intel · Supply Chain Intelligence`,
     `To unsubscribe, reply with "unsubscribe".`,
   ];
   return lines.join("\n");
@@ -232,7 +232,7 @@ export async function sendAlertEmail(
         : `🔴 ${count} Critical Supply Chain Disruptions Detected`;
 
     const { error } = await resend.emails.send({
-      from: `Margin Sentinel <${ENV.alertFromEmail}>`,
+      from: `Freight Intel <${ENV.alertFromEmail}>`,
       to: subscriberEmail,
       subject,
       html: buildAlertEmailHtml(criticalItems, subscriberName),

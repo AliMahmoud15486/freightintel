@@ -247,25 +247,25 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
         position: "relative",
       }}
     >
-      {/* Datajar-branded wordmark */}
+      {/* Freight Intel wordmark */}
       <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "6px" : "10px", minWidth: 0 }}>
         <span
           style={{
-            fontFamily: "'Rajdhani', sans-serif",
+            fontFamily: "'Nunito', 'Poppins', 'Inter', sans-serif",
             fontWeight: 800,
-            fontSize: isMobile ? "0.95rem" : "1.05rem",
-            letterSpacing: "0.04em",
+            fontSize: isMobile ? "1.1rem" : "1.35rem",
+            letterSpacing: "-0.01em",
             background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
             textTransform: "none",
             whiteSpace: "nowrap",
+            lineHeight: 1.1,
           }}
         >
-          Margin Sentinel
+          Freight Intel
         </span>
-        <span style={{ fontSize: isMobile ? "0.75rem" : "0.85rem", lineHeight: 1 }}>✨</span>
 
         {!isMobile && (
           <>
