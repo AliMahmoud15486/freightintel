@@ -95,3 +95,5 @@
 - [x] Responsive: Fix RetailerActionPanel for mobile (full width below news feed)
 - [x] Responsive: Add mobile navigation menu / hamburger for small screens
 - [x] Responsive: On mobile, show RetailerActionPanel (Alerts + Categories) above ImpactNewsFeed\n
+- [x] Block 1 (SupplyChainMap): Add marine and air shipping lines panel showing affected vs unaffected routes
+- [x] Block 2 (RetailerActionPanel): Add international shipping companies panel showing affected vs unaffected carriers

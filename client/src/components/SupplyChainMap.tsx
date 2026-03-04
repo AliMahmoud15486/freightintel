@@ -9,6 +9,7 @@ import { useState, useMemo } from "react";
 import { MoreHorizontal, ZoomIn, ZoomOut, RefreshCw, Anchor, Wind, Ship } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import ShippingLinesPanel from "@/components/ShippingLinesPanel";
 
 const MAP_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663201940453/ahZanQ69csJtVFtyEk4qAc/map-bg-J8FdW8j5LNYHoKYjXTpykf.webp";
@@ -810,6 +811,7 @@ export default function SupplyChainMap() {
   };
 
   return (
+    <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "8px" : "12px" }}>
     <div
       className="ms-panel"
       style={{ overflow: "hidden", position: "relative", display: "flex", flexDirection: "column", minHeight: isMobile ? "320px" : "460px" }}
@@ -918,6 +920,13 @@ export default function SupplyChainMap() {
           </span>
         </div>
       </div>
+    </div>
+
+    {/* Shipping Lines Panel — below the map */}
+    <ShippingLinesPanel
+      disruptions={locations.map((l) => ({ name: l.name, description: l.description, lat: l.lat, lng: l.lng, severity: l.severity }))}
+      isLoading={isLoading && locations.length === 0}
+    />
     </div>
   );
 }
