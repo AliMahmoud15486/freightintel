@@ -102,3 +102,4 @@
 - [x] Shipping lines: Set server cache TTL to 5 hours and frontend refetchInterval to 5 hours
 - [x] Shipping lines: ShippingLinesPanel consumes trpc.news.shippingLines directly with live timestamp
 - [x] Layout: Move RetailerActionPanel (Shipping Companies + Alerts + Categories) below SupplyChainMap+ShippingLinesPanel
+- [x] RetailerActionPanel: Add collapsible toggle (collapse/expand button) so users can hide/show the panel

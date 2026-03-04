@@ -85,6 +85,7 @@ export default function RetailerActionPanel({ selectedCategories, onCategoryTogg
   const { isMobile } = useBreakpoint();
   const [companyTab, setCompanyTab] = useState<"marine" | "air">("marine");
   const [companiesExpanded, setCompaniesExpanded] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const { data, isLoading, refetch } = trpc.news.feed.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
@@ -164,12 +165,54 @@ export default function RetailerActionPanel({ selectedCategories, onCategoryTogg
     <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: isMobile ? "auto" : "100%" }}>
       <div className="ms-panel">
         {/* Panel header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <span className="panel-header">RETAILER ACTION PANEL</span>
-          <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer" }} onClick={() => refetch()} title="Refresh data">
-            <MoreHorizontal size={14} />
-          </button>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: isCollapsed ? "none" : "1px solid rgba(255,255,255,0.07)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span className="panel-header">RETAILER ACTION PANEL</span>
+            {/* Summary badges shown when collapsed */}
+            {isCollapsed && alertCount > 0 && (
+              <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.58rem", color: "#ef4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "3px", padding: "0 5px", letterSpacing: "0.04em" }}>
+                {alertCount} ALERTS
+              </span>
+            )}
+            {isCollapsed && categoriesAtRisk.length > 0 && (
+              <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.58rem", color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", padding: "0 5px", letterSpacing: "0.04em" }}>
+                {categoriesAtRisk.length} CATEGORIES
+              </span>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: "2px" }} onClick={() => refetch()} title="Refresh data">
+              <MoreHorizontal size={14} />
+            </button>
+            <button
+              onClick={() => setIsCollapsed((v) => !v)}
+              title={isCollapsed ? "Expand panel" : "Collapse panel"}
+              style={{
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                color: "rgba(255,255,255,0.4)",
+                cursor: "pointer",
+                padding: "2px 5px",
+                display: "flex",
+                alignItems: "center",
+                gap: "3px",
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.58rem",
+                letterSpacing: "0.04em",
+                transition: "all 0.15s",
+              }}
+              className="hover:border-white/20 hover:text-white/60"
+            >
+              {isCollapsed ? <ChevronDown size={11} /> : <ChevronUp size={11} />}
+              <span>{isCollapsed ? "EXPAND" : "COLLAPSE"}</span>
+            </button>
+          </div>
         </div>
+
+        {/* ── Body (hidden when collapsed) ─────────────────────────────────── */}
+        {!isCollapsed && (
+          <>
 
         {/* ── Alerts ─────────────────────────────────────────────────────────── */}
         <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -580,6 +623,9 @@ export default function RetailerActionPanel({ selectedCategories, onCategoryTogg
             </>
           )}
         </div>
+
+          </>
+        )}
       </div>
     </div>
   );
