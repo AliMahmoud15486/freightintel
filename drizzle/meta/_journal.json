@@ -8,6 +8,13 @@
       "when": 1772543528440,
       "tag": "0000_careless_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772637063364,
+      "tag": "0001_chemical_the_fallen",
+      "breakpoints": true
     }
   ]
 }

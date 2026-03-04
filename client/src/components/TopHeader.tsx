@@ -1,7 +1,10 @@
 /* TopHeader — Margin Sentinel
  * Responsive: compact on mobile, full on desktop
  */
+import { useState } from "react";
+import { Bell } from "lucide-react";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import SubscribeModal from "./SubscribeModal";
 
 interface TopHeaderProps {
   pageTitle?: string;
@@ -9,8 +12,10 @@ interface TopHeaderProps {
 
 export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
   const { isMobile } = useBreakpoint();
+  const [showSubscribe, setShowSubscribe] = useState(false);
 
   return (
+    <>
     <div
       style={{
         height: isMobile ? "44px" : "52px",
@@ -67,28 +72,61 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
         )}
       </div>
 
-      {/* Live indicator */}
-      <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
-        <div
-          className="animate-blink"
+      {/* Right side: Subscribe button + Live indicator */}
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "14px", flexShrink: 0 }}>
+
+        {/* Subscribe button */}
+        <button
+          onClick={() => setShowSubscribe(true)}
           style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "#10b981",
-            boxShadow: "0 0 6px #10b981",
-          }}
-        />
-        <span
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "0.65rem",
-            color: "rgba(255,255,255,0.3)",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "linear-gradient(90deg, #E91E8C, #f97316)",
+            border: "none",
+            borderRadius: "20px",
+            color: "#fff",
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            fontSize: isMobile ? "0.62rem" : "0.7rem",
+            letterSpacing: "0.05em",
+            padding: isMobile ? "5px 10px" : "5px 14px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
           }}
         >
-          LIVE
-        </span>
-      </div>
+          <Bell size={isMobile ? 10 : 11} />
+          {isMobile ? "ALERTS" : "STAY INFORMED"}
+        </button>
+
+        {/* Live indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <div
+            className="animate-blink"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "#10b981",
+              boxShadow: "0 0 6px #10b981",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "0.65rem",
+              color: "rgba(255,255,255,0.3)",
+            }}
+          >
+            LIVE
+          </span>
+        </div>
+
+      </div>{/* end right side */}
     </div>
+
+    {/* Subscribe modal */}
+    <SubscribeModal isOpen={showSubscribe} onClose={() => setShowSubscribe(false)} />
+    </>
   );
 }

@@ -103,3 +103,7 @@
 - [x] Shipping lines: ShippingLinesPanel consumes trpc.news.shippingLines directly with live timestamp
 - [x] Layout: Move RetailerActionPanel (Shipping Companies + Alerts + Categories) below SupplyChainMap+ShippingLinesPanel
 - [x] RetailerActionPanel: Add collapsible toggle (collapse/expand button) so users can hide/show the panel
+- [x] Subscribers: Add subscribers table to DB schema (name, email, createdAt)
+- [x] Subscribers: Add tRPC subscribe procedure to save name+email to DB
+- [x] Subscribers: Build Subscribe modal/form component on the dashboard
+- [x] Subscribers: Verify form submission stores data in the database

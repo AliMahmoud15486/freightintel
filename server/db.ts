@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertSubscriber, InsertUser, subscribers, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -90,3 +90,36 @@ export async function getUserByOpenId(openId: string) {
 }
 
 // TODO: add feature queries here as your schema grows.
+
+/**
+ * Insert a new subscriber. Returns the inserted row id.
+ * Throws if the email already exists (duplicate key).
+ */
+export async function insertSubscriber(data: InsertSubscriber): Promise<{ id: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(subscribers).values(data);
+  return { id: (result[0] as any).insertId as number };
+}
+
+/**
+ * Check if an email is already registered as a subscriber.
+ */
+export async function getSubscriberByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(subscribers).where(eq(subscribers.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Return all subscribers (for admin use).
+ */
+export async function getAllSubscribers() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(subscribers).orderBy(subscribers.createdAt);
+}
