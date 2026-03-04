@@ -923,10 +923,7 @@ export default function SupplyChainMap() {
     </div>
 
     {/* Shipping Lines Panel — below the map */}
-    <ShippingLinesPanel
-      disruptions={locations.map((l) => ({ name: l.name, description: l.description, lat: l.lat, lng: l.lng, severity: l.severity }))}
-      isLoading={isLoading && locations.length === 0}
-    />
+    <ShippingLinesPanel />
     </div>
   );
 }

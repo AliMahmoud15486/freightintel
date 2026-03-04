@@ -1,224 +1,40 @@
 /* ShippingLinesPanel — Margin Sentinel
- * Shows marine and air shipping lines affected/unaffected by current disruptions.
- * Derives status dynamically from the live disruption locations.
+ * Consumes trpc.news.shippingLines — LLM-classified carrier disruption status.
+ * Auto-refreshes every 5 hours. Manual refresh button available.
  */
-import { useMemo } from "react";
-import { Ship, Plane, AlertTriangle, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import { Ship, Plane, AlertTriangle, CheckCircle2, RefreshCw, Clock } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
-// ─── Static carrier data ──────────────────────────────────────────────────────
-
-interface Carrier {
-  id: string;
-  name: string;
-  country: string;
-  type: "marine" | "air";
-  /** Which disruption zone IDs affect this carrier */
-  affectedByZones: string[];
-  /** Key routes this carrier operates */
-  routes: string[];
-}
-
-const CARRIERS: Carrier[] = [
-  // ── Marine carriers ──────────────────────────────────────────────────────────
-  {
-    id: "maersk",
-    name: "Maersk",
-    country: "Denmark",
-    type: "marine",
-    affectedByZones: ["suez", "red-sea", "arabian-sea"],
-    routes: ["Asia–Europe", "Trans-Pacific", "Trans-Atlantic"],
-  },
-  {
-    id: "msc",
-    name: "MSC",
-    country: "Switzerland",
-    type: "marine",
-    affectedByZones: ["suez", "red-sea", "arabian-sea"],
-    routes: ["Asia–Europe (Suez)", "Trans-Atlantic", "South America"],
-  },
-  {
-    id: "cmacgm",
-    name: "CMA CGM",
-    country: "France",
-    type: "marine",
-    affectedByZones: ["suez", "red-sea"],
-    routes: ["Asia–Europe", "Trans-Pacific", "Indian Ocean"],
-  },
-  {
-    id: "cosco",
-    name: "COSCO Shipping",
-    country: "China",
-    type: "marine",
-    affectedByZones: ["south-china-sea", "taiwan-strait"],
-    routes: ["Trans-Pacific", "Intra-Asia", "Asia–Europe"],
-  },
-  {
-    id: "evergreen",
-    name: "Evergreen",
-    country: "Taiwan",
-    type: "marine",
-    affectedByZones: ["south-china-sea", "taiwan-strait"],
-    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
-  },
-  {
-    id: "hapag",
-    name: "Hapag-Lloyd",
-    country: "Germany",
-    type: "marine",
-    affectedByZones: ["suez", "red-sea"],
-    routes: ["Asia–Europe", "Trans-Atlantic", "US Gulf"],
-  },
-  {
-    id: "one",
-    name: "Ocean Network Express",
-    country: "Japan",
-    type: "marine",
-    affectedByZones: ["south-china-sea"],
-    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
-  },
-  {
-    id: "yangming",
-    name: "Yang Ming",
-    country: "Taiwan",
-    type: "marine",
-    affectedByZones: [],
-    routes: ["Trans-Pacific", "Intra-Asia"],
-  },
-  {
-    id: "zim",
-    name: "ZIM",
-    country: "Israel",
-    type: "marine",
-    affectedByZones: ["suez", "red-sea", "arabian-sea"],
-    routes: ["Asia–Europe (Suez)", "Trans-Pacific", "Mediterranean"],
-  },
-  {
-    id: "pil",
-    name: "Pacific Int'l Lines",
-    country: "Singapore",
-    type: "marine",
-    affectedByZones: [],
-    routes: ["Intra-Asia", "Indian Ocean", "Africa"],
-  },
-  // ── Air cargo carriers ───────────────────────────────────────────────────────
-  {
-    id: "emirates-cargo",
-    name: "Emirates SkyCargo",
-    country: "UAE",
-    type: "air",
-    affectedByZones: ["arabian-sea", "hormuz"],
-    routes: ["Asia–Europe", "Middle East Hub", "Trans-Pacific"],
-  },
-  {
-    id: "fedex",
-    name: "FedEx Express",
-    country: "USA",
-    type: "air",
-    affectedByZones: [],
-    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"],
-  },
-  {
-    id: "dhl",
-    name: "DHL Aviation",
-    country: "Germany",
-    type: "air",
-    affectedByZones: ["suez"],
-    routes: ["Asia–Europe", "Middle East", "Africa"],
-  },
-  {
-    id: "cargolux",
-    name: "Cargolux",
-    country: "Luxembourg",
-    type: "air",
-    affectedByZones: [],
-    routes: ["Trans-Atlantic", "Asia–Europe", "Americas"],
-  },
-  {
-    id: "cathay-cargo",
-    name: "Cathay Cargo",
-    country: "Hong Kong",
-    type: "air",
-    affectedByZones: ["south-china-sea"],
-    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
-  },
-  {
-    id: "korean-air-cargo",
-    name: "Korean Air Cargo",
-    country: "South Korea",
-    type: "air",
-    affectedByZones: [],
-    routes: ["Trans-Pacific", "Intra-Asia", "Europe"],
-  },
-  {
-    id: "qatar-cargo",
-    name: "Qatar Airways Cargo",
-    country: "Qatar",
-    type: "air",
-    affectedByZones: ["arabian-sea", "hormuz"],
-    routes: ["Asia–Europe", "Middle East Hub", "Africa"],
-  },
-  {
-    id: "ups-airlines",
-    name: "UPS Airlines",
-    country: "USA",
-    type: "air",
-    affectedByZones: [],
-    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"],
-  },
-];
-
-// ─── Disruption zone keyword matching ─────────────────────────────────────────
-
-/** Maps disruption location names/descriptions to zone IDs */
-function matchZoneIds(disruptions: { name: string; description: string; lat: number; lng: number }[]): Set<string> {
-  const activeZones = new Set<string>();
-  for (const d of disruptions) {
-    const text = `${d.name} ${d.description}`.toLowerCase();
-    if (text.includes("suez") || text.includes("red sea") || text.includes("bab el-mandeb")) {
-      activeZones.add("suez");
-      activeZones.add("red-sea");
-    }
-    if (text.includes("arabian sea") || text.includes("arabian")) {
-      activeZones.add("arabian-sea");
-    }
-    if (text.includes("hormuz") || text.includes("strait of hormuz")) {
-      activeZones.add("hormuz");
-    }
-    if (text.includes("south china sea") || text.includes("taiwan strait") || text.includes("taiwan")) {
-      activeZones.add("south-china-sea");
-      activeZones.add("taiwan-strait");
-    }
-    // Geographic proximity for Arabian Sea
-    if (d.lat > 10 && d.lat < 30 && d.lng > 50 && d.lng < 75) {
-      activeZones.add("arabian-sea");
-    }
-    // Suez / Red Sea proximity
-    if (d.lat > 10 && d.lat < 35 && d.lng > 28 && d.lng < 45) {
-      activeZones.add("suez");
-      activeZones.add("red-sea");
-    }
-    // South China Sea proximity
-    if (d.lat > 5 && d.lat < 25 && d.lng > 105 && d.lng < 125) {
-      activeZones.add("south-china-sea");
-    }
-  }
-  return activeZones;
-}
+const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface CarrierRowProps {
-  carrier: Carrier;
-  isAffected: boolean;
+  name: string;
+  country: string;
+  routes: string[];
+  affected: boolean;
   affectedRoutes: string[];
+  reason: string;
+  severity: "critical" | "warning" | "none";
 }
 
-function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
-  const statusColor = isAffected ? "#ef4444" : "#10b981";
-  const statusBg    = isAffected ? "rgba(239,68,68,0.07)" : "rgba(16,185,129,0.06)";
-  const statusBorder = isAffected ? "rgba(239,68,68,0.2)" : "rgba(16,185,129,0.15)";
-  const statusLabel = isAffected ? "AFFECTED" : "OPERATING";
+function CarrierRow({ name, country, routes, affected, affectedRoutes, reason, severity }: CarrierRowProps) {
+  const dotColor   = severity === "critical" ? "#ef4444" : severity === "warning" ? "#f59e0b" : "#10b981";
+  const statusBg   = affected
+    ? severity === "critical" ? "rgba(239,68,68,0.07)" : "rgba(245,158,11,0.07)"
+    : "rgba(16,185,129,0.06)";
+  const statusBorder = affected
+    ? severity === "critical" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"
+    : "rgba(16,185,129,0.15)";
+  const badgeColor = affected
+    ? severity === "critical" ? "#ef4444" : "#f59e0b"
+    : "#10b981";
+  const badgeLabel = affected
+    ? severity === "critical" ? "AFFECTED" : "DELAYED"
+    : "OPERATING";
 
   return (
     <div
@@ -233,14 +49,14 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
         transition: "all 0.15s",
       }}
     >
-      {/* Status indicator */}
+      {/* Status dot */}
       <div
         style={{
           width: 6,
           height: 6,
           borderRadius: "50%",
-          background: statusColor,
-          boxShadow: `0 0 5px ${statusColor}`,
+          background: dotColor,
+          boxShadow: `0 0 5px ${dotColor}`,
           flexShrink: 0,
           marginTop: "4px",
         }}
@@ -258,7 +74,7 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
               letterSpacing: "0.02em",
             }}
           >
-            {carrier.name}
+            {name}
           </span>
           <span
             style={{
@@ -267,23 +83,38 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
               color: "rgba(255,255,255,0.3)",
             }}
           >
-            {carrier.country}
+            {country}
           </span>
         </div>
-        {isAffected && affectedRoutes.length > 0 && (
+
+        {affected && reason && (
           <div
             style={{
               fontFamily: "'Inter', sans-serif",
               fontSize: "0.62rem",
-              color: "rgba(239,68,68,0.7)",
+              color: severity === "critical" ? "rgba(239,68,68,0.75)" : "rgba(245,158,11,0.75)",
               marginTop: "2px",
               lineHeight: 1.3,
             }}
           >
-            Impact: {affectedRoutes.join(", ")}
+            {reason}
           </div>
         )}
-        {!isAffected && (
+
+        {affected && affectedRoutes.length > 0 && (
+          <div
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "0.6rem",
+              color: "rgba(255,255,255,0.3)",
+              marginTop: "1px",
+            }}
+          >
+            Routes: {affectedRoutes.join(", ")}
+          </div>
+        )}
+
+        {!affected && (
           <div
             style={{
               fontFamily: "'Inter', sans-serif",
@@ -292,8 +123,7 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
               marginTop: "2px",
             }}
           >
-            {carrier.routes[0]}
-            {carrier.routes.length > 1 ? ` +${carrier.routes.length - 1} more` : ""}
+            {routes[0]}{routes.length > 1 ? ` +${routes.length - 1} more` : ""}
           </div>
         )}
       </div>
@@ -304,9 +134,9 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
           fontFamily: "'Rajdhani', sans-serif",
           fontWeight: 700,
           fontSize: "0.6rem",
-          color: statusColor,
-          background: `${statusColor}15`,
-          border: `1px solid ${statusColor}30`,
+          color: badgeColor,
+          background: `${badgeColor}15`,
+          border: `1px solid ${badgeColor}30`,
           borderRadius: "3px",
           padding: "1px 5px",
           letterSpacing: "0.06em",
@@ -314,7 +144,7 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
           whiteSpace: "nowrap",
         }}
       >
-        {statusLabel}
+        {badgeLabel}
       </span>
     </div>
   );
@@ -322,48 +152,38 @@ function CarrierRow({ carrier, isAffected, affectedRoutes }: CarrierRowProps) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-interface Props {
-  disruptions: { name: string; description: string; lat: number; lng: number; severity: string }[];
-  isLoading?: boolean;
-}
-
-export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
+export default function ShippingLinesPanel() {
   const { isMobile } = useBreakpoint();
-  const [activeTab, setActiveTab] = React.useState<"marine" | "air">("marine");
+  const [activeTab, setActiveTab] = useState<"marine" | "air">("marine");
 
-  const activeZones = useMemo(() => matchZoneIds(disruptions), [disruptions]);
-
-  const enrichedCarriers = useMemo(() => {
-    return CARRIERS.map((c) => {
-      const hitZones = c.affectedByZones.filter((z) => activeZones.has(z));
-      const isAffected = hitZones.length > 0;
-      // Map hit zones to affected route names
-      const affectedRoutes = isAffected ? c.routes.filter((r) => {
-        const rl = r.toLowerCase();
-        return hitZones.some((z) => {
-          if ((z === "suez" || z === "red-sea") && (rl.includes("asia") || rl.includes("europe") || rl.includes("suez") || rl.includes("middle east"))) return true;
-          if (z === "arabian-sea" && (rl.includes("middle east") || rl.includes("asia") || rl.includes("indian"))) return true;
-          if (z === "hormuz" && (rl.includes("middle east") || rl.includes("gulf"))) return true;
-          if ((z === "south-china-sea" || z === "taiwan-strait") && (rl.includes("trans-pacific") || rl.includes("intra-asia") || rl.includes("asia"))) return true;
-          return false;
-        });
-      }) : [];
-      return { ...c, isAffected, affectedRoutes };
-    });
-  }, [activeZones]);
-
-  const marineCarriers = enrichedCarriers.filter((c) => c.type === "marine");
-  const airCarriers    = enrichedCarriers.filter((c) => c.type === "air");
-  const displayed      = activeTab === "marine" ? marineCarriers : airCarriers;
-
-  const affectedCount   = displayed.filter((c) => c.isAffected).length;
-  const unaffectedCount = displayed.filter((c) => !c.isAffected).length;
-
-  // Sort: affected first, then alphabetical
-  const sorted = [...displayed].sort((a, b) => {
-    if (a.isAffected !== b.isAffected) return a.isAffected ? -1 : 1;
-    return a.name.localeCompare(b.name);
+  const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.shippingLines.useQuery(undefined, {
+    refetchInterval: FIVE_HOURS_MS,          // auto-refresh every 5 hours
+    staleTime:       FIVE_HOURS_MS - 60_000, // keep fresh for just under 5 hours
   });
+
+  const carriers = data?.carriers ?? [];
+  const marine   = carriers.filter((c) => c.type === "marine");
+  const air      = carriers.filter((c) => c.type === "air");
+  const displayed = activeTab === "marine" ? marine : air;
+
+  const affectedCount   = displayed.filter((c) => c.affected).length;
+  const unaffectedCount = displayed.filter((c) => !c.affected).length;
+
+  // Sort: critical first, then warning, then operating
+  const sorted = [...displayed].sort((a, b) => {
+    const order = { critical: 0, warning: 1, none: 2 };
+    return order[a.severity] - order[b.severity];
+  });
+
+  // Format last-updated timestamp
+  const lastUpdated = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  // Next refresh time
+  const nextRefresh = dataUpdatedAt
+    ? new Date(dataUpdatedAt + FIVE_HOURS_MS).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : null;
 
   return (
     <div className="ms-panel" style={{ overflow: "hidden" }}>
@@ -375,12 +195,15 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
           justifyContent: "space-between",
           padding: isMobile ? "10px 12px" : "12px 16px",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
+          flexWrap: "wrap",
+          gap: "8px",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span className="panel-header" style={{ fontSize: isMobile ? "0.7rem" : undefined }}>
             SHIPPING LINES
           </span>
+          {/* LIVE badge */}
           <div
             style={{
               display: "flex",
@@ -408,9 +231,26 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
               LIVE
             </span>
           </div>
+
+          {/* Last updated + next refresh */}
+          {lastUpdated && (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <Clock size={9} color="rgba(255,255,255,0.25)" />
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.58rem",
+                  color: "rgba(255,255,255,0.25)",
+                }}
+              >
+                Updated {lastUpdated}
+                {nextRefresh && !isMobile ? ` · Next: ${nextRefresh}` : ""}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Summary badges */}
+        {/* Right side: summary badges + refresh button */}
         <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
           <span
             style={{
@@ -424,7 +264,7 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
               padding: "2px 7px",
             }}
           >
-            {affectedCount} AFFECTED
+            {data?.affectedCount ?? affectedCount} AFFECTED
           </span>
           <span
             style={{
@@ -440,7 +280,46 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
           >
             {unaffectedCount} CLEAR
           </span>
+          <button
+            onClick={() => refetch()}
+            title="Refresh now"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+              borderRadius: "4px",
+            }}
+          >
+            <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
+          </button>
         </div>
+      </div>
+
+      {/* Auto-refresh notice */}
+      <div
+        style={{
+          padding: "5px 16px",
+          background: "rgba(233,30,140,0.04)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: "0.6rem",
+            color: "rgba(255,255,255,0.25)",
+          }}
+        >
+          LLM-classified from live news · Auto-updates every 5 hours
+          {nextRefresh ? ` · Next refresh at ${nextRefresh}` : ""}
+        </span>
       </div>
 
       {/* Tab switcher */}
@@ -454,8 +333,8 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
         {(["marine", "air"] as const).map((tab) => {
           const isActive = activeTab === tab;
           const Icon = tab === "marine" ? Ship : Plane;
-          const carriers = tab === "marine" ? marineCarriers : airCarriers;
-          const tabAffected = carriers.filter((c) => c.isAffected).length;
+          const tabCarriers = tab === "marine" ? marine : air;
+          const tabAffected = tabCarriers.filter((c) => c.affected).length;
           return (
             <button
               key={tab}
@@ -510,11 +389,11 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
           display: "flex",
           flexDirection: "column",
           gap: "6px",
-          maxHeight: isMobile ? "320px" : "380px",
+          maxHeight: isMobile ? "320px" : "400px",
           overflowY: "auto",
         }}
       >
-        {isLoading ? (
+        {isLoading && carriers.length === 0 ? (
           [1, 2, 3, 4].map((i) => (
             <div
               key={i}
@@ -541,17 +420,9 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
         ) : (
           <>
             {/* Affected section */}
-            {sorted.filter((c) => c.isAffected).length > 0 && (
+            {sorted.filter((c) => c.affected).length > 0 && (
               <>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    marginBottom: "2px",
-                    marginTop: "2px",
-                  }}
-                >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px", marginTop: "2px" }}>
                   <AlertTriangle size={10} color="#ef4444" />
                   <span
                     style={{
@@ -565,23 +436,21 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
                     Disruption Impact
                   </span>
                 </div>
-                {sorted
-                  .filter((c) => c.isAffected)
-                  .map((c) => (
-                    <CarrierRow key={c.id} carrier={c} isAffected={true} affectedRoutes={c.affectedRoutes} />
-                  ))}
+                {sorted.filter((c) => c.affected).map((c) => (
+                  <CarrierRow key={c.id} {...c} />
+                ))}
               </>
             )}
 
-            {/* Unaffected section */}
-            {sorted.filter((c) => !c.isAffected).length > 0 && (
+            {/* Operating normally section */}
+            {sorted.filter((c) => !c.affected).length > 0 && (
               <>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    marginTop: sorted.filter((c) => c.isAffected).length > 0 ? "8px" : "2px",
+                    marginTop: sorted.filter((c) => c.affected).length > 0 ? "8px" : "2px",
                     marginBottom: "2px",
                   }}
                 >
@@ -598,11 +467,9 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
                     Operating Normally
                   </span>
                 </div>
-                {sorted
-                  .filter((c) => !c.isAffected)
-                  .map((c) => (
-                    <CarrierRow key={c.id} carrier={c} isAffected={false} affectedRoutes={[]} />
-                  ))}
+                {sorted.filter((c) => !c.affected).map((c) => (
+                  <CarrierRow key={c.id} {...c} />
+                ))}
               </>
             )}
           </>
@@ -611,6 +478,3 @@ export default function ShippingLinesPanel({ disruptions, isLoading }: Props) {
     </div>
   );
 }
-
-// Need React import for useState
-import React from "react";

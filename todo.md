@@ -97,3 +97,7 @@
 - [x] Responsive: On mobile, show RetailerActionPanel (Alerts + Categories) above ImpactNewsFeed\n
 - [x] Block 1 (SupplyChainMap): Add marine and air shipping lines panel showing affected vs unaffected routes
 - [x] Block 2 (RetailerActionPanel): Add international shipping companies panel showing affected vs unaffected carriers
+- [x] Real-time shipping lines: Add news.shippingLines tRPC procedure with LLM carrier classification
+- [x] Real-time shipping lines: Update ShippingLinesPanel to consume live tRPC data with 5-hour refresh
+- [x] Shipping lines: Set server cache TTL to 5 hours and frontend refetchInterval to 5 hours
+- [x] Shipping lines: ShippingLinesPanel consumes trpc.news.shippingLines directly with live timestamp

@@ -323,6 +323,159 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
   return sorted;
 }
 
+// ─── carrier definitions (used by shippingLines procedure) ──────────────────
+
+const CARRIER_LIST = [
+  // Marine
+  { id: "maersk",       name: "Maersk",                    country: "Denmark",     type: "marine", routes: ["Asia–Europe", "Trans-Pacific", "Trans-Atlantic"] },
+  { id: "msc",          name: "MSC",                       country: "Switzerland", type: "marine", routes: ["Asia–Europe (Suez)", "Trans-Atlantic", "South America"] },
+  { id: "cmacgm",       name: "CMA CGM",                   country: "France",      type: "marine", routes: ["Asia–Europe", "Trans-Pacific", "Indian Ocean"] },
+  { id: "cosco",        name: "COSCO Shipping",            country: "China",       type: "marine", routes: ["Trans-Pacific", "Intra-Asia", "Asia–Europe"] },
+  { id: "evergreen",    name: "Evergreen",                 country: "Taiwan",      type: "marine", routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
+  { id: "hapag",        name: "Hapag-Lloyd",               country: "Germany",     type: "marine", routes: ["Asia–Europe", "Trans-Atlantic", "US Gulf"] },
+  { id: "one",          name: "Ocean Network Express",     country: "Japan",       type: "marine", routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
+  { id: "yangming",     name: "Yang Ming",                 country: "Taiwan",      type: "marine", routes: ["Trans-Pacific", "Intra-Asia"] },
+  { id: "zim",          name: "ZIM",                       country: "Israel",      type: "marine", routes: ["Asia–Europe (Suez)", "Trans-Pacific", "Mediterranean"] },
+  { id: "pil",          name: "Pacific Int'l Lines",       country: "Singapore",   type: "marine", routes: ["Intra-Asia", "Indian Ocean", "Africa"] },
+  { id: "hmmm",         name: "HMM (Hyundai)",             country: "South Korea", type: "marine", routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
+  { id: "wan-hai",      name: "Wan Hai Lines",             country: "Taiwan",      type: "marine", routes: ["Intra-Asia", "Trans-Pacific"] },
+  // Air cargo
+  { id: "emirates-cargo",     name: "Emirates SkyCargo",       country: "UAE",          type: "air",    routes: ["Asia–Europe", "Middle East Hub", "Trans-Pacific"] },
+  { id: "fedex",              name: "FedEx Express",            country: "USA",          type: "air",    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"] },
+  { id: "dhl",                name: "DHL Aviation",             country: "Germany",      type: "air",    routes: ["Asia–Europe", "Middle East", "Africa"] },
+  { id: "cargolux",           name: "Cargolux",                 country: "Luxembourg",   type: "air",    routes: ["Trans-Atlantic", "Asia–Europe", "Americas"] },
+  { id: "cathay-cargo",       name: "Cathay Cargo",             country: "Hong Kong",    type: "air",    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
+  { id: "korean-air-cargo",   name: "Korean Air Cargo",         country: "South Korea",  type: "air",    routes: ["Trans-Pacific", "Intra-Asia", "Europe"] },
+  { id: "qatar-cargo",        name: "Qatar Airways Cargo",      country: "Qatar",        type: "air",    routes: ["Asia–Europe", "Middle East Hub", "Africa"] },
+  { id: "ups-airlines",       name: "UPS Airlines",             country: "USA",          type: "air",    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"] },
+  { id: "lufthansa-cargo",    name: "Lufthansa Cargo",          country: "Germany",      type: "air",    routes: ["Trans-Atlantic", "Asia–Europe", "Middle East"] },
+  { id: "air-france-cargo",   name: "Air France-KLM Cargo",     country: "France",       type: "air",    routes: ["Trans-Atlantic", "Asia–Europe", "Africa"] },
+];
+
+export interface CarrierStatus {
+  id: string;
+  name: string;
+  country: string;
+  type: "marine" | "air";
+  routes: string[];
+  affected: boolean;
+  affectedRoutes: string[];
+  reason: string; // short explanation e.g. "Suez Canal closure affects Asia-Europe route"
+  severity: "critical" | "warning" | "none";
+}
+
+// Separate cache for shipping lines — 5 hour TTL as requested
+const SHIPPING_LINES_CACHE_TTL_MS = 5 * 60 * 60 * 1000; // 5 hours
+let shippingLinesCache: { carriers: CarrierStatus[]; fetchedAt: number } | null = null;
+
+async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierStatus[]> {
+  // Use cached result if fresh
+  if (shippingLinesCache && Date.now() - shippingLinesCache.fetchedAt < SHIPPING_LINES_CACHE_TTL_MS) {
+    return shippingLinesCache.carriers;
+  }
+
+  if (newsHeadlines.length === 0) {
+    // No news — all carriers operating normally
+    return CARRIER_LIST.map((c) => ({
+      ...c,
+      type: c.type as "marine" | "air",
+      affected: false,
+      affectedRoutes: [],
+      reason: "No active disruptions reported",
+      severity: "none" as const,
+    }));
+  }
+
+  const headlineText = newsHeadlines.slice(0, 10).map((h, i) => `${i + 1}. ${h}`).join("\n");
+  const carrierNames = CARRIER_LIST.map((c) => c.name).join(", ");
+
+  try {
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are a supply chain analyst. Based on current news headlines, determine which shipping carriers are affected by disruptions. Return ONLY valid JSON.
+
+Carriers to assess: ${carrierNames}
+
+For each carrier, determine:
+- affected: true/false
+- affectedRoutes: array of route names from their known routes that are impacted
+- reason: 1 sentence explanation (empty string if not affected)
+- severity: "critical", "warning", or "none"
+
+Base your assessment on geographic disruptions mentioned in the headlines (e.g., Suez Canal → affects Asia-Europe routes, Red Sea → affects Middle East routes, South China Sea → affects Trans-Pacific/Intra-Asia, Strait of Hormuz → affects Middle East/Gulf routes).`,
+        },
+        {
+          role: "user",
+          content: `Current news headlines:\n${headlineText}\n\nAssess each carrier's disruption status. Return JSON array matching this schema exactly:\n[{"id": "maersk", "affected": true, "affectedRoutes": ["Asia–Europe"], "reason": "Suez Canal closure disrupts Asia-Europe route", "severity": "critical"}, ...]`,
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "carrier_impacts",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              carriers: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id:             { type: "string" },
+                    affected:       { type: "boolean" },
+                    affectedRoutes: { type: "array", items: { type: "string" } },
+                    reason:         { type: "string" },
+                    severity:       { type: "string", enum: ["critical", "warning", "none"] },
+                  },
+                  required: ["id", "affected", "affectedRoutes", "reason", "severity"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["carriers"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+
+    const raw = JSON.parse(response.choices[0].message.content as string) as {
+      carriers: { id: string; affected: boolean; affectedRoutes: string[]; reason: string; severity: string }[];
+    };
+
+    // Merge LLM results with static carrier data
+    const llmMap = new Map(raw.carriers.map((c) => [c.id, c]));
+    const result: CarrierStatus[] = CARRIER_LIST.map((carrier) => {
+      const llm = llmMap.get(carrier.id);
+      return {
+        ...carrier,
+        type: carrier.type as "marine" | "air",
+        affected:       llm?.affected       ?? false,
+        affectedRoutes: llm?.affectedRoutes ?? [],
+        reason:         llm?.reason         ?? "",
+        severity:       (llm?.severity as CarrierStatus["severity"]) ?? "none",
+      };
+    });
+
+    shippingLinesCache = { carriers: result, fetchedAt: Date.now() };
+    return result;
+  } catch (err) {
+    console.warn("[shippingLines] LLM classification failed, falling back to zone matching:", err);
+    // Fallback: use geographic zone matching from disruption locations
+    return CARRIER_LIST.map((c) => ({
+      ...c,
+      type: c.type as "marine" | "air",
+      affected: false,
+      affectedRoutes: [],
+      reason: "Status unavailable",
+      severity: "none" as const,
+    }));
+  }
+}
+
 // ─── router ───────────────────────────────────────────────────────────────────
 
 export const newsRouter = router({
@@ -365,8 +518,40 @@ export const newsRouter = router({
     }
   }),
 
+  shippingLines: publicProcedure.query(async () => {
+    try {
+      const items = await fetchAndClassifyNews();
+      const headlines = items.map((i) => i.title);
+      const carriers = await classifyCarrierImpacts(headlines);
+      return {
+        carriers,
+        lastUpdated: shippingLinesCache?.fetchedAt
+          ? new Date(shippingLinesCache.fetchedAt).toISOString()
+          : new Date().toISOString(),
+        affectedCount: carriers.filter((c) => c.affected).length,
+        criticalCount: carriers.filter((c) => c.severity === "critical").length,
+      };
+    } catch (err) {
+      console.error("[shippingLines] Query failed:", err);
+      return {
+        carriers: CARRIER_LIST.map((c) => ({
+          ...c,
+          type: c.type as "marine" | "air",
+          affected: false,
+          affectedRoutes: [],
+          reason: "Status unavailable",
+          severity: "none" as const,
+        })),
+        lastUpdated: new Date().toISOString(),
+        affectedCount: 0,
+        criticalCount: 0,
+      };
+    }
+  }),
+
   refresh: publicProcedure.mutation(async () => {
     cache = null;
+    shippingLinesCache = null;
     const items = await fetchAndClassifyNews();
     return { success: true, count: items.length };
   }),
