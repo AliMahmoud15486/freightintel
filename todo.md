@@ -112,3 +112,5 @@
 - [x] Alert emails: Send alert emails to all subscribers on new critical disruptions
 - [x] Alert emails: Add sent_alerts table to DB to prevent duplicate emails
 - [x] Alert emails: Wire alert trigger into the news polling cycle
+- [x] Email test button: Add sendTestAlert tRPC procedure (owner-only) that sends sample alert to owner email
+- [x] Email test button: Add test button to TopHeader with loading/success/error states
