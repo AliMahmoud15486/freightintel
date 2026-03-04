@@ -101,3 +101,4 @@
 - [x] Real-time shipping lines: Update ShippingLinesPanel to consume live tRPC data with 5-hour refresh
 - [x] Shipping lines: Set server cache TTL to 5 hours and frontend refetchInterval to 5 hours
 - [x] Shipping lines: ShippingLinesPanel consumes trpc.news.shippingLines directly with live timestamp
+- [x] Layout: Move RetailerActionPanel (Shipping Companies + Alerts + Categories) below SupplyChainMap+ShippingLinesPanel

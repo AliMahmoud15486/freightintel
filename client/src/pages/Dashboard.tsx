@@ -165,11 +165,18 @@ export default function Dashboard() {
             WebkitOverflowScrolling: "touch",
           } as React.CSSProperties}
         >
-          {/* Full-width Supply Chain Disruption Map */}
+          {/* Full-width Supply Chain Disruption Map (includes ShippingLinesPanel below it) */}
           <SupplyChainMap />
 
-          {/* Desktop/Tablet: side-by-side center + right sidebar */}
-          {/* Mobile: single column, RetailerActionPanel above ImpactNewsFeed */}
+          {/* Full-width Retailer Action Panel (Shipping Companies + Alerts + Categories) */}
+          {/* Placed directly below ShippingLinesPanel as requested */}
+          <RetailerActionPanel
+            selectedCategories={selectedCategories}
+            onCategoryToggle={toggleCategory}
+            onClearCategories={clearCategories}
+          />
+
+          {/* KPI cards + Cost Inflation Drivers + Impact News Feed */}
           <div
             style={{
               display: "flex",
@@ -178,7 +185,7 @@ export default function Dashboard() {
               minWidth: 0,
             }}
           >
-            {/* Center content (stats + bottom panels) */}
+            {/* Center content: KPI stats + bottom panels */}
             <div
               style={{
                 flex: 1,
@@ -276,15 +283,6 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Mobile: RetailerActionPanel (Alerts + Categories) inserted here — above news feed */}
-              {isMobile && (
-                <RetailerActionPanel
-                  selectedCategories={selectedCategories}
-                  onCategoryToggle={toggleCategory}
-                  onClearCategories={clearCategories}
-                />
-              )}
-
               {/* Bottom row: Cost Inflation Drivers + Impact News Feed */}
               {/* Desktop: side by side | Mobile/Tablet: stacked */}
               <div
@@ -302,26 +300,6 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-
-            {/* Right sidebar — Retailer Action Panel */}
-            {/* Desktop/Tablet: fixed right column | Mobile: rendered above (see isMobile block above) */}
-            {!isMobile && (
-              <div
-                style={{
-                  width: isDesktop ? "260px" : "100%",
-                  minWidth: isDesktop ? "260px" : "0",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: contentGap,
-                }}
-              >
-                <RetailerActionPanel
-                  selectedCategories={selectedCategories}
-                  onCategoryToggle={toggleCategory}
-                  onClearCategories={clearCategories}
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
