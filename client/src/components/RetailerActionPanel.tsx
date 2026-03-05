@@ -56,13 +56,35 @@ function matchActiveZones(disruptions: { name: string; description: string; lat:
     if (text.includes("suez") || text.includes("red sea") || text.includes("bab el-mandeb")) {
       zones.add("suez"); zones.add("red-sea");
     }
-    if (text.includes("arabian sea") || text.includes("arabian")) zones.add("arabian-sea");
-    if (text.includes("hormuz")) zones.add("hormuz");
+    // Arabian Sea / Gulf / Iran / Hormuz — broad keyword matching
+    if (
+      text.includes("arabian sea") || text.includes("arabian") ||
+      text.includes("iran") || text.includes("iranian") ||
+      text.includes("persian gulf") || text.includes("gulf of oman") ||
+      text.includes("saudi") || text.includes("oman") ||
+      text.includes("yemen") || text.includes("houthi") ||
+      text.includes("middle east") || text.includes("gulf oil") ||
+      text.includes("lng tanker") || text.includes("tanker") && text.includes("mediterranean")
+    ) {
+      zones.add("arabian-sea");
+    }
+    if (
+      text.includes("hormuz") || text.includes("iran") ||
+      text.includes("persian gulf") || text.includes("gulf")
+    ) {
+      zones.add("hormuz");
+    }
     if (text.includes("south china sea") || text.includes("taiwan")) {
       zones.add("south-china-sea"); zones.add("taiwan-strait");
     }
-    // Proximity: Arabian Sea
-    if (d.lat > 10 && d.lat < 30 && d.lng > 50 && d.lng < 75) zones.add("arabian-sea");
+    // Proximity: Arabian Sea / Persian Gulf / Iran (lat 15–35, lng 44–65)
+    if (d.lat > 15 && d.lat < 35 && d.lng > 44 && d.lng < 65) {
+      zones.add("arabian-sea"); zones.add("hormuz");
+    }
+    // Proximity: Saudi Arabia / Gulf region (lat 15–32, lng 35–60)
+    if (d.lat > 15 && d.lat < 32 && d.lng > 35 && d.lng < 60) {
+      zones.add("arabian-sea"); zones.add("hormuz");
+    }
     // Proximity: Suez / Red Sea
     if (d.lat > 10 && d.lat < 35 && d.lng > 28 && d.lng < 45) { zones.add("suez"); zones.add("red-sea"); }
     // Proximity: South China Sea

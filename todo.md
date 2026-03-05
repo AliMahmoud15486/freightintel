@@ -121,3 +121,6 @@
 - [x] Exit intent: Create useExitIntent hook that detects cursor moving to top of viewport
 - [x] Exit intent: Show Stay Informed subscription popup when exit intent is triggered
 - [x] Exit intent: Only show once per session (sessionStorage dedup), with 3s delay after page load
+- [x] Fix Avg Delay Impact: LLM not returning etaImpact - improve prompt with explicit examples and use json_schema format
+- [x] Fix Shipping Companies zone matching: extend matchActiveZones to detect Iran/Arabian Sea keywords from current news
+- [x] Fix Shipping Lines: LLM carrier classification not returning affected=true for current Iran/Arabian Sea disruptions

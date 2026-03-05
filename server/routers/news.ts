@@ -138,7 +138,10 @@ For each item, return a JSON array with objects containing:
   - info: general market updates, minor changes
 - "tags": array of 1-4 relevant hashtags from: #Oil, #Freight, #Logistics, #Delays, #Fuel, #Shipping, #Ports, #Trade, #Commodities, #Inflation, #SupplyChain, #Energy
 - "affectedCategories": array of affected retail categories from: Electronics, Apparel, Toys, Home & Garden, Auto Parts, Sporting Goods, Food & Beverage, All Imports
-- "etaImpact": string like "+7 days" or "+14 days" if there's a delay impact, otherwise null
+- "etaImpact": REQUIRED for critical/warning severity items — estimate shipping delay even if not explicitly stated.
+  Use these benchmarks: tanker sinking/incident → "+10 days", port closure → "+14 days",
+  conflict disrupting key route → "+7 days", supply disruption (oil/fertiliser) → "+5 days",
+  weather/labor dispute → "+3 days". Return null ONLY for pure info/market-update items.
 - "costImpact": string like "+2.3%" or "+8%" if there's a cost/price impact, otherwise null
 - "summary": 1-sentence plain-English summary of the supply chain impact (max 120 chars)
 - "locations": array of geographic disruption points mentioned or implied in the article. Each location:
@@ -381,7 +384,7 @@ export interface CarrierStatus {
 }
 
 // Separate cache for shipping lines — 5 hour TTL as requested
-const SHIPPING_LINES_CACHE_TTL_MS = 5 * 60 * 60 * 1000; // 5 hours
+const SHIPPING_LINES_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour (refresh more frequently for accuracy)
 let shippingLinesCache: { carriers: CarrierStatus[]; fetchedAt: number } | null = null;
 
 async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierStatus[]> {
@@ -408,19 +411,26 @@ async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierS
   try {
     const response = await invokeLLM({
       messages: [
-        {
-          role: "system",
-          content: `You are a supply chain analyst. Based on current news headlines, determine which shipping carriers are affected by disruptions. Return ONLY valid JSON.
-
-Carriers to assess: ${carrierNames}
-
-For each carrier, determine:
-- affected: true/false
-- affectedRoutes: array of route names from their known routes that are impacted
-- reason: 1 sentence explanation (empty string if not affected)
-- severity: "critical", "warning", or "none"
-
-Base your assessment on geographic disruptions mentioned in the headlines (e.g., Suez Canal → affects Asia-Europe routes, Red Sea → affects Middle East routes, South China Sea → affects Trans-Pacific/Intra-Asia, Strait of Hormuz → affects Middle East/Gulf routes).`,
+          {
+          role: "system" as const,
+          content: [
+            "You are a supply chain analyst. Based on current news headlines, determine which shipping carriers are affected by disruptions. Return ONLY valid JSON.",
+            `Carriers to assess: ${carrierNames}`,
+            "For each carrier, determine:",
+            "- affected: true/false. Be liberal: if any headline mentions disruptions near a carrier's key routes, mark as affected.",
+            "- affectedRoutes: array of route names from their known routes that are impacted",
+            "- reason: 1 sentence explanation (empty string if not affected)",
+            "- severity: critical, warning, or none",
+            "",
+            "Geographic impact rules (apply broadly):",
+            "- Iran conflict / Gulf oil disruption / LNG tanker incident: affects Arabian Sea, Hormuz, Middle East routes. Mark Emirates SkyCargo, Qatar Airways Cargo, ZIM, Maersk, MSC, CMA CGM, Hapag-Lloyd as affected.",
+            "- Suez Canal / Red Sea / Houthi: affects Asia-Europe routes. Mark Maersk, MSC, CMA CGM, Hapag-Lloyd, ZIM as affected.",
+            "- South China Sea / Taiwan Strait: affects Trans-Pacific/Intra-Asia. Mark COSCO, Evergreen, Yang Ming, ONE as affected.",
+            "- Mediterranean incidents: affects Maersk, MSC, CMA CGM, ZIM.",
+            "- Any tanker sinking or major incident: mark carriers operating nearby routes as affected.",
+            "",
+            "IMPORTANT: If headlines mention Iran, Gulf, oil disruption, tanker incidents, or Middle East conflict, this DOES affect shipping routes. Do NOT return all carriers as unaffected when such news exists.",
+          ].join("\n"),
         },
         {
           role: "user",
@@ -458,14 +468,23 @@ Base your assessment on geographic disruptions mentioned in the headlines (e.g.,
       },
     });
 
-    const raw = JSON.parse(response.choices[0].message.content as string) as {
+    const rawContent = response.choices[0].message.content as string;
+    const raw = JSON.parse(rawContent) as {
       carriers: { id: string; affected: boolean; affectedRoutes: string[]; reason: string; severity: string }[];
     };
-
     // Merge LLM results with static carrier data
-    const llmMap = new Map(raw.carriers.map((c) => [c.id, c]));
+    // The LLM may return display names (e.g. "Maersk") instead of IDs (e.g. "maersk")
+    // Build a lookup map that matches on both id and name (case-insensitive)
+    const llmByIdOrName = new Map<string, typeof raw.carriers[0]>();
+    for (const c of raw.carriers) {
+      llmByIdOrName.set(c.id.toLowerCase(), c);
+    }
     const result: CarrierStatus[] = CARRIER_LIST.map((carrier) => {
-      const llm = llmMap.get(carrier.id);
+      // Try by exact id first, then by lowercase id, then by lowercase name
+      const llm =
+        llmByIdOrName.get(carrier.id) ??
+        llmByIdOrName.get(carrier.id.toLowerCase()) ??
+        llmByIdOrName.get(carrier.name.toLowerCase());
       return {
         ...carrier,
         type: carrier.type as "marine" | "air",
