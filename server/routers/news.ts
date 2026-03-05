@@ -64,6 +64,10 @@ const RSS_FEEDS = [
   { url: "https://www.supplychaindive.com/feeds/news/", name: "Supply Chain Dive" },
   { url: "https://www.ft.com/commodities?format=rss", name: "FT Commodities" },
   { url: "https://splash247.com/feed/", name: "Splash247" },
+  { url: "https://www.freightwaves.com/news/feed", name: "FreightWaves" },
+  { url: "https://www.hellenicshippingnews.com/feed/", name: "Hellenic Shipping News" },
+  { url: "https://theloadstar.com/feed/", name: "The Loadstar" },
+  { url: "https://www.joc.com/rss.xml", name: "Journal of Commerce" },
 ];
 
 async function fetchRssFeed(url: string, sourceName: string): Promise<RawFeedItem[]> {
@@ -126,7 +130,7 @@ function stripHtml(html: string): string {
 async function classifyNewsItems(rawItems: RawFeedItem[]): Promise<NewsItem[]> {
   if (rawItems.length === 0) return [];
 
-  const batch = rawItems.slice(0, 12);
+  const batch = rawItems.slice(0, 25);
 
   const prompt = `You are a supply chain analyst. Classify each news headline for a retail margin intelligence dashboard.
 
@@ -312,8 +316,7 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
       const db = b.pubDate ? new Date(b.pubDate).getTime() : 0;
       return db - da;
     })
-    .slice(0, 12);
-
+    .slice(0, 25);
   if (allRaw.length === 0) {
     console.warn("[news] No RSS items fetched — returning empty");
     return [];
