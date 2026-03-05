@@ -60,6 +60,11 @@ interface PulseCache {
 let pulseCache: PulseCache | null = null;
 const PULSE_CACHE_TTL = 60_000; // 60 seconds
 
+/** Exposed only for unit tests — clears all in-memory caches */
+export function _resetCacheForTesting() {
+  pulseCache = null;
+}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 const YAHOO_HEADERS = {
@@ -91,8 +96,9 @@ function calcChange(result: YahooResult | null, fallback: { price: number; pct: 
   const curr = meta.regularMarketPrice ?? 0;
   if (curr === 0) return { price: fallback.price, change: fallback.price * (fallback.pct / 100), changePct: fallback.pct };
 
-  // Use chartPreviousClose for accurate daily change
-  const prev = meta.chartPreviousClose > 0 ? meta.chartPreviousClose : curr;
+  // Use second-to-last close for accurate daily change (not chartPreviousClose which may be a week ago)
+  const closes = (result.indicators?.quote?.[0]?.close ?? []).filter((v): v is number => v !== null && v > 0);
+  const prev = closes.length >= 2 ? closes[closes.length - 2] : (meta.chartPreviousClose > 0 ? meta.chartPreviousClose : curr);
 
   const change = curr - prev;
   const changePct = prev !== 0 ? (change / prev) * 100 : 0;
