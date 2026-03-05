@@ -310,6 +310,35 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
             >
               {pageTitle}
             </span>
+            <span style={{ color: "rgba(255,255,255,0.12)", fontSize: "0.75rem", marginLeft: "6px" }}>·</span>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 400,
+                fontSize: "0.7rem",
+                color: "rgba(255,255,255,0.32)",
+                whiteSpace: "nowrap",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Analyze your e-commerce data with{" "}
+              <a
+                href="https://datajar.co"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Datajar.co
+              </a>
+            </span>
           </>
         )}
       </div>

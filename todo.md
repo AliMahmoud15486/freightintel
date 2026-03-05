@@ -129,3 +129,4 @@
 - [x] Add GDPR Cookie Consent banner with accept/decline, localStorage persistence, and Clarity activation on consent
 - [x] Wire Clarity Smart Events to: Stay Informed button, Force Refresh buttons, Subscribe form submission, Exit Intent popup, News item clicks
 - [x] Pre-publish full test: vitest (14/14), TypeScript (0 errors), all 9 API endpoints verified
+- [x] Add 'Analyze your e-commerce data with Datajar.co' tagline to TopHeader beside logo/Dashboard, linking to https://datajar.co
