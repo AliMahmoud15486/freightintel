@@ -125,3 +125,4 @@
 - [x] Fix Shipping Companies zone matching: extend matchActiveZones to detect Iran/Arabian Sea keywords from current news
 - [x] Fix Shipping Lines: LLM carrier classification not returning affected=true for current Iran/Arabian Sea disruptions
 - [x] Make Force Refresh buttons functional: verified all panels, added clickable refresh to GlobalPulseBar live indicator
+- [x] Install Microsoft Clarity (ID: vr15hce3zn) in index.html
