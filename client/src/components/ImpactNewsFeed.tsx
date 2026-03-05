@@ -7,6 +7,7 @@ import { useState } from "react";
 import { MoreHorizontal, RefreshCw, ExternalLink, Clock, Rss, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { clarityEvent } from "@/lib/clarity";
 
 type Severity = "all" | "critical" | "warning" | "info";
 
@@ -52,7 +53,7 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
   });
 
   const { mutate: forceRefresh, isPending: isRefreshing } = trpc.news.refresh.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); clarityEvent("news_force_refreshed"); },
   });
 
   const items = data?.items ?? [];

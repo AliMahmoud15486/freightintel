@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Margins from "./pages/Margins";
+import CookieConsent from "./components/CookieConsent";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -34,6 +35,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <CookieConsent />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

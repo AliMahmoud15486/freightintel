@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { X, Mail, User, CheckCircle2, Loader2, Bell } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { clarityEvent } from "@/lib/clarity";
 
 interface Props {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
   const subscribe = trpc.subscribers.subscribe.useMutation({
     onSuccess: () => {
       setSubmitted(true);
+      clarityEvent("subscribe_success");
     },
     onError: (err) => {
       if (err.message.includes("already subscribed")) {
@@ -47,6 +49,7 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    clarityEvent("subscribe_form_submitted");
     subscribe.mutate({ name: name.trim(), email: email.trim() });
   };
 

@@ -8,6 +8,7 @@ import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import SubscribeModal from "./SubscribeModal";
+import { clarityEvent } from "@/lib/clarity";
 
 interface TopHeaderProps {
   pageTitle?: string;
@@ -354,7 +355,7 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
 
         {/* Subscribe button */}
         <button
-          onClick={() => setShowSubscribe(true)}
+          onClick={() => { setShowSubscribe(true); clarityEvent("stay_informed_clicked", "header"); }}
           style={{
             display: "flex",
             alignItems: "center",

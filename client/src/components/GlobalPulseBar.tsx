@@ -7,6 +7,7 @@ import { useState } from "react";
 import { TrendingUp, TrendingDown, Minus, X, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { clarityEvent } from "@/lib/clarity";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -221,7 +222,7 @@ export default function GlobalPulseBar() {
 
       {/* Live indicator — clickable to force refresh */}
       <button
-        onClick={() => refetch()}
+        onClick={() => { refetch(); clarityEvent("pulse_bar_refreshed"); }}
         title={data ? `Live — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}. Click to refresh.` : "Click to refresh prices"}
         style={{
           background: "none",

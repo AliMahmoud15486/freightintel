@@ -126,3 +126,5 @@
 - [x] Fix Shipping Lines: LLM carrier classification not returning affected=true for current Iran/Arabian Sea disruptions
 - [x] Make Force Refresh buttons functional: verified all panels, added clickable refresh to GlobalPulseBar live indicator
 - [x] Install Microsoft Clarity (ID: vr15hce3zn) in index.html
+- [x] Add GDPR Cookie Consent banner with accept/decline, localStorage persistence, and Clarity activation on consent
+- [x] Wire Clarity Smart Events to: Stay Informed button, Force Refresh buttons, Subscribe form submission, Exit Intent popup, News item clicks

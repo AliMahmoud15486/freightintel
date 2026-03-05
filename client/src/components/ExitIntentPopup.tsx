@@ -7,6 +7,7 @@ import { useCallback, useState } from "react";
 import { X, AlertTriangle, Bell } from "lucide-react";
 import SubscribeModal from "./SubscribeModal";
 import { useExitIntent } from "@/hooks/useExitIntent";
+import { clarityEvent } from "@/lib/clarity";
 
 interface Props {
   /** Pass true once the user has already subscribed to permanently disable the popup */
@@ -19,6 +20,7 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
 
   const handleExitIntent = useCallback(() => {
     setShowOverlay(true);
+    clarityEvent("exit_intent_triggered");
   }, []);
 
   useExitIntent({
@@ -30,11 +32,13 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
 
   const handleDismiss = () => {
     setShowOverlay(false);
+    clarityEvent("exit_intent_dismissed");
   };
 
   const handleSubscribeClick = () => {
     setShowOverlay(false);
     setShowModal(true);
+    clarityEvent("stay_informed_clicked", "exit_intent");
   };
 
   return (
