@@ -118,3 +118,6 @@
 - [x] Rebrand: Update page title, meta tags, subscribe modal, and email templates to Freight Intel
 - [x] Logo: Add "Powered by Datajar" subtitle below the Freight Intel wordmark in TopHeader
 - [x] Fix Global Pulse Bar: replace exhausted Manus Data API with direct Yahoo Finance fetch to get live prices
+- [x] Exit intent: Create useExitIntent hook that detects cursor moving to top of viewport
+- [x] Exit intent: Show Stay Informed subscription popup when exit intent is triggered
+- [x] Exit intent: Only show once per session (sessionStorage dedup), with 3s delay after page load

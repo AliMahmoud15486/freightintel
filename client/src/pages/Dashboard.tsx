@@ -6,6 +6,7 @@
  */
 import { useMemo, useState } from "react";
 import TopHeader from "@/components/TopHeader";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 import GlobalPulseBar from "@/components/GlobalPulseBar";
 import AlertsSystem from "@/components/AlertsSystem";
 import SupplyChainMap from "@/components/SupplyChainMap";
@@ -123,6 +124,7 @@ export default function Dashboard() {
   const contentGap = isMobile ? "8px" : "12px";
 
   return (
+    <>
     <div
       style={{
         display: "flex",
@@ -304,5 +306,7 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    <ExitIntentPopup />
+    </>
   );
 }
