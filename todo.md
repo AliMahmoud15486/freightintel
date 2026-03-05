@@ -117,3 +117,4 @@
 - [x] Rebrand: Update logo wordmark to "Freight Intel" with bold rounded font and magenta-to-orange gradient
 - [x] Rebrand: Update page title, meta tags, subscribe modal, and email templates to Freight Intel
 - [x] Logo: Add "Powered by Datajar" subtitle below the Freight Intel wordmark in TopHeader
+- [x] Fix Global Pulse Bar: replace exhausted Manus Data API with direct Yahoo Finance fetch to get live prices

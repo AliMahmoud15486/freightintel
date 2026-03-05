@@ -1,5 +1,5 @@
-/* marketData.ts — Margin Sentinel
- * tRPC router for live market data via Yahoo Finance (built-in Data API)
+/* marketData.ts — Freight Intel
+ * tRPC router for live market data via direct Yahoo Finance v8 API
  *
  * Pulse Bar symbols (all live):
  *   BZ=F        → Brent Crude Oil ($/bbl)
@@ -8,15 +8,14 @@
  *   GC=F        → Gold ($/oz)
  *   BDRY        → Breakwave Dry Bulk Shipping ETF (proxy for freight rates)
  *   ZIM         → ZIM Integrated Shipping (live shipping stock)
- *   MAERSK-B.CO → Maersk (global container shipping)
+ *   MAERSK-B.CO → Maersk (global container shipping, DKK)
  *   CHRW        → C.H. Robinson (logistics/freight brokerage)
  *   XLE         → Energy Select Sector ETF
  *
- * Note: Data API query params must all be strings (no booleans).
+ * Uses direct Yahoo Finance v8/finance/chart endpoint — no API key required.
  */
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
-import { callDataApi } from "../_core/dataApi";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -63,12 +62,22 @@ const PULSE_CACHE_TTL = 60_000; // 60 seconds
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
+const YAHOO_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Accept": "application/json",
+};
+
 async function fetchQuote(symbol: string, range = "5d", interval = "1d"): Promise<YahooResult | null> {
   try {
-    const res = (await callDataApi("YahooFinance/get_stock_chart", {
-      query: { symbol, region: "US", interval, range },
-    })) as YahooResponse;
-    return res?.chart?.result?.[0] ?? null;
+    const encodedSymbol = encodeURIComponent(symbol);
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?interval=${interval}&range=${range}`;
+    const res = await fetch(url, { headers: YAHOO_HEADERS });
+    if (!res.ok) {
+      console.warn(`[marketData] Yahoo Finance HTTP ${res.status} for ${symbol}`);
+      return null;
+    }
+    const json = (await res.json()) as YahooResponse;
+    return json?.chart?.result?.[0] ?? null;
   } catch (err) {
     console.warn(`[marketData] Failed to fetch ${symbol}:`, err);
     return null;
@@ -82,12 +91,8 @@ function calcChange(result: YahooResult | null, fallback: { price: number; pct: 
   const curr = meta.regularMarketPrice ?? 0;
   if (curr === 0) return { price: fallback.price, change: fallback.price * (fallback.pct / 100), changePct: fallback.pct };
 
-  // Use second-to-last close (yesterday's close) for accurate daily change
-  const closes = result.indicators.quote[0]?.close ?? [];
-  const validCloses = closes.filter((c): c is number => c !== null && c > 0);
-  const prev = validCloses.length >= 2
-    ? validCloses[validCloses.length - 2]
-    : (meta.chartPreviousClose > 0 ? meta.chartPreviousClose : curr);
+  // Use chartPreviousClose for accurate daily change
+  const prev = meta.chartPreviousClose > 0 ? meta.chartPreviousClose : curr;
 
   const change = curr - prev;
   const changePct = prev !== 0 ? (change / prev) * 100 : 0;
@@ -136,7 +141,7 @@ async function buildPulseBarData(): Promise<PulseBarData> {
   const chrwData   = calcChange(chrw,   { price: 187.24, pct: 5.7  });
   const xleData    = calcChange(xle,    { price: 57.04,  pct: 3.4  });
 
-  // Derive US Port Congestion status from XLE + shipping performance
+  // Derive US Port Congestion status from shipping performance
   const avgShippingPct = (bdryData.changePct + zimData.changePct) / 2;
   const portLevel: 1 | 2 | 3 = avgShippingPct > 5 ? 3 : avgShippingPct > 2 ? 2 : 1;
   const portStatus = portLevel === 3 ? "Red" : portLevel === 2 ? "Amber" : "Green";
