@@ -146,7 +146,7 @@ export default function GlobalPulseBar() {
   const [dismissed, setDismissed] = useState(false);
   const { isMobile } = useBreakpoint();
 
-  const { data, isLoading, dataUpdatedAt } = trpc.marketData.pulseBar.useQuery(undefined, {
+  const { data, isLoading, refetch, dataUpdatedAt } = trpc.marketData.pulseBar.useQuery(undefined, {
     refetchInterval: 60_000, // refresh every 60 seconds
     staleTime: 55_000,
   });
@@ -219,33 +219,35 @@ export default function GlobalPulseBar() {
         </span>
       </div>
 
-      {/* Live indicator */}
-      {isLoading ? (
-        <RefreshCw
-          size={12}
-          className="animate-spin"
-          style={{ color: "#E91E8C", margin: "0 12px", flexShrink: 0 }}
-        />
-      ) : (
-        <div
-          className="animate-blink"
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            background: data ? "#10b981" : "#f59e0b",
-            margin: "0 12px",
-            flexShrink: 0,
-            boxShadow: `0 0 6px ${data ? "#10b981" : "#f59e0b"}`,
-            cursor: "default",
-          }}
-          title={
-            data
-              ? `Live — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}`
-              : "Fallback data"
-          }
-        />
-      )}
+      {/* Live indicator — clickable to force refresh */}
+      <button
+        onClick={() => refetch()}
+        title={data ? `Live — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}. Click to refresh.` : "Click to refresh prices"}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "0 12px",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        {isLoading ? (
+          <RefreshCw size={12} className="animate-spin" style={{ color: "#E91E8C" }} />
+        ) : (
+          <div
+            className="animate-blink"
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: data ? "#10b981" : "#f59e0b",
+              boxShadow: `0 0 6px ${data ? "#10b981" : "#f59e0b"}`,
+            }}
+          />
+        )}
+      </button>
 
       {/* Scrolling ticker track */}
       <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
