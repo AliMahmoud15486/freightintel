@@ -280,18 +280,41 @@ export default function TopHeader({ pageTitle = "Dashboard" }: TopHeaderProps) {
               marginTop: "1px",
             }}
           >
-            Powered by{" "}
-            <span
-              style={{
-                background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                fontWeight: 700,
-              }}
-            >
-              Datajar
-            </span>
+            {isMobile ? (
+              <>
+                Analyze e-commerce data with{" "}
+                <a
+                  href="https://datajar.co"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                  }}
+                >
+                  Datajar.co
+                </a>
+              </>
+            ) : (
+              <>
+                Powered by{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    fontWeight: 700,
+                  }}
+                >
+                  Datajar
+                </span>
+              </>
+            )}
           </span>
         </div>
 

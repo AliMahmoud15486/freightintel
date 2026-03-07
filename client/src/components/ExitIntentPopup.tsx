@@ -230,6 +230,35 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
             >
               No thanks, I'll miss the alerts
             </button>
+            {/* Datajar tagline */}
+            <div
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.58rem",
+                color: "rgba(255,255,255,0.15)",
+                textAlign: "center",
+                marginTop: "10px",
+                borderTop: "1px solid rgba(255,255,255,0.05)",
+                paddingTop: "10px",
+              }}
+            >
+              Analyze your e-commerce data with{" "}
+              <a
+                href="https://datajar.co"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Datajar.co
+              </a>
+            </div>
           </div>
         </div>
       )}

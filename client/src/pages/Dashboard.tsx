@@ -307,6 +307,61 @@ export default function Dashboard() {
       </div>
     </div>
     <ExitIntentPopup />
+    {/* Sticky footer */}
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: "rgba(10, 14, 26, 0.97)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        padding: "7px 20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "6px",
+        zIndex: 100,
+        flexWrap: "wrap",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "0.65rem",
+          color: "rgba(255,255,255,0.25)",
+        }}
+      >
+        Analyze your e-commerce data with
+      </span>
+      <a
+        href="https://datajar.co"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          fontWeight: 700,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "0.65rem",
+          textDecoration: "none",
+        }}
+      >
+        Datajar.co
+      </a>
+      <span style={{ color: "rgba(255,255,255,0.1)", fontSize: "0.65rem" }}>·</span>
+      <span
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "0.65rem",
+          color: "rgba(255,255,255,0.15)",
+        }}
+      >
+        © {new Date().getFullYear()} FreightIntel
+      </span>
+    </div>
     </>
   );
 }
