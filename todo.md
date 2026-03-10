@@ -136,3 +136,17 @@
 - [ ] Add Datajar.co tagline to Cookie Consent banner footer
 - [ ] Add a sticky footer bar at the bottom of the dashboard with Datajar.co tagline
 - [ ] Add Datajar.co branding to email alert template
+
+## Carrier Recommendation Engine
+- [x] DB schema: freight_lanes table (20 major trade routes seeded)
+- [x] DB schema: lane_carriers junction table (70+ carrier-lane mappings seeded)
+- [x] Scoring engine: 4-signal risk score (severity 40%, news mentions 30%, zone overlap 20%, reliability 10%)
+- [x] LLM rationale: 1-sentence plain-English explanation per carrier
+- [x] tRPC procedures: getLanes (dropdown data) + recommend (scored results)
+- [x] CarrierRecommendationPanel UI: query form with origin, destination, cargo type, container, urgency
+- [x] Results display: ranked carrier cards with risk badges, transit time, cost index, delay estimate
+- [x] Best Option badge on top-ranked carrier
+- [x] Expand/collapse disruption reasons per carrier card
+- [x] Force Refresh button to re-score with latest live data
+- [x] Clarity Smart Event: carrier_recommendation_requested
+- [x] Vitest tests: 16 tests covering all scoring functions (30 total tests passing)

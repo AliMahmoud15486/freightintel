@@ -598,3 +598,21 @@ export const newsRouter = router({
     return { success: true, count: items.length };
   }),
 });
+
+// ─── Cache accessors for other routers ───────────────────────────────────────
+
+/**
+ * Returns the current cached news items (or empty array if cache is cold).
+ * Used by the Carrier Recommendation Engine to score carriers without re-fetching.
+ */
+export function getNewsCache(): NewsItem[] {
+  return cache?.items ?? [];
+}
+
+/**
+ * Returns the current cached shipping lines status (or empty array if cache is cold).
+ * Used by the Carrier Recommendation Engine to read live carrier disruption data.
+ */
+export function getShippingLinesCache(): CarrierStatus[] {
+  return shippingLinesCache?.carriers ?? [];
+}

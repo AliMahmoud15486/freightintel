@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { float, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -61,3 +61,54 @@ export const sentAlerts = mysqlTable("sent_alerts", {
 
 export type SentAlert = typeof sentAlerts.$inferSelect;
 export type InsertSentAlert = typeof sentAlerts.$inferInsert;
+
+/**
+ * FreightLanes — major trade routes used by the Carrier Recommendation Engine.
+ * Each lane represents an origin→destination port pair with baseline transit data.
+ */
+export const freightLanes = mysqlTable("freight_lanes", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Human-readable lane name, e.g. "Shanghai → Rotterdam" */
+  name: varchar("name", { length: 255 }).notNull(),
+  /** Origin region key, e.g. "china", "india", "uae" */
+  originRegion: varchar("originRegion", { length: 64 }).notNull(),
+  /** Destination region key, e.g. "uk", "usa", "germany" */
+  destinationRegion: varchar("destinationRegion", { length: 64 }).notNull(),
+  /** Origin port name */
+  originPort: varchar("originPort", { length: 128 }).notNull(),
+  /** Destination port name */
+  destinationPort: varchar("destinationPort", { length: 128 }).notNull(),
+  /** Baseline transit time in days (no disruption) */
+  baseTransitDays: int("baseTransitDays").notNull(),
+  /** Relative cost index: 1=low, 2=medium, 3=high */
+  costIndex: int("costIndex").notNull().default(2),
+  /** Disruption zones this lane passes through, comma-separated */
+  zones: varchar("zones", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FreightLane = typeof freightLanes.$inferSelect;
+export type InsertFreightLane = typeof freightLanes.$inferInsert;
+
+/**
+ * LaneCarriers — junction table mapping freight lanes to the carriers that operate them.
+ * Also stores carrier-specific baseline data for that lane.
+ */
+export const laneCarriers = mysqlTable("lane_carriers", {
+  id: int("id").autoincrement().primaryKey(),
+  laneId: int("laneId").notNull(),
+  /** Carrier ID matching the existing ShippingLines carrier list, e.g. "maersk" */
+  carrierId: varchar("carrierId", { length: 64 }).notNull(),
+  /** Display name, e.g. "Maersk" */
+  carrierName: varchar("carrierName", { length: 128 }).notNull(),
+  /** Carrier-specific transit days on this lane (may differ from lane baseline) */
+  transitDays: int("transitDays").notNull(),
+  /** Relative reliability score 0–100 (static seed, higher = more reliable) */
+  reliabilityScore: int("reliabilityScore").notNull().default(70),
+  /** Carrier-specific cost index for this lane: 1=cheap, 2=mid, 3=premium */
+  costIndex: int("costIndex").notNull().default(2),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type LaneCarrier = typeof laneCarriers.$inferSelect;
+export type InsertLaneCarrier = typeof laneCarriers.$inferInsert;

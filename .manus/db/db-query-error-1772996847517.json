@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, email, name, created_at FROM subscribers ORDER BY created_at DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Ag9AB7K4YtjjX55.bd6204364a8c --database ahZanQ69csJtVFtyEk4qAc --execute SELECT id, email, name, created_at FROM subscribers ORDER BY created_at DESC;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'created_at' in 'field list'"
+  ]
+}

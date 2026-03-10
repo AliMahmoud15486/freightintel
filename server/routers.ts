@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { marketDataRouter } from "./routers/marketData";
 import { newsRouter } from "./routers/news";
+import { carrierRecommendationRouter } from "./routers/carrierRecommendation";
 import { getAllSubscribers, getSubscriberByEmail, insertSubscriber } from "./db";
 
 export const appRouter = router({
@@ -24,6 +25,7 @@ export const appRouter = router({
 
   marketData: marketDataRouter,
   news: newsRouter,
+  carrierRecommendation: carrierRecommendationRouter,
 
   subscribers: router({
     /**

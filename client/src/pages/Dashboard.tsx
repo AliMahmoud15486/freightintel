@@ -13,6 +13,7 @@ import SupplyChainMap from "@/components/SupplyChainMap";
 import CostInflationDrivers from "@/components/CostInflationDrivers";
 import ImpactNewsFeed from "@/components/ImpactNewsFeed";
 import RetailerActionPanel from "@/components/RetailerActionPanel";
+import CarrierRecommendationPanel from "@/components/CarrierRecommendationPanel";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
@@ -177,6 +178,9 @@ export default function Dashboard() {
             onCategoryToggle={toggleCategory}
             onClearCategories={clearCategories}
           />
+
+          {/* Carrier Recommendation Engine */}
+          <CarrierRecommendationPanel />
 
           {/* KPI cards + Cost Inflation Drivers + Impact News Feed */}
           <div
