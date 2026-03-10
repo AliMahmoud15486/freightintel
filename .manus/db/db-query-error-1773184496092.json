@@ -1,0 +1,13 @@
+{
+  "query": "\nSELECT 'users' AS tbl, COUNT(*) AS rows FROM users\nUNION ALL SELECT 'subscribers', COUNT(*) FROM subscribers\nUNION ALL SELECT 'sent_alerts', COUNT(*) FROM sent_alerts\nUNION ALL SELECT 'freight_lanes', COUNT(*) FROM freight_lanes\nUNION ALL SELECT 'lane_carriers', COUNT(*) FROM lane_carriers\nUNION ALL SELECT 'risk_forecasts', COUNT(*) FROM risk_forecasts;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Ag9AB7K4YtjjX55.bd6204364a8c --database ahZanQ69csJtVFtyEk4qAc --execute \nSELECT 'users' AS tbl, COUNT(*) AS rows FROM users\nUNION ALL SELECT 'subscribers', COUNT(*) FROM subscribers\nUNION ALL SELECT 'sent_alerts', COUNT(*) FROM sent_alerts\nUNION ALL SELECT 'freight_lanes', COUNT(*) FROM freight_lanes\nUNION ALL SELECT 'lane_carriers', COUNT(*) FROM lane_carriers\nUNION ALL SELECT 'risk_forecasts', COUNT(*) FROM risk_forecasts;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 2: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 39 near \"rows FROM users",
+    "UNION ALL SELECT 'subscribers', COUNT(*) FROM subscribers",
+    "UNION ALL SELECT 'sent_alerts', COUNT(*) FROM sent_alerts",
+    "UNION ALL SELECT 'freight_lanes', COUNT(*) FROM freight_lanes",
+    "UNION ALL SELECT 'lane_carriers', COUNT(*) FROM lane_carriers",
+    "UNION ALL SELECT 'risk_forecasts', COUNT(*) FROM risk_forecasts\""
+  ]
+}

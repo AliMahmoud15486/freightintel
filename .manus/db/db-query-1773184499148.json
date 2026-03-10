@@ -1,0 +1,31 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Ag9AB7K4YtjjX55.bd6204364a8c --database ahZanQ69csJtVFtyEk4qAc --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "freight_lanes"
+    },
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "lane_carriers"
+    },
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "risk_forecasts"
+    },
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "sent_alerts"
+    },
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "subscribers"
+    },
+    {
+      "Tables_in_ahZanQ69csJtVFtyEk4qAc": "users"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_ahZanQ69csJtVFtyEk4qAc\n__drizzle_migrations\nfreight_lanes\nlane_carriers\nrisk_forecasts\nsent_alerts\nsubscribers\nusers\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

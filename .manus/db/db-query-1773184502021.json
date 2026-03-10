@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as lane_count FROM freight_lanes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Ag9AB7K4YtjjX55.bd6204364a8c --database ahZanQ69csJtVFtyEk4qAc --execute SELECT COUNT(*) as lane_count FROM freight_lanes;",
+  "rows": [
+    {
+      "lane_count": "20"
+    }
+  ],
+  "messages": [],
+  "stdout": "lane_count\n20\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}
