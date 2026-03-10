@@ -7,6 +7,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { marketDataRouter } from "./routers/marketData";
 import { newsRouter } from "./routers/news";
 import { carrierRecommendationRouter } from "./routers/carrierRecommendation";
+import { predictiveRiskRouter } from "./routers/predictiveRisk";
 import { getAllSubscribers, getSubscriberByEmail, insertSubscriber } from "./db";
 
 export const appRouter = router({
@@ -26,6 +27,7 @@ export const appRouter = router({
   marketData: marketDataRouter,
   news: newsRouter,
   carrierRecommendation: carrierRecommendationRouter,
+  predictiveRisk: predictiveRiskRouter,
 
   subscribers: router({
     /**

@@ -1,0 +1,1 @@
+ALTER TABLE `risk_forecasts` MODIFY COLUMN `keyRisks` text;

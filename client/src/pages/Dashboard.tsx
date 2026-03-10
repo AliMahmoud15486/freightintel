@@ -14,6 +14,7 @@ import CostInflationDrivers from "@/components/CostInflationDrivers";
 import ImpactNewsFeed from "@/components/ImpactNewsFeed";
 import RetailerActionPanel from "@/components/RetailerActionPanel";
 import CarrierRecommendationPanel from "@/components/CarrierRecommendationPanel";
+import PredictiveRiskPanel from "@/components/PredictiveRiskPanel";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
@@ -181,6 +182,9 @@ export default function Dashboard() {
 
           {/* Carrier Recommendation Engine */}
           <CarrierRecommendationPanel />
+
+          {/* Predictive Risk Scoring */}
+          <PredictiveRiskPanel />
 
           {/* KPI cards + Cost Inflation Drivers + Impact News Feed */}
           <div

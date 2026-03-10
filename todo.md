@@ -150,3 +150,14 @@
 - [x] Force Refresh button to re-score with latest live data
 - [x] Clarity Smart Event: carrier_recommendation_requested
 - [x] Vitest tests: 16 tests covering all scoring functions (30 total tests passing)
+
+## Predictive Risk Scoring
+- [x] DB schema: risk_forecasts table (laneId, laneName, probability30d, probability60d, trend, keyRisks, confidence, generatedAt)
+- [x] Forecasting engine: tRPC predictiveRisk.getAllForecasts — runs LLM forecast for all 20 lanes, 30-min DB cache
+- [x] Forecasting engine: tRPC predictiveRisk.getForecast — single lane forecast with DB caching
+- [x] Panel UI: PredictiveRiskPanel component — KPI cards, lane forecast table, expandable detail rows
+- [x] Panel UI: Probability bars colour-coded (green/amber/red), trend arrows, confidence badges
+- [x] Sparkline trend history: show 7-point probability trend per lane from stored forecasts
+- [x] Clarity Smart Event: predictive_risk_refreshed
+- [x] Vitest tests: probability normalisation, trend classification (24 tests)
+- [x] Checkpoint: 0 TypeScript errors, 54 tests passing

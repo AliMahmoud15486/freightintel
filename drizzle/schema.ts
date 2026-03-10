@@ -112,3 +112,30 @@ export const laneCarriers = mysqlTable("lane_carriers", {
 
 export type LaneCarrier = typeof laneCarriers.$inferSelect;
 export type InsertLaneCarrier = typeof laneCarriers.$inferInsert;
+
+/**
+ * RiskForecasts — stores LLM-generated 30/60-day disruption probability forecasts per lane.
+ * Cached for 30 minutes to avoid excessive LLM calls.
+ * Accumulates over time to enable sparkline trend history.
+ */
+export const riskForecasts = mysqlTable("risk_forecasts", {
+  id: int("id").autoincrement().primaryKey(),
+  laneId: int("laneId").notNull(),
+  laneName: varchar("laneName", { length: 255 }).notNull(),
+  /** Probability of significant disruption in next 30 days, 0–100 */
+  probability30d: int("probability30d").notNull(),
+  /** Probability of significant disruption in next 60 days, 0–100 */
+  probability60d: int("probability60d").notNull(),
+  /** Whether risk is rising, stable, or falling vs. previous forecast */
+  trend: mysqlEnum("trend", ["rising", "stable", "falling"]).notNull().default("stable"),
+  /** JSON array of key risk factor strings */
+  keyRisks: text("keyRisks"),
+  /** LLM confidence in this forecast */
+  confidence: mysqlEnum("confidence", ["high", "medium", "low"]).notNull().default("medium"),
+  /** Short summary sentence for the forecast */
+  summary: text("summary"),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+});
+
+export type RiskForecast = typeof riskForecasts.$inferSelect;
+export type InsertRiskForecast = typeof riskForecasts.$inferInsert;
