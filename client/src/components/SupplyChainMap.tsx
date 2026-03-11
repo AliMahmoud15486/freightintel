@@ -5,7 +5,7 @@
  *  3. Port Status       — major world ports with congestion/status indicators
  *  4. Weather Impact    — weather disruption zones with storm indicators
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { MoreHorizontal, ZoomIn, ZoomOut, RefreshCw, Anchor, Wind, Ship } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
@@ -762,18 +762,99 @@ const ZOOM_LEVELS = [1, 1.35, 1.75, 2.2, 2.8];
 const ZOOM_MIN = 0;
 const ZOOM_MAX = ZOOM_LEVELS.length - 1;
 
+// Maximum pan offset as a fraction of container size per zoom level
+function maxPan(scale: number) {
+  // At scale=1 no pan needed; at higher scales allow panning proportional to overflow
+  return { x: 50 * (scale - 1), y: 50 * (scale - 1) };
+}
+
 export default function SupplyChainMap() {
   const [filterMode, setFilterMode] = useState("Interland Monitor");
   const [zoomIdx, setZoomIdx] = useState(0);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const panStart = useRef({ x: 0, y: 0 });
   const { isMobile, isTablet } = useBreakpoint();
 
   const zoomScale = ZOOM_LEVELS[zoomIdx];
 
   function handleZoomIn() {
-    setZoomIdx((prev) => Math.min(prev + 1, ZOOM_MAX));
+    setZoomIdx((prev) => {
+      const next = Math.min(prev + 1, ZOOM_MAX);
+      // Clamp existing pan to new limits
+      const lim = maxPan(ZOOM_LEVELS[next]);
+      setPan((p) => ({
+        x: Math.max(-lim.x, Math.min(lim.x, p.x)),
+        y: Math.max(-lim.y, Math.min(lim.y, p.y)),
+      }));
+      return next;
+    });
   }
   function handleZoomOut() {
-    setZoomIdx((prev) => Math.max(prev - 1, ZOOM_MIN));
+    setZoomIdx((prev) => {
+      const next = Math.max(prev - 1, ZOOM_MIN);
+      if (next === 0) {
+        setPan({ x: 0, y: 0 });
+      } else {
+        const lim = maxPan(ZOOM_LEVELS[next]);
+        setPan((p) => ({
+          x: Math.max(-lim.x, Math.min(lim.x, p.x)),
+          y: Math.max(-lim.y, Math.min(lim.y, p.y)),
+        }));
+      }
+      return next;
+    });
+  }
+
+  // ── Drag-to-pan handlers ──────────────────────────────────────────────────
+  function onMouseDown(e: React.MouseEvent) {
+    if (zoomScale <= 1) return;
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    panStart.current = { x: pan.x, y: pan.y };
+    e.preventDefault();
+  }
+
+  function onMouseMove(e: React.MouseEvent) {
+    if (!isDragging.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    const lim = maxPan(zoomScale);
+    setPan({
+      x: Math.max(-lim.x, Math.min(lim.x, panStart.current.x + dx)),
+      y: Math.max(-lim.y, Math.min(lim.y, panStart.current.y + dy)),
+    });
+  }
+
+  function onMouseUp() {
+    isDragging.current = false;
+  }
+
+  // Touch support
+  function onTouchStart(e: React.TouchEvent) {
+    if (zoomScale <= 1) return;
+    const t = e.touches[0];
+    isDragging.current = true;
+    dragStart.current = { x: t.clientX, y: t.clientY };
+    panStart.current = { x: pan.x, y: pan.y };
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!isDragging.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - dragStart.current.x;
+    const dy = t.clientY - dragStart.current.y;
+    const lim = maxPan(zoomScale);
+    setPan({
+      x: Math.max(-lim.x, Math.min(lim.x, panStart.current.x + dx)),
+      y: Math.max(-lim.y, Math.min(lim.y, panStart.current.y + dy)),
+    });
+    e.preventDefault();
+  }
+
+  function onTouchEnd() {
+    isDragging.current = false;
   }
 
   const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.disruptions.useQuery(undefined, {
@@ -882,7 +963,23 @@ export default function SupplyChainMap() {
 
       {/* Map Container */}
       <div
-        style={{ position: "relative", width: "100%", height: isMobile ? "clamp(240px, 55vw, 340px)" : isTablet ? "clamp(300px, 40vh, 420px)" : "clamp(380px, 45vh, 560px)", flex: "0 0 auto", overflow: "hidden", background: "#060b14" }}
+        style={{
+          position: "relative",
+          width: "100%",
+          height: isMobile ? "clamp(240px, 55vw, 340px)" : isTablet ? "clamp(300px, 40vh, 420px)" : "clamp(380px, 45vh, 560px)",
+          flex: "0 0 auto",
+          overflow: "hidden",
+          background: "#060b14",
+          cursor: zoomScale > 1 ? (isDragging.current ? "grabbing" : "grab") : "default",
+          userSelect: "none",
+        }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         {/* Zoomable inner layer */}
         <div
@@ -890,8 +987,8 @@ export default function SupplyChainMap() {
             position: "absolute",
             inset: 0,
             transformOrigin: "center center",
-            transform: `scale(${zoomScale})`,
-            transition: "transform 0.25s ease",
+            transform: `scale(${zoomScale}) translate(${pan.x / zoomScale}px, ${pan.y / zoomScale}px)`,
+            transition: isDragging.current ? "none" : "transform 0.25s ease",
           }}
         >
         {/* Background map image */}

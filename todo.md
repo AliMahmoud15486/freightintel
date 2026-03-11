@@ -164,3 +164,4 @@
 
 ## Map Fixes
 - [x] Fix zoom in / zoom out buttons on Supply Chain Map to correctly control Google Maps zoom level
+- [x] Add drag-to-pan to Supply Chain Map — click and drag to move when zoomed in (mouse + touch)
