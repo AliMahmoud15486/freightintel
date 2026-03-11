@@ -180,3 +180,18 @@
 ## Map UX Enhancements
 - [x] Scroll-wheel zoom on Supply Chain Map (mouse wheel + trackpad pinch)
 - [x] Port Status live linkage: show matching live news headline in port tooltip for disrupted ports
+
+## Margin Impact Calculator
+- [x] tRPC procedure: marginCalculator.getDefaults — returns live oil price, freight index, disruption level as slider defaults
+- [x] tRPC procedure: marginCalculator.getInsight — LLM-generated 1-line insight for the current calculation result
+- [x] MarginImpactCalculator component: input panel (product name, category, unit cost, selling price, origin, container, units/month)
+- [x] MarginImpactCalculator component: scenario sliders (oil price ±$20, freight surcharge 0–50%, disruption severity Low/Med/High)
+- [x] MarginImpactCalculator component: KPI cards (Base Margin %, Current Margin %, Delta)
+- [x] MarginImpactCalculator component: waterfall chart (base → freight → oil → disruption → current margin)
+- [x] MarginImpactCalculator component: monthly impact summary (revenue at risk, units affected, break-even price)
+- [x] MarginImpactCalculator component: AI insight strip (LLM-generated 1-line recommendation)
+- [x] Sliders default to live market values (oil price from pulseBar, freight from BDRY/ZIM)
+- [x] All calculations client-side for instant feedback (no server round-trip on slider change)
+- [x] Integrate panel into Dashboard between CarrierRecommendationPanel and PredictiveRiskPanel
+- [x] Vitest tests: margin calculation logic, waterfall breakdown, break-even formula (18 tests)
+- [x] TypeScript: 0 errors
