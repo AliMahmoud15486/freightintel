@@ -465,17 +465,29 @@ function ShippingRoutesOverlay({ routes }: { routes: RouteEntry[] }) {
 function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
   const [activePort, setActivePort] = useState<string | null>(null);
 
-  // Elevate port status if a live disruption is nearby
+  // Elevate port status and attach nearest live disruption for tooltip
   const enhancedPorts = useMemo(() => {
     return WORLD_PORTS.map((port) => {
-      const nearby = disruptions.find((d) => {
+      // Find the closest disruption within 8° (approx 800km)
+      let nearest: LiveDisruption | null = null;
+      let nearestDist = Infinity;
+      for (const d of disruptions) {
         const dist = Math.sqrt((d.lat - port.lat) ** 2 + (d.lng - port.lng) ** 2);
-        return dist < 8;
-      });
-      if (nearby) {
-        return { ...port, status: nearby.severity === "critical" ? "closed" as const : "warning" as const };
+        if (dist < 8 && dist < nearestDist) {
+          nearest = d;
+          nearestDist = dist;
+        }
       }
-      return port;
+      if (nearest) {
+        return {
+          ...port,
+          status: nearest.severity === "critical" ? "closed" as const : "warning" as const,
+          liveHeadline: nearest.name,
+          liveDescription: nearest.description.slice(0, 80) + (nearest.description.length > 80 ? "…" : ""),
+          liveSeverity: nearest.severity,
+        };
+      }
+      return { ...port, liveHeadline: null, liveDescription: null, liveSeverity: null };
     });
   }, [disruptions]);
 
@@ -522,21 +534,52 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
                   bottom: "calc(100% + 4px)",
                   left: "50%",
                   transform: "translateX(-50%)",
-                  background: "rgba(10,14,26,0.92)",
-                  border: `1px solid ${color}55`,
-                  borderRadius: "4px",
-                  padding: "4px 8px",
-                  whiteSpace: "nowrap",
+                  background: "rgba(10,14,26,0.95)",
+                  border: `1px solid ${color}66`,
+                  borderRadius: "6px",
+                  padding: "6px 10px",
                   zIndex: 20,
                   pointerEvents: "none",
+                  minWidth: 160,
+                  maxWidth: 260,
+                  whiteSpace: "normal" as const,
+                  boxShadow: `0 4px 16px rgba(0,0,0,0.6), 0 0 8px ${color}33`,
                 }}
               >
-                <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.7rem", color, letterSpacing: "0.05em" }}>
-                  {port.name}
+                {/* Port name + status */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: port.liveHeadline ? 4 : 0 }}>
+                  <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.72rem", color, letterSpacing: "0.05em" }}>
+                    {port.name}
+                  </div>
+                  <div style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "0.55rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase" as const,
+                    color: "rgba(255,255,255,0.45)",
+                    background: `${color}20`,
+                    border: `1px solid ${color}40`,
+                    borderRadius: 3,
+                    padding: "1px 4px",
+                  }}>
+                    {portStatusLabel[port.status]}
+                  </div>
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.62rem", color: "rgba(255,255,255,0.5)" }}>
-                  {portStatusLabel[port.status]}
-                </div>
+                {/* Live news headline if disrupted */}
+                {port.liveHeadline && (
+                  <>
+                    <div style={{ width: "100%", height: 1, background: `${color}25`, marginBottom: 4 }} />
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.63rem", color: "rgba(255,255,255,0.75)", lineHeight: 1.4, marginBottom: 2 }}>
+                      {port.liveHeadline}
+                    </div>
+                    {port.liveDescription && (
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.58rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.35 }}>
+                        {port.liveDescription}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -875,6 +918,16 @@ export default function SupplyChainMap() {
     isDragging.current = false;
   }
 
+  // ── Scroll-wheel zoom ────────────────────────────────────────────────────────
+  function onWheel(e: React.WheelEvent) {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
+  }
+
   const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.disruptions.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
     staleTime: 4 * 60 * 1000,
@@ -1051,6 +1104,7 @@ export default function SupplyChainMap() {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onWheel={onWheel}
       >
         {/* Zoomable inner layer */}
         <div

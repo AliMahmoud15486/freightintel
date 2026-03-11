@@ -176,3 +176,7 @@
 - [x] Shipping Routes: update badge count from live data (not hardcoded static count)
 - [x] Weather Impact: derive weather zones from live news items mentioning storms, cyclones, typhoons, hurricanes
 - [x] Weather Impact: update badge count from live data
+
+## Map UX Enhancements
+- [x] Scroll-wheel zoom on Supply Chain Map (mouse wheel + trackpad pinch)
+- [x] Port Status live linkage: show matching live news headline in port tooltip for disrupted ports
