@@ -71,10 +71,7 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
 
   const navItems: NavItem[] = [
     { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", href: "/",        implemented: true  },
-    { icon: <Map size={16} />,            label: "Maps",       id: "maps",      href: "/maps",     implemented: false },
-    { icon: <Droplets size={16} />,       label: "Oil Data",   id: "oil",       href: "/oil",      implemented: false },
     { icon: <TrendingUp size={16} />,     label: "Margins",    id: "margins",   href: "/margins",  implemented: true  },
-    { icon: <Bell size={16} />,           label: "Alerts",     id: "alerts",    href: "/alerts",   badge: liveCriticalCount || undefined, implemented: false },
   ];
 
   const isActive = (item: NavItem) => {
