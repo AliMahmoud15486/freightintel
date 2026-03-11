@@ -206,3 +206,13 @@
 - [x] Make navigation sidebar collapsible (toggle open/closed with a button)
 - [x] Collapsed state: show only icons (no labels), with tooltip on hover
 - [ ] Persist collapsed state across page navigation
+
+## Margins Page Live Data
+- [x] Add marginAnalysis tRPC procedure: live KPIs (critical SKUs, margin at risk, best performer)
+- [x] Add marginAnalysis waterfall: compute oil surcharge and freight cost impact from live prices
+- [x] Add marginAnalysis categories: adjust current margins based on live oil/freight multipliers
+- [x] Add marginAnalysis SKU table: compute landed costs and margin changes from live freight rates
+- [x] Set all Margins page data to 5-hour refetch interval
+- [x] Set MarginImpactCalculator defaults to 5-hour refetch interval
+- [x] Add force-refresh button to Margins page header
+- [x] Add last-updated timestamp to each panel on Margins page

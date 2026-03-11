@@ -209,7 +209,8 @@ export default function MarginImpactCalculator() {
 
   // Fetch live defaults
   const { data: defaults } = trpc.marginCalculator.getDefaults.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 60 * 1000, // 5 hours
+    staleTime: 5 * 60 * 60 * 1000 - 60_000, // stale 1 min before TTL
     refetchOnWindowFocus: false,
   });
 
