@@ -340,7 +340,7 @@ function PortTooltip({ port }: { port: typeof WORLD_PORTS[0] }) {
   );
 }
 
-function WeatherTooltip({ zone }: { zone: typeof WEATHER_ZONES[0] }) {
+function WeatherTooltip({ zone }: { zone: WeatherZoneEntry }) {
   const color = weatherSeverityColor[zone.severity];
   return (
     <div
@@ -374,7 +374,20 @@ function WeatherTooltip({ zone }: { zone: typeof WEATHER_ZONES[0] }) {
 
 // ─── Overlay components ───────────────────────────────────────────────────────
 
-function ShippingRoutesOverlay() {
+type RouteEntry = typeof SHIPPING_ROUTES[0];
+type WeatherZoneEntry = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radius: number;
+  type: "cyclone" | "typhoon" | "hurricane" | "storm";
+  severity: "critical" | "warning" | "info";
+  impact: string;
+  isLive?: boolean;
+};
+
+function ShippingRoutesOverlay({ routes }: { routes: RouteEntry[] }) {
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null);
 
   // Convert route waypoints to SVG polyline points (percentage-based viewBox 0-100)
@@ -385,7 +398,7 @@ function ShippingRoutesOverlay() {
       preserveAspectRatio="none"
     >
       <defs>
-        {SHIPPING_ROUTES.map((route) => {
+        {routes.map((route) => {
           const color = routeStatusColor[route.status];
           return (
             <filter key={`glow-${route.id}`} id={`glow-${route.id}`} x="-50%" y="-50%" width="200%" height="200%">
@@ -404,7 +417,7 @@ function ShippingRoutesOverlay() {
         `}</style>
       </defs>
 
-      {SHIPPING_ROUTES.map((route) => {
+      {routes.map((route) => {
         const color = routeStatusColor[route.status];
         const pts = route.points
           .map(([lng, lat]) => `${lngToX(lng).toFixed(2)},${latToY(lat).toFixed(2)}`)
@@ -533,7 +546,7 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
   );
 }
 
-function WeatherOverlay() {
+function WeatherOverlay({ zones }: { zones: WeatherZoneEntry[] }) {
   const [activeZone, setActiveZone] = useState<string | null>(null);
 
   return (
@@ -559,7 +572,7 @@ function WeatherOverlay() {
               to { transform-origin: center; transform: rotate(360deg); }
             }
           `}</style>
-          {WEATHER_ZONES.map((zone) => {
+          {zones.map((zone) => {
             const color = weatherSeverityColor[zone.severity];
             return (
               <radialGradient key={`wg-${zone.id}`} id={`wg-${zone.id}`} cx="50%" cy="50%" r="50%">
@@ -571,7 +584,7 @@ function WeatherOverlay() {
           })}
         </defs>
 
-        {WEATHER_ZONES.map((zone) => {
+        {zones.map((zone) => {
           const cx = lngToX(zone.lng);
           const cy = latToY(zone.lat);
           const r = zone.radius;
@@ -594,7 +607,7 @@ function WeatherOverlay() {
       </svg>
 
       {/* Interactive zone markers */}
-      {WEATHER_ZONES.map((zone) => {
+      {zones.map((zone) => {
         const x = lngToX(zone.lng);
         const y = latToY(zone.lat);
         if (x < 1 || x > 99 || y < 1 || y > 99) return null;
@@ -875,24 +888,77 @@ export default function SupplyChainMap() {
     ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : null;
 
+  // ── Live Shipping Routes ──────────────────────────────────────────────────
+  // For each route, check if any live disruption hotspot falls within 12° of
+  // any waypoint. If so, escalate the route status to critical/warning.
+  const liveRoutes = useMemo(() => {
+    if (locations.length === 0) return SHIPPING_ROUTES;
+    return SHIPPING_ROUTES.map((route) => {
+      let worstLevel = 0; // 0=normal, 1=warning, 2=critical
+      for (const [lng, lat] of route.points) {
+        for (const d of locations) {
+          const dist = Math.sqrt((d.lat - lat) ** 2 + (d.lng - lng) ** 2);
+          if (dist < 12) {
+            if (d.severity === "critical") { worstLevel = 2; break; }
+            if (d.severity === "warning" && worstLevel < 1) worstLevel = 1;
+          }
+        }
+        if (worstLevel === 2) break;
+      }
+      if (worstLevel === 0) return { ...route, status: "normal" as const, color: routeStatusColor.normal };
+      if (worstLevel === 2) return { ...route, status: "critical" as const, color: routeStatusColor.critical };
+      return { ...route, status: "warning" as const, color: routeStatusColor.warning };
+    });
+  }, [locations]);
+
+  // ── Live Weather Zones ────────────────────────────────────────────────────
+  // Extract weather-related disruptions from live news locations.
+  // Keywords: storm, cyclone, typhoon, hurricane, monsoon, flood, blizzard.
+  const WEATHER_KEYWORDS = /storm|cyclone|typhoon|hurricane|monsoon|flood|blizzard|gale|squall|tropical/i;
+  const liveWeatherZones = useMemo<WeatherZoneEntry[]>(() => {
+    const fromLive = locations
+      .filter((d) => WEATHER_KEYWORDS.test(d.name) || WEATHER_KEYWORDS.test(d.description))
+      .map((d, i) => ({
+        id: `live-weather-${i}`,
+        name: d.name,
+        lat: d.lat,
+        lng: d.lng,
+        radius: d.severity === "critical" ? 7 : 5,
+        type: (/typhoon/i.test(d.name + d.description) ? "typhoon"
+          : /hurricane/i.test(d.name + d.description) ? "hurricane"
+          : /cyclone/i.test(d.name + d.description) ? "cyclone"
+          : "storm") as "typhoon" | "hurricane" | "cyclone" | "storm",
+        severity: d.severity === "critical" ? "critical" as const
+          : d.severity === "warning" ? "warning" as const
+          : "info" as const,
+        impact: d.description.slice(0, 60),
+        isLive: true,
+      }));
+    // Merge: live zones take priority; keep static zones that don't overlap a live zone
+    const staticFiltered: WeatherZoneEntry[] = WEATHER_ZONES
+      .filter((sz) => !fromLive.some((lz) => Math.sqrt((lz.lat - sz.lat) ** 2 + (lz.lng - sz.lng) ** 2) < 15))
+      .map((sz) => ({ ...sz, type: sz.type as WeatherZoneEntry["type"] }));
+    return [...fromLive, ...staticFiltered];
+  }, [locations]);
+
   // Mode-specific badge text
   const badgeText = useMemo(() => {
     if (filterMode === "Shipping Routes") {
-      const disrupted = SHIPPING_ROUTES.filter((r) => r.status !== "normal").length;
-      return `${disrupted} ROUTES DISRUPTED`;
+      const disrupted = liveRoutes.filter((r) => r.status !== "normal").length;
+      return disrupted > 0 ? `${disrupted} ROUTES DISRUPTED` : "ALL ROUTES CLEAR";
     }
     if (filterMode === "Port Status") {
       const closed = WORLD_PORTS.filter((p) => p.status === "closed" || p.status === "warning").length;
       return `${closed} PORTS IMPACTED`;
     }
     if (filterMode === "Weather Impact") {
-      const critical = WEATHER_ZONES.filter((z) => z.severity === "critical").length;
-      return `${critical} CRITICAL STORMS`;
+      const critical = liveWeatherZones.filter((z) => z.severity === "critical").length;
+      return critical > 0 ? `${critical} CRITICAL STORMS` : "CONDITIONS MONITORED";
     }
     return isLoading && locations.length === 0
       ? "LOADING..."
       : `${criticalCount} CRITICAL · ${warningCount} WARNING`;
-  }, [filterMode, isLoading, locations.length, criticalCount, warningCount]);
+  }, [filterMode, isLoading, locations.length, criticalCount, warningCount, liveRoutes, liveWeatherZones]);
 
   const badgeColor = filterMode === "Shipping Routes"
     ? "#ef4444"
@@ -1014,9 +1080,9 @@ export default function SupplyChainMap() {
 
         {/* ── Mode-specific overlays ── */}
         {filterMode === "Interland Monitor" && <DisruptionHotspots locations={locations} />}
-        {filterMode === "Shipping Routes"   && <ShippingRoutesOverlay />}
+        {filterMode === "Shipping Routes"   && <ShippingRoutesOverlay routes={liveRoutes} />}
         {filterMode === "Port Status"       && <PortStatusOverlay disruptions={locations} />}
-        {filterMode === "Weather Impact"    && <WeatherOverlay />}
+        {filterMode === "Weather Impact"    && <WeatherOverlay zones={liveWeatherZones} />}
 
         {/* Zoom controls — outside the zoomable layer so they stay fixed */}
 

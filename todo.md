@@ -170,3 +170,9 @@
 - [x] Audit and fix Shipping Routes overlay — increased strokeWidth 0.3→0.7, glow opacity improved, all 7 routes confirmed working
 - [x] Audit and fix Port Status overlay — marker size 14px→18px, pulse animation on disrupted/warning ports, 20 ports confirmed correct coordinates
 - [x] Audit and fix Weather Impact overlay — blob opacity 0.18→0.75, ring size 28px→34px, 6 weather zones confirmed visible
+
+## Live Map Overlays
+- [x] Shipping Routes: derive route status dynamically from live disruption hotspots (proximity to waypoints)
+- [x] Shipping Routes: update badge count from live data (not hardcoded static count)
+- [x] Weather Impact: derive weather zones from live news items mentioning storms, cyclones, typhoons, hurricanes
+- [x] Weather Impact: update badge count from live data
