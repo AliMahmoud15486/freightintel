@@ -15,6 +15,7 @@ import {
   Calculator,
   BarChart3,
   Newspaper,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
@@ -61,13 +62,21 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
     }
   };
 
-  const sectionItems = [
+  // Dashboard sections (no Margin Calculator — it lives on /margins)
+  const dashboardSections = [
     { icon: <Globe size={14} />,      label: "Supply Chain Map",   sectionId: "section-map"     },
     { icon: <Ship size={14} />,       label: "Carrier Engine",     sectionId: "section-carrier" },
-    { icon: <Calculator size={14} />, label: "Margin Calculator",  sectionId: "section-margin"  },
     { icon: <BarChart3 size={14} />,  label: "Risk Forecast",      sectionId: "section-risk"    },
     { icon: <Newspaper size={14} />,  label: "News Feed",          sectionId: "section-news"    },
   ];
+
+  // Margins page sections
+  const marginsSections = [
+    { icon: <TrendingUp size={14} />,  label: "Margin Analysis",    sectionId: "section-kpis"           },
+    { icon: <Calculator size={14} />,  label: "Margin Calculator",  sectionId: "section-margin-calculator" },
+  ];
+
+  const sectionItems = location === "/" ? dashboardSections : location.startsWith("/margins") ? marginsSections : [];
 
   const navItems: NavItem[] = [
     { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", href: "/",        implemented: true  },
@@ -202,6 +211,15 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
                   {item.badge}
                 </span>
               )}
+              {/* Down arrow indicating sub-sections are available */}
+              <ChevronDown
+                size={12}
+                style={{
+                  flexShrink: 0,
+                  color: active ? "rgba(249,115,22,0.7)" : "rgba(255,255,255,0.25)",
+                  transition: "color 0.15s ease",
+                }}
+              />
             </>
           );
 
@@ -230,8 +248,8 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
             </button>
           );
         })}
-        {/* SECTIONS quick-jump group — only shown on Dashboard */}
-        {location === "/" && (
+        {/* SECTIONS quick-jump group — shown on Dashboard and Margins */}
+        {sectionItems.length > 0 && (
           <>
             <div style={{ padding: "16px 16px 8px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               <span className="section-label">JUMP TO</span>

@@ -22,6 +22,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { TrendingDown, TrendingUp, AlertTriangle, Package, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import MarginImpactCalculator from "@/components/MarginImpactCalculator";
 import NavigationSidebar from "@/components/NavigationSidebar";
 import TopHeader from "@/components/TopHeader";
 import GlobalPulseBar from "@/components/GlobalPulseBar";
@@ -228,10 +229,10 @@ export default function Margins() {
         </div>
 
         {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div data-scroll-container="main" style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
 
           {/* KPI row */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px" }}>
+          <div id="section-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px" }}>
             <KpiCard label="Avg Portfolio Margin" value={`${liveAvgMargin}%`} sub="Across all categories" color="#3b82f6" icon={Package} trend="down" />
             <KpiCard label="Oil Price Impact" value={`-${liveOilImpact}%`} sub={`Brent at $${currentPrices?.brentPrice.toFixed(2) ?? "—"}`} color="#f97316" icon={TrendingDown} trend="down" />
             <KpiCard label="Critical SKUs" value="4" sub="Below target margin" color="#ef4444" icon={AlertTriangle} trend="down" />
@@ -512,6 +513,11 @@ export default function Margins() {
               </table>
             </div>
           </div>
+          {/* Margin Impact Calculator */}
+          <div id="section-margin-calculator">
+            <MarginImpactCalculator />
+          </div>
+
         </div>
       </div>
     </div>

@@ -195,3 +195,8 @@
 - [x] Integrate panel into Dashboard between CarrierRecommendationPanel and PredictiveRiskPanel
 - [x] Vitest tests: margin calculation logic, waterfall breakdown, break-even formula (18 tests)
 - [x] TypeScript: 0 errors
+
+## Nav & Layout Refactor
+- [ ] Move MarginImpactCalculator from Dashboard to the Margins page
+- [ ] Remove section-margin JUMP TO entry from Dashboard sidebar
+- [ ] Add down-arrow / section indicator beside Dashboard and Margins nav items in sidebar

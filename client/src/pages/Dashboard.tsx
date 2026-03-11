@@ -14,7 +14,6 @@ import CostInflationDrivers from "@/components/CostInflationDrivers";
 import ImpactNewsFeed from "@/components/ImpactNewsFeed";
 import RetailerActionPanel from "@/components/RetailerActionPanel";
 import CarrierRecommendationPanel from "@/components/CarrierRecommendationPanel";
-import MarginImpactCalculator from "@/components/MarginImpactCalculator";
 import PredictiveRiskPanel from "@/components/PredictiveRiskPanel";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
@@ -188,8 +187,6 @@ export default function Dashboard() {
 
           {/* Carrier Recommendation Engine */}
           <div id="section-carrier"><CarrierRecommendationPanel /></div>
-          <div id="section-margin"><MarginImpactCalculator /></div>
-
           {/* Predictive Risk Scoring */}
           <div id="section-risk"><PredictiveRiskPanel /></div>
 
