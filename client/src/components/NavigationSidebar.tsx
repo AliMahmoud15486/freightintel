@@ -10,6 +10,11 @@ import {
   TrendingUp,
   Bell,
   Shield,
+  Globe,
+  Ship,
+  Calculator,
+  BarChart3,
+  Newspaper,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
@@ -38,6 +43,31 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
     staleTime: 4 * 60 * 1000,
   });
   const liveCriticalCount = (newsData?.items ?? []).filter((i) => i.severity === "critical").length;
+
+  // Section scroll handler — scrolls the inner dashboard container to the target section
+  const scrollToSection = (sectionId: string) => {
+    const target = document.getElementById(sectionId);
+    const container = document.querySelector('[data-scroll-container="main"]') as HTMLElement | null;
+    if (!target) return;
+    if (container) {
+      // Calculate offset relative to the scrollable container
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const offset = targetRect.top - containerRect.top + container.scrollTop - 8;
+      container.scrollTo({ top: offset, behavior: 'smooth' });
+    } else {
+      // Fallback for non-nested layouts
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const sectionItems = [
+    { icon: <Globe size={14} />,      label: "Supply Chain Map",   sectionId: "section-map"     },
+    { icon: <Ship size={14} />,       label: "Carrier Engine",     sectionId: "section-carrier" },
+    { icon: <Calculator size={14} />, label: "Margin Calculator",  sectionId: "section-margin"  },
+    { icon: <BarChart3 size={14} />,  label: "Risk Forecast",      sectionId: "section-risk"    },
+    { icon: <Newspaper size={14} />,  label: "News Feed",          sectionId: "section-news"    },
+  ];
 
   const navItems: NavItem[] = [
     { icon: <LayoutDashboard size={16} />, label: "Dashboard", id: "dashboard", href: "/",        implemented: true  },
@@ -134,7 +164,7 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
       </div>
 
       {/* Nav items */}
-      <nav style={{ flex: 1, padding: "0 8px" }}>
+      <nav style={{ flex: 1, padding: "0 8px", overflowY: 'auto' }}>
         {navItems.map((item) => {
           const active = isActive(item);
           const navStyle: React.CSSProperties = {
@@ -203,6 +233,49 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
             </button>
           );
         })}
+        {/* SECTIONS quick-jump group — only shown on Dashboard */}
+        {location === "/" && (
+          <>
+            <div style={{ padding: "16px 16px 8px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <span className="section-label">JUMP TO</span>
+            </div>
+            {sectionItems.map((item) => (
+              <button
+                key={item.sectionId}
+                onClick={() => scrollToSection(item.sectionId)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "7px 10px",
+                  borderRadius: "6px",
+                  marginBottom: "2px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "transparent",
+                  borderLeft: "3px solid transparent",
+                  color: "rgba(255,255,255,0.4)",
+                  transition: "all 0.15s ease",
+                  textAlign: "left",
+                }}
+                className="hover:bg-white/5 hover:text-white/70"
+              >
+                <span style={{ flexShrink: 0, color: "rgba(249,115,22,0.6)" }}>{item.icon}</span>
+                <span
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 500,
+                    fontSize: "0.78rem",
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </>
+        )}
       </nav>
     </aside>
   );

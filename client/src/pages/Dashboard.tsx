@@ -18,6 +18,7 @@ import MarginImpactCalculator from "@/components/MarginImpactCalculator";
 import PredictiveRiskPanel from "@/components/PredictiveRiskPanel";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import NavigationSidebar from "@/components/NavigationSidebar";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -137,6 +138,9 @@ export default function Dashboard() {
         backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(233,30,140,0.04) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.04) 0%, transparent 50%)",
       }}
     >
+      {/* Navigation Sidebar — hidden on mobile */}
+      {!isMobile && <NavigationSidebar />}
+
       {/* Main content area */}
       <div
         style={{
@@ -158,6 +162,7 @@ export default function Dashboard() {
 
         {/* Scrollable main content */}
         <div
+          data-scroll-container="main"
           style={{
             flex: 1,
             overflowY: "auto",
@@ -171,7 +176,7 @@ export default function Dashboard() {
           } as React.CSSProperties}
         >
           {/* Full-width Supply Chain Disruption Map (includes ShippingLinesPanel below it) */}
-          <SupplyChainMap />
+          <div id="section-map"><SupplyChainMap /></div>
 
           {/* Full-width Retailer Action Panel (Shipping Companies + Alerts + Categories) */}
           {/* Placed directly below ShippingLinesPanel as requested */}
@@ -182,11 +187,11 @@ export default function Dashboard() {
           />
 
           {/* Carrier Recommendation Engine */}
-          <CarrierRecommendationPanel />
-          <MarginImpactCalculator />
+          <div id="section-carrier"><CarrierRecommendationPanel /></div>
+          <div id="section-margin"><MarginImpactCalculator /></div>
 
           {/* Predictive Risk Scoring */}
-          <PredictiveRiskPanel />
+          <div id="section-risk"><PredictiveRiskPanel /></div>
 
           {/* KPI cards + Cost Inflation Drivers + Impact News Feed */}
           <div
@@ -306,10 +311,12 @@ export default function Dashboard() {
                 }}
               >
                 <CostInflationDrivers />
-                <ImpactNewsFeed
-                  selectedCategories={selectedCategories}
-                  onClearCategories={clearCategories}
-                />
+                <div id="section-news">
+                  <ImpactNewsFeed
+                    selectedCategories={selectedCategories}
+                    onClearCategories={clearCategories}
+                  />
+                </div>
               </div>
             </div>
           </div>
