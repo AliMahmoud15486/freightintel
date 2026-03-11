@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Margins from "./pages/Margins";
+import MerchantProfile from "./pages/MerchantProfile";
 import CookieConsent from "./components/CookieConsent";
 
 function Router() {
@@ -14,6 +15,7 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/margins"} component={Margins} />
+      <Route path={"/profile"} component={MerchantProfile} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

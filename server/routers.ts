@@ -10,6 +10,7 @@ import { carrierRecommendationRouter } from "./routers/carrierRecommendation";
 import { predictiveRiskRouter } from "./routers/predictiveRisk";
 import { marginCalculatorRouter } from "./routers/marginCalculator";
 import { marginAnalysisRouter } from "./routers/marginAnalysis";
+import { merchantProfileRouter } from "./routers/merchantProfile";
 import { getAllSubscribers, getSubscriberByEmail, insertSubscriber } from "./db";
 
 export const appRouter = router({
@@ -32,6 +33,7 @@ export const appRouter = router({
   predictiveRisk: predictiveRiskRouter,
   marginCalculator: marginCalculatorRouter,
   marginAnalysis: marginAnalysisRouter,
+  merchantProfile: merchantProfileRouter,
 
   subscribers: router({
     /**

@@ -139,3 +139,67 @@ export const riskForecasts = mysqlTable("risk_forecasts", {
 
 export type RiskForecast = typeof riskForecasts.$inferSelect;
 export type InsertRiskForecast = typeof riskForecasts.$inferInsert;
+
+/**
+ * MerchantProfiles — one row per authenticated user.
+ * Stores all editable business profile data as JSON blobs for flexibility.
+ */
+export const merchantProfiles = mysqlTable("merchant_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  /** FK to users.id */
+  userId: int("userId").notNull().unique(),
+  /** Business display name */
+  businessName: varchar("businessName", { length: 255 }),
+  /** Industry vertical, e.g. "Electronics", "Apparel" */
+  industry: varchar("industry", { length: 128 }),
+  /** Company size bracket */
+  companySize: varchar("companySize", { length: 64 }),
+  /** Annual import volume in USD */
+  annualImportVolume: varchar("annualImportVolume", { length: 64 }),
+  /** Primary sourcing regions, comma-separated */
+  sourcingRegions: text("sourcingRegions"),
+  /** Product categories traded, comma-separated */
+  productCategories: text("productCategories"),
+  /** Website URL */
+  website: varchar("website", { length: 512 }),
+  /** Business description / bio */
+  bio: text("bio"),
+  /** JSON: { [categoryId]: { target: number, floor: number } } */
+  marginTargets: text("marginTargets"),
+  /** JSON: { preferredCarriers: string[], preferredLanes: string[], avoidCarriers: string[] } */
+  carrierPrefs: text("carrierPrefs"),
+  /** JSON: { emailAlerts: boolean, criticalOnly: boolean, weeklyDigest: boolean, marginDropAlert: boolean, marginDropThreshold: number } */
+  notificationPrefs: text("notificationPrefs"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MerchantProfile = typeof merchantProfiles.$inferSelect;
+export type InsertMerchantProfile = typeof merchantProfiles.$inferInsert;
+
+/**
+ * MarginHistory — monthly margin snapshots per user.
+ * Used to render the historical margin trend sparkline on the profile page.
+ */
+export const marginHistory = mysqlTable("margin_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  /** YYYY-MM label, e.g. "2026-02" */
+  month: varchar("month", { length: 7 }).notNull(),
+  /** Average portfolio margin % that month */
+  avgMargin: float("avgMargin").notNull(),
+  /** Best performing category margin % */
+  bestMargin: float("bestMargin"),
+  /** Worst performing category margin % */
+  worstMargin: float("worstMargin"),
+  /** Brent crude average that month */
+  avgBrentPrice: float("avgBrentPrice"),
+  /** Number of critical SKUs that month */
+  criticalSkuCount: int("criticalSkuCount").default(0),
+  /** Optional note */
+  note: text("note"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MarginHistory = typeof marginHistory.$inferSelect;
+export type InsertMarginHistory = typeof marginHistory.$inferInsert;

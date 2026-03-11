@@ -216,3 +216,18 @@
 - [x] Set MarginImpactCalculator defaults to 5-hour refetch interval
 - [x] Add force-refresh button to Margins page header
 - [x] Add last-updated timestamp to each panel on Margins page
+
+## Merchant Profile Page
+- [x] Add merchantProfiles DB table (business details, margin targets JSON, carrier prefs JSON, notification prefs JSON)
+- [x] Add marginHistory DB table (monthly margin snapshots per user)
+- [x] Run pnpm db:push to migrate schema
+- [x] Build merchantProfile tRPC router: getProfile, updateProfile, upsertMarginTargets, upsertCarrierPrefs, upsertNotificationPrefs, getMarginHistory, addMarginSnapshot
+- [x] Register merchantProfile router in routers.ts
+- [x] Build MerchantProfile page (/profile) — Business Details section
+- [x] Build MerchantProfile page — Margin Targets section (per category, with sliders)
+- [x] Build MerchantProfile page — Preferred Carriers & Trade Lanes section
+- [x] Build MerchantProfile page — Notification Preferences section
+- [x] Build MerchantProfile page — Historical Margin Snapshots section (sparkline chart)
+- [x] Add /profile route in App.tsx
+- [x] Add Merchant Profile nav item to NavigationSidebar
+- [x] Write vitest tests for merchantProfile router
