@@ -418,8 +418,8 @@ function ShippingRoutesOverlay() {
               points={pts}
               fill="none"
               stroke={color}
-              strokeWidth={isHovered ? "0.6" : "0.35"}
-              strokeOpacity={0.25}
+              strokeWidth={isHovered ? "1.4" : "0.9"}
+              strokeOpacity={0.35}
               filter={`url(#glow-${route.id})`}
             />
             {/* Animated dashed line */}
@@ -427,9 +427,9 @@ function ShippingRoutesOverlay() {
               points={pts}
               fill="none"
               stroke={color}
-              strokeWidth={isHovered ? "0.55" : "0.3"}
-              strokeOpacity={isHovered ? 0.95 : 0.7}
-              strokeDasharray={route.status === "critical" ? "1.5 1.5" : route.status === "warning" ? "2 1" : "3 1"}
+              strokeWidth={isHovered ? "1.2" : "0.7"}
+              strokeOpacity={isHovered ? 1.0 : 0.85}
+              strokeDasharray={route.status === "critical" ? "2 1.5" : route.status === "warning" ? "3 1.5" : "4 1.5"}
               style={{ animation: `dash-flow ${route.status === "critical" ? "1.2s" : "2s"} linear infinite` }}
             />
             {/* Invisible hit area for hover */}
@@ -485,20 +485,21 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
             {/* Port icon */}
             <div
               style={{
-                width: 14,
-                height: 14,
-                borderRadius: "3px",
-                background: `${color}22`,
-                border: `1.5px solid ${color}`,
-                boxShadow: `0 0 8px ${color}88`,
+                width: 18,
+                height: 18,
+                borderRadius: "4px",
+                background: `${color}30`,
+                border: `2px solid ${color}`,
+                boxShadow: `0 0 12px ${color}aa, 0 0 4px ${color}66`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 position: "relative",
                 zIndex: 2,
+                animation: port.status === "closed" || port.status === "warning" ? "port-pulse 1.8s ease-in-out infinite" : undefined,
               }}
             >
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: color }} />
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, boxShadow: `0 0 4px ${color}` }} />
             </div>
             {/* Port name label */}
             {isActive && (
@@ -546,8 +547,12 @@ function WeatherOverlay() {
         <defs>
           <style>{`
             @keyframes weather-pulse {
-              0%, 100% { opacity: 0.18; }
-              50% { opacity: 0.35; }
+              0%, 100% { opacity: 0.30; }
+              50% { opacity: 0.60; }
+            }
+            @keyframes port-pulse {
+              0%, 100% { box-shadow: 0 0 12px var(--port-color, #ef4444)aa, 0 0 4px var(--port-color, #ef4444)66; }
+              50% { box-shadow: 0 0 20px var(--port-color, #ef4444)cc, 0 0 8px var(--port-color, #ef4444)88; }
             }
             @keyframes weather-spin {
               from { transform-origin: center; transform: rotate(0deg); }
@@ -558,8 +563,8 @@ function WeatherOverlay() {
             const color = weatherSeverityColor[zone.severity];
             return (
               <radialGradient key={`wg-${zone.id}`} id={`wg-${zone.id}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={color} stopOpacity="0.5" />
-                <stop offset="60%" stopColor={color} stopOpacity="0.15" />
+                <stop offset="0%" stopColor={color} stopOpacity="0.75" />
+                <stop offset="50%" stopColor={color} stopOpacity="0.35" />
                 <stop offset="100%" stopColor={color} stopOpacity="0" />
               </radialGradient>
             );
@@ -579,8 +584,8 @@ function WeatherOverlay() {
               key={zone.id}
               cx={cx}
               cy={cy}
-              rx={rx * 1.8}
-              ry={ry * 1.8}
+              rx={rx * 2.2}
+              ry={ry * 2.2}
               fill={`url(#wg-${zone.id})`}
               style={{ animation: `weather-pulse ${zone.severity === "critical" ? "1.5s" : "2.5s"} ease-in-out infinite` }}
             />
@@ -606,10 +611,10 @@ function WeatherOverlay() {
             {/* Spinning ring */}
             <div
               style={{
-                width: 28,
-                height: 28,
+                width: 34,
+                height: 34,
                 borderRadius: "50%",
-                border: `2px dashed ${color}`,
+                border: `2.5px dashed ${color}`,
                 borderTopColor: "transparent",
                 position: "absolute",
                 top: "50%",
@@ -622,12 +627,12 @@ function WeatherOverlay() {
             {/* Center icon */}
             <div
               style={{
-                width: 20,
-                height: 20,
+                width: 24,
+                height: 24,
                 borderRadius: "50%",
-                background: `${color}22`,
-                border: `1.5px solid ${color}`,
-                boxShadow: `0 0 10px ${color}66`,
+                background: `${color}35`,
+                border: `2px solid ${color}`,
+                boxShadow: `0 0 14px ${color}99, 0 0 6px ${color}55`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

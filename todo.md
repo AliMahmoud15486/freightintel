@@ -165,3 +165,8 @@
 ## Map Fixes
 - [x] Fix zoom in / zoom out buttons on Supply Chain Map to correctly control Google Maps zoom level
 - [x] Add drag-to-pan to Supply Chain Map — click and drag to move when zoomed in (mouse + touch)
+
+## Map Overlay Fixes
+- [x] Audit and fix Shipping Routes overlay — increased strokeWidth 0.3→0.7, glow opacity improved, all 7 routes confirmed working
+- [x] Audit and fix Port Status overlay — marker size 14px→18px, pulse animation on disrupted/warning ports, 20 ports confirmed correct coordinates
+- [x] Audit and fix Weather Impact overlay — blob opacity 0.18→0.75, ring size 28px→34px, 6 weather zones confirmed visible
