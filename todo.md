@@ -161,3 +161,6 @@
 - [x] Clarity Smart Event: predictive_risk_refreshed
 - [x] Vitest tests: probability normalisation, trend classification (24 tests)
 - [x] Checkpoint: 0 TypeScript errors, 54 tests passing
+
+## Map Fixes
+- [x] Fix zoom in / zoom out buttons on Supply Chain Map to correctly control Google Maps zoom level

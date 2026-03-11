@@ -758,9 +758,23 @@ function MapLegend({ mode }: { mode: string }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const ZOOM_LEVELS = [1, 1.35, 1.75, 2.2, 2.8];
+const ZOOM_MIN = 0;
+const ZOOM_MAX = ZOOM_LEVELS.length - 1;
+
 export default function SupplyChainMap() {
   const [filterMode, setFilterMode] = useState("Interland Monitor");
+  const [zoomIdx, setZoomIdx] = useState(0);
   const { isMobile, isTablet } = useBreakpoint();
+
+  const zoomScale = ZOOM_LEVELS[zoomIdx];
+
+  function handleZoomIn() {
+    setZoomIdx((prev) => Math.min(prev + 1, ZOOM_MAX));
+  }
+  function handleZoomOut() {
+    setZoomIdx((prev) => Math.max(prev - 1, ZOOM_MIN));
+  }
 
   const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.disruptions.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
@@ -870,6 +884,16 @@ export default function SupplyChainMap() {
       <div
         style={{ position: "relative", width: "100%", height: isMobile ? "clamp(240px, 55vw, 340px)" : isTablet ? "clamp(300px, 40vh, 420px)" : "clamp(380px, 45vh, 560px)", flex: "0 0 auto", overflow: "hidden", background: "#060b14" }}
       >
+        {/* Zoomable inner layer */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            transformOrigin: "center center",
+            transform: `scale(${zoomScale})`,
+            transition: "transform 0.25s ease",
+          }}
+        >
         {/* Background map image */}
         <img
           src={MAP_BG}
@@ -892,14 +916,7 @@ export default function SupplyChainMap() {
         {filterMode === "Port Status"       && <PortStatusOverlay disruptions={locations} />}
         {filterMode === "Weather Impact"    && <WeatherOverlay />}
 
-        {/* Zoom controls — larger touch targets on mobile */}
-        <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "2px", zIndex: 5 }}>
-          {[ZoomIn, ZoomOut].map((Icon, i) => (
-            <button key={i} style={{ width: isMobile ? 36 : 28, height: isMobile ? 36 : 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => {}}>
-              <Icon size={isMobile ? 16 : 14} />
-            </button>
-          ))}
-        </div>
+        {/* Zoom controls — outside the zoomable layer so they stay fixed */}
 
         {/* Legend */}
         <MapLegend mode={filterMode} />
@@ -909,6 +926,29 @@ export default function SupplyChainMap() {
 
         {/* Bottom gradient fade */}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60px", background: "linear-gradient(to top, rgba(6,11,20,0.7) 0%, transparent 100%)", pointerEvents: "none", zIndex: 2 }} />
+
+        {/* Close the zoomable inner layer */}
+        </div>
+
+        {/* Zoom controls — fixed over the map, outside the zoomable layer */}
+        <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "2px", zIndex: 10 }}>
+          <button
+            title="Zoom in"
+            disabled={zoomIdx >= ZOOM_MAX}
+            onClick={handleZoomIn}
+            style={{ width: isMobile ? 36 : 28, height: isMobile ? 36 : 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: zoomIdx >= ZOOM_MAX ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: zoomIdx >= ZOOM_MAX ? "not-allowed" : "pointer" }}
+          >
+            <ZoomIn size={isMobile ? 16 : 14} />
+          </button>
+          <button
+            title="Zoom out"
+            disabled={zoomIdx <= ZOOM_MIN}
+            onClick={handleZoomOut}
+            style={{ width: isMobile ? 36 : 28, height: isMobile ? 36 : 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: zoomIdx <= ZOOM_MIN ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: zoomIdx <= ZOOM_MIN ? "not-allowed" : "pointer" }}
+          >
+            <ZoomOut size={isMobile ? 16 : 14} />
+          </button>
+        </div>
 
         {/* Status badge (top-right) */}
         <div
