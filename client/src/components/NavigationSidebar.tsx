@@ -1,25 +1,25 @@
-/* NavigationSidebar — Margin Sentinel
+/* NavigationSidebar — Freight Intel / Margin Sentinel
  * Design: Dark Intelligence — orange active border, icon+label nav items
  * Fixed left sidebar with branding and nav links.
- * alertCount prop drives the live badge on the Alerts nav item.
+ * Collapsible: toggle between full (192px) and icon-only (56px) modes.
  */
 import {
   LayoutDashboard,
-  Map,
-  Droplets,
   TrendingUp,
-  Bell,
-  Shield,
   Globe,
   Ship,
-  Calculator,
   BarChart3,
   Newspaper,
+  Calculator,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 
 interface NavItem {
   icon: React.ReactNode;
@@ -37,6 +37,7 @@ interface NavigationSidebarProps {
 
 export default function NavigationSidebar({ activeSection, onSectionChange }: NavigationSidebarProps) {
   const [location] = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
 
   // Live critical count from news feed — same cache, no extra request
   const { data: newsData } = trpc.news.feed.useQuery(undefined, {
@@ -51,18 +52,16 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
     const container = document.querySelector('[data-scroll-container="main"]') as HTMLElement | null;
     if (!target) return;
     if (container) {
-      // Calculate offset relative to the scrollable container
       const containerRect = container.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
       const offset = targetRect.top - containerRect.top + container.scrollTop - 8;
       container.scrollTo({ top: offset, behavior: 'smooth' });
     } else {
-      // Fallback for non-nested layouts
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
-  // Dashboard sections (no Margin Calculator — it lives on /margins)
+  // Dashboard sections
   const dashboardSections = [
     { icon: <Globe size={14} />,      label: "Supply Chain Map",   sectionId: "section-map"     },
     { icon: <Ship size={14} />,       label: "Carrier Engine",     sectionId: "section-carrier" },
@@ -95,11 +94,13 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
     });
   };
 
+  const sidebarWidth = collapsed ? "56px" : "192px";
+
   return (
     <aside
       style={{
-        width: "192px",
-        minWidth: "192px",
+        width: sidebarWidth,
+        minWidth: sidebarWidth,
         background: "rgba(11, 15, 25, 0.97)",
         borderRight: "1px solid rgba(255,255,255,0.07)",
         display: "flex",
@@ -109,18 +110,25 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
         top: 0,
         zIndex: 30,
         flexShrink: 0,
+        transition: "width 0.22s cubic-bezier(0.4,0,0.2,1), min-width 0.22s cubic-bezier(0.4,0,0.2,1)",
+        overflow: "hidden",
       }}
     >
       {/* Logo / Brand */}
       <div
         style={{
-          padding: "18px 16px 16px",
+          padding: collapsed ? "14px 0" : "12px 14px",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           display: "flex",
           alignItems: "center",
-          gap: "10px",
+          flexShrink: 0,
+          minHeight: "60px",
+          position: "relative",
+          justifyContent: collapsed ? "center" : "flex-start",
+          gap: collapsed ? 0 : "10px",
         }}
       >
+        {/* Logo icon */}
         <div
           style={{
             width: 32,
@@ -134,51 +142,106 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
             flexShrink: 0,
           }}
         >
-          <Shield size={16} style={{ color: "white" }} />
+          <Zap size={16} style={{ color: "white" }} />
         </div>
-        <div>
-          <div
-            style={{
-              fontFamily: "'Rajdhani', sans-serif",
-              fontWeight: 700,
-              fontSize: "1rem",
-              letterSpacing: "0.08em",
-              color: "white",
-              lineHeight: 1.1,
-            }}
-          >
-            MARGIN
+
+        {/* Brand text — hidden when collapsed */}
+        {!collapsed && (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: "1.05rem",
+                letterSpacing: "0.06em",
+                background: "linear-gradient(90deg, #f97316, #E91E8C)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                lineHeight: 1.15,
+                whiteSpace: "nowrap",
+              }}
+            >
+              FREIGHT INTEL
+            </div>
+            <div
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 400,
+                fontSize: "0.6rem",
+                letterSpacing: "0.04em",
+                color: "rgba(255,255,255,0.35)",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Powered by{" "}
+              <a
+                href="https://datajar.co"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: "linear-gradient(90deg, #f97316, #E91E8C)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                Datajar
+              </a>
+            </div>
           </div>
-          <div
-            style={{
-              fontFamily: "'Rajdhani', sans-serif",
-              fontWeight: 700,
-              fontSize: "1rem",
-              letterSpacing: "0.08em",
-              color: "#f97316",
-              lineHeight: 1.1,
-            }}
-          >
-            SENTINEL
-          </div>
-        </div>
+        )}
+
+        {/* Collapse toggle — floats on the right edge of the sidebar */}
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "rgba(255,255,255,0.4)",
+            flexShrink: 0,
+            transition: "background 0.15s, color 0.15s",
+            position: "absolute",
+            right: "-10px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 40,
+          }}
+          className="hover:bg-white/10 hover:text-white/70"
+        >
+          {collapsed ? <ChevronRight size={11} /> : <ChevronLeft size={11} />}
+        </button>
       </div>
 
       {/* Nav section label */}
-      <div style={{ padding: "16px 16px 8px" }}>
-        <span className="section-label">NAVIGATION</span>
-      </div>
+      {!collapsed && (
+        <div style={{ padding: "14px 16px 6px" }}>
+          <span className="section-label">NAVIGATION</span>
+        </div>
+      )}
+      {collapsed && <div style={{ height: "14px" }} />}
 
       {/* Nav items */}
-      <nav style={{ flex: 1, padding: "0 8px", overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: collapsed ? "0 6px" : "0 8px", overflowY: 'auto', overflowX: 'hidden' }}>
         {navItems.map((item) => {
           const active = isActive(item);
           const navStyle: React.CSSProperties = {
             width: "100%",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            padding: "9px 10px",
+            gap: collapsed ? 0 : "10px",
+            padding: collapsed ? "9px 0" : "9px 10px",
             borderRadius: "6px",
             marginBottom: "2px",
             border: "none",
@@ -190,36 +253,48 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
             textAlign: "left",
             position: "relative",
             textDecoration: "none",
+            justifyContent: collapsed ? "center" : "flex-start",
           };
 
           const content = (
             <>
-              <span style={{ flexShrink: 0 }}>{item.icon}</span>
               <span
-                style={{
-                  fontFamily: "'Rajdhani', sans-serif",
-                  fontWeight: 600,
-                  fontSize: "0.88rem",
-                  letterSpacing: "0.04em",
-                  flex: 1,
-                }}
+                style={{ flexShrink: 0 }}
+                title={collapsed ? item.label : undefined}
               >
-                {item.label}
+                {item.icon}
               </span>
-              {item.badge != null && item.badge > 0 && (
-                <span className="alert-badge" style={{ flexShrink: 0 }}>
-                  {item.badge}
-                </span>
+              {!collapsed && (
+                <>
+                  <span
+                    style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      letterSpacing: "0.04em",
+                      flex: 1,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                  {item.badge != null && item.badge > 0 && (
+                    <span className="alert-badge" style={{ flexShrink: 0 }}>
+                      {item.badge}
+                    </span>
+                  )}
+                  {/* Down arrow indicating sub-sections are available */}
+                  <ChevronDown
+                    size={12}
+                    style={{
+                      flexShrink: 0,
+                      color: active ? "rgba(249,115,22,0.7)" : "rgba(255,255,255,0.25)",
+                      transition: "color 0.15s ease",
+                    }}
+                  />
+                </>
               )}
-              {/* Down arrow indicating sub-sections are available */}
-              <ChevronDown
-                size={12}
-                style={{
-                  flexShrink: 0,
-                  color: active ? "rgba(249,115,22,0.7)" : "rgba(255,255,255,0.25)",
-                  transition: "color 0.15s ease",
-                }}
-              />
             </>
           );
 
@@ -248,10 +323,11 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
             </button>
           );
         })}
-        {/* SECTIONS quick-jump group — shown on Dashboard and Margins */}
-        {sectionItems.length > 0 && (
+
+        {/* SECTIONS quick-jump group — shown on Dashboard and Margins (hidden when collapsed) */}
+        {!collapsed && sectionItems.length > 0 && (
           <>
-            <div style={{ padding: "16px 16px 8px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ padding: "14px 16px 6px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               <span className="section-label">JUMP TO</span>
             </div>
             {sectionItems.map((item) => (
@@ -283,6 +359,8 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
                     fontWeight: 500,
                     fontSize: "0.78rem",
                     letterSpacing: "0.03em",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
                   }}
                 >
                   {item.label}

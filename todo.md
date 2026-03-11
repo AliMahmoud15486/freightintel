@@ -200,3 +200,9 @@
 - [ ] Move MarginImpactCalculator from Dashboard to the Margins page
 - [ ] Remove section-margin JUMP TO entry from Dashboard sidebar
 - [ ] Add down-arrow / section indicator beside Dashboard and Margins nav items in sidebar
+
+## Sidebar Branding & Collapse
+- [x] Replace "Margin Sentinel" logo in sidebar with "Freight Intel" + "Powered by Datajar" branding
+- [x] Make navigation sidebar collapsible (toggle open/closed with a button)
+- [x] Collapsed state: show only icons (no labels), with tooltip on hover
+- [ ] Persist collapsed state across page navigation
