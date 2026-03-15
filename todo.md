@@ -258,3 +258,6 @@
 - [x] Merchant Profile: Carrier Prefs — improve tag selector UX with clearer add/remove interactions
 - [x] Merchant Profile: Notification Prefs — use toggle switches with clear labels and descriptions
 - [x] Merchant Profile: History — improve chart and table layout, add empty state illustration
+
+## Dashboard Layout Fix
+- [x] Fix Carrier Recommendation Engine block: ensure it is fully visually separated from Shipping Companies / Crisis Banner above (no overlap, clear top margin, own container)

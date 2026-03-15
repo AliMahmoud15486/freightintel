@@ -186,11 +186,24 @@ export default function Dashboard() {
             onClearCategories={clearCategories}
           />
 
-          {/* Crisis Signal Banner — live Hormuz crisis score above Carrier Engine */}
-          <CrisisSignalBanner />
+          {/* ── Carrier Engine block — fully isolated from RetailerActionPanel above ── */}
+          <div
+            id="section-carrier-block"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              paddingTop: "8px",
+              borderTop: "2px solid rgba(233,30,140,0.18)",
+              marginTop: "8px",
+            }}
+          >
+            {/* Crisis Signal Banner — live Hormuz crisis score */}
+            <CrisisSignalBanner />
 
-          {/* Carrier Recommendation Engine — extra top margin for visual separation from Shipping Companies */}
-          <div id="section-carrier" style={{ marginTop: "12px" }}><CarrierRecommendationPanel /></div>
+            {/* Carrier Recommendation Engine */}
+            <div id="section-carrier"><CarrierRecommendationPanel /></div>
+          </div>
           {/* Predictive Risk Scoring */}
           <div id="section-risk"><PredictiveRiskPanel /></div>
 
