@@ -18,6 +18,7 @@ import PredictiveRiskPanel from "@/components/PredictiveRiskPanel";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import NavigationSidebar from "@/components/NavigationSidebar";
+import CrisisSignalBanner from "@/components/CrisisSignalBanner";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -185,8 +186,11 @@ export default function Dashboard() {
             onClearCategories={clearCategories}
           />
 
-          {/* Carrier Recommendation Engine */}
-          <div id="section-carrier"><CarrierRecommendationPanel /></div>
+          {/* Crisis Signal Banner — live Hormuz crisis score above Carrier Engine */}
+          <CrisisSignalBanner />
+
+          {/* Carrier Recommendation Engine — extra top margin for visual separation from Shipping Companies */}
+          <div id="section-carrier" style={{ marginTop: "12px" }}><CarrierRecommendationPanel /></div>
           {/* Predictive Risk Scoring */}
           <div id="section-risk"><PredictiveRiskPanel /></div>
 

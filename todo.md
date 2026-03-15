@@ -247,3 +247,14 @@
 - [x] Add /scenarios route in App.tsx
 - [x] Add Crisis Scenarios nav item to NavigationSidebar
 - [x] Write vitest tests for crisisScenarios router
+
+## UX Fixes — Round 3
+- [x] Fix spacing between Shipping Companies panel and Carrier Recommendation Engine on Dashboard
+- [x] Add crisis score banner/widget to Dashboard (live overall crisis score + top 2 critical cells)
+- [x] Add crisis impact column to Margins page SKU table (shows which crisis elements affect each category)
+- [x] Redesign Merchant Profile page: better visual hierarchy, card-based sections, improved form UX
+- [x] Merchant Profile: Business Details — use a two-column grid layout with labeled field groups
+- [x] Merchant Profile: Margin Targets — show category cards with visual target/floor indicators instead of plain sliders
+- [x] Merchant Profile: Carrier Prefs — improve tag selector UX with clearer add/remove interactions
+- [x] Merchant Profile: Notification Prefs — use toggle switches with clear labels and descriptions
+- [x] Merchant Profile: History — improve chart and table layout, add empty state illustration

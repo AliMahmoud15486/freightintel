@@ -163,6 +163,37 @@ export default function Margins() {
   // Oil history for the trend chart — 5-hour refresh
   const { data: oilHistory, refetch: refetchOilHistory } = useOilHistory(6);
 
+  // Crisis scenario data — used to annotate categories with live crisis signals
+  const { data: crisisData } = trpc.crisisScenarios.getMatrix.useQuery(undefined, {
+    refetchInterval: FIVE_HOURS_MS,
+    staleTime: FIVE_HOURS_MS - 60_000,
+  });
+
+  // Build a map of categoryId → worst crisis cell for that sector
+  const crisisBySector = useMemo(() => {
+    if (!crisisData) return {} as Record<string, { severity: string; elementName: string; score: number }>;
+    const map: Record<string, { severity: string; elementName: string; score: number }> = {};
+    // Map marginAnalysis category ids to crisisScenarios sector ids
+    const sectorMap: Record<string, string> = {
+      electronics: "ecommerce",
+      clothing: "ecommerce",
+      "home-goods": "ecommerce",
+      food: "inflation",
+      chemicals: "inflation",
+      automotive: "inflation",
+      "e-grocery": "egrocery",
+      customs: "customs",
+    };
+    for (const [catId, sectorId] of Object.entries(sectorMap)) {
+      const cells = crisisData.matrix.filter((c) => c.sectorId === sectorId);
+      if (!cells.length) continue;
+      const worst = cells.reduce((a, b) => (b.impactScore > a.impactScore ? b : a));
+      const element = crisisData.elements.find((e) => e.id === worst.elementId);
+      map[catId] = { severity: worst.severity, elementName: element?.name ?? worst.elementId, score: worst.impactScore };
+    }
+    return map;
+  }, [crisisData]);
+
   // ── Derived data ────────────────────────────────────────────────────────────
 
   // Waterfall chart with running totals
@@ -434,13 +465,13 @@ export default function Margins() {
             </div>
           </div>
 
-          {/* Category comparison */}
+          {/* Category comparison with crisis signals */}
           <div className="ms-panel" style={{ padding: "16px" }}>
             <div style={{ marginBottom: "14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
                 <span className="panel-header">MARGIN BY CATEGORY</span>
                 <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", margin: "4px 0 0" }}>
-                  Current margin vs. baseline vs. target — adjusted for live freight &amp; oil rates
+                  Current margin vs. baseline — crisis impact signals from live Hormuz data
                 </p>
               </div>
               {!analysisLoading && <LiveBadge lastUpdated={analysis?.lastUpdated} />}
@@ -450,25 +481,57 @@ export default function Margins() {
                 <RefreshCw size={20} className="animate-spin" style={{ color: "rgba(255,255,255,0.2)" }} />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={analysis?.categories ?? []} layout="vertical" margin={{ top: 0, right: 60, left: 80, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 50]} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11, fontFamily: "'Inter', sans-serif" }} axisLine={false} tickLine={false} width={80} />
-                  <Tooltip
-                    formatter={(v: any, name: string) => [`${(v as number).toFixed(1)}%`, name === "baseMargin" ? "Baseline" : name === "currentMargin" ? "Current" : "Target"]}
-                    contentStyle={{ background: "rgba(10,14,26,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", fontFamily: "'Inter', sans-serif", fontSize: "0.75rem" }}
-                  />
-                  <Bar dataKey="baseMargin" fill="rgba(59,130,246,0.3)" radius={[0, 2, 2, 0]} name="Baseline" />
-                  <Bar dataKey="currentMargin" radius={[0, 2, 2, 0]} name="Current">
-                    {(analysis?.categories ?? []).map((cat) => (
-                      <Cell key={cat.id} fill={cat.risk === "critical" ? "#ef4444" : cat.risk === "warning" ? "#f59e0b" : "#10b981"} />
-                    ))}
-                  </Bar>
-                  <Bar dataKey="target" fill="rgba(249,115,22,0.2)" radius={[0, 2, 2, 0]} name="Target" />
-                  <ReferenceLine x={30} stroke="#f97316" strokeDasharray="3 3" strokeWidth={1} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
+                {(analysis?.categories ?? []).map((cat) => {
+                  const crisis = crisisBySector[cat.id];
+                  const marginColor = cat.risk === "critical" ? "#ef4444" : cat.risk === "warning" ? "#f59e0b" : "#10b981";
+                  const crisisColor = crisis?.severity === "critical" ? "#ef4444" : crisis?.severity === "high" ? "#f97316" : crisis?.severity === "moderate" ? "#eab308" : "#22c55e";
+                  const barPct = Math.min(100, (cat.currentMargin / 50) * 100);
+                  const basePct = Math.min(100, (cat.baseMargin / 50) * 100);
+                  return (
+                    <div key={cat.id} style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${crisis ? crisisColor + "33" : "rgba(255,255,255,0.07)"}`,
+                      borderRadius: "8px", padding: "12px",
+                      display: "flex", flexDirection: "column", gap: "8px",
+                    }}>
+                      {/* Header row */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.04em", color: "rgba(255,255,255,0.8)" }}>
+                          {cat.name}
+                        </span>
+                        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 800, fontSize: "1.05rem", color: marginColor }}>
+                          {cat.currentMargin.toFixed(1)}%
+                        </span>
+                      </div>
+                      {/* Progress bar: baseline vs current */}
+                      <div style={{ position: "relative", height: "6px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${basePct}%`, background: "rgba(59,130,246,0.3)", borderRadius: "3px" }} />
+                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${barPct}%`, background: marginColor, borderRadius: "3px", opacity: 0.85 }} />
+                      </div>
+                      {/* Baseline vs target */}
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(255,255,255,0.3)" }}>Base {cat.baseMargin.toFixed(1)}%</span>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(249,115,22,0.6)" }}>Target {cat.target.toFixed(1)}%</span>
+                      </div>
+                      {/* Crisis signal chip */}
+                      {crisis && (
+                        <div style={{
+                          display: "flex", alignItems: "center", gap: "5px",
+                          background: crisisColor + "15",
+                          border: `1px solid ${crisisColor}33`,
+                          borderRadius: "4px", padding: "4px 7px",
+                        }}>
+                          <AlertTriangle size={10} style={{ color: crisisColor, flexShrink: 0 }} />
+                          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.58rem", color: crisisColor, lineHeight: 1.3 }}>
+                            {crisis.elementName} · {crisis.score}/100
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
