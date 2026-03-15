@@ -16,7 +16,10 @@ import {
   AlertTriangle,
   Brain,
   BarChart2,
+  Flame,
+  ExternalLink,
 } from "lucide-react";
+import { Link } from "wouter";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -712,6 +715,77 @@ export default function PredictiveRiskPanel() {
           >
             No forecast data available. Click Refresh to generate forecasts.
           </span>
+        </div>
+      )}
+
+      {/* Hormuz Crisis Banner */}
+      {isActive && (
+        <div
+          style={{
+            marginTop: "10px",
+            padding: "10px 12px",
+            borderRadius: "6px",
+            background: "rgba(239,68,68,0.07)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+            <Flame size={13} color="#ef4444" style={{ flexShrink: 0 }} />
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 700,
+                  fontSize: "0.72rem",
+                  color: "#ef4444",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  marginBottom: "2px",
+                }}
+              >
+                Strait of Hormuz Crisis Active
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.62rem",
+                  color: "rgba(255,255,255,0.4)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                5-element impact across Inflation · E-commerce · E-grocery · Customs
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/scenarios"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              background: "rgba(239,68,68,0.12)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              color: "#ef4444",
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 700,
+              fontSize: "0.65rem",
+              letterSpacing: "0.04em",
+              textDecoration: "none",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
+            VIEW ANALYSIS
+            <ExternalLink size={10} />
+          </Link>
         </div>
       )}
 

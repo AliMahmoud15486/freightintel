@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Zap,
   User,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
@@ -79,9 +80,10 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
   const sectionItems = location === "/" ? dashboardSections : location.startsWith("/margins") ? marginsSections : [];
 
   const navItems: NavItem[] = [
-    { icon: <LayoutDashboard size={16} />, label: "Dashboard",       id: "dashboard", href: "/",        implemented: true  },
-    { icon: <TrendingUp size={16} />,     label: "Margins",         id: "margins",   href: "/margins",  implemented: true  },
-    { icon: <User size={16} />,           label: "Merchant Profile", id: "profile",   href: "/profile",  implemented: true  },
+    { icon: <LayoutDashboard size={16} />, label: "Dashboard",       id: "dashboard", href: "/",          implemented: true  },
+    { icon: <TrendingUp size={16} />,     label: "Margins",         id: "margins",   href: "/margins",   implemented: true  },
+    { icon: <Flame size={16} />,          label: "Crisis Scenarios", id: "scenarios", href: "/scenarios", implemented: true  },
+    { icon: <User size={16} />,           label: "Merchant Profile", id: "profile",   href: "/profile",   implemented: true  },
   ];
 
   const isActive = (item: NavItem) => {

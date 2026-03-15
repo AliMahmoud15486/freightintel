@@ -86,6 +86,9 @@ const BASE_CATEGORIES: Omit<CategoryMargin, "currentMargin" | "risk">[] = [
   { id: "home-garden",  name: "Home & Garden",   baseMargin: 38.5, target: 40 },
   { id: "auto-parts",   name: "Auto Parts",      baseMargin: 22.0, target: 25 },
   { id: "sporting",     name: "Sporting Goods",  baseMargin: 31.0, target: 33 },
+  // Hormuz Crisis additions
+  { id: "e-grocery",    name: "E-Grocery",       baseMargin: 12.0, target: 15 }, // thin-margin; highly fertilizer-sensitive
+  { id: "customs",      name: "Customs & Trade", baseMargin: 18.0, target: 20 }, // brokerage/clearance fees; insurance-sensitive
 ];
 
 // Base SKU data at $70/bbl, 0% freight surcharge
@@ -98,16 +101,26 @@ const BASE_SKUS: Omit<SkuRow, "landedCost" | "margin" | "change" | "risk">[] = [
   { sku: "TOY-RC-CAR",     name: "Remote Control Car",     category: "Toys",          cogs: 22,  sellingPrice: 59   },
   { sku: "HG-SOFA-3S",     name: "3-Seat Sofa",            category: "Home & Garden", cogs: 180, sellingPrice: 399  },
   { sku: "AP-BRAKE-SET",   name: "Brake Pad Set",          category: "Auto Parts",    cogs: 32,  sellingPrice: 79   },
+  // Hormuz Crisis additions — E-Grocery
+  { sku: "GRO-WHEAT-25KG", name: "Wheat Flour 25kg",       category: "E-Grocery",     cogs: 18,  sellingPrice: 24   },
+  { sku: "GRO-RICE-10KG",  name: "Basmati Rice 10kg",      category: "E-Grocery",     cogs: 12,  sellingPrice: 19   },
+  { sku: "GRO-CORN-OIL",   name: "Corn Oil 5L",            category: "E-Grocery",     cogs: 8,   sellingPrice: 14   },
+  // Hormuz Crisis additions — Customs & Trade
+  { sku: "CUS-CLEARANCE",  name: "Standard Clearance Fee", category: "Customs & Trade", cogs: 85,  sellingPrice: 120  },
+  { sku: "CUS-WAR-INS",    name: "War Risk Insurance",     category: "Customs & Trade", cogs: 45,  sellingPrice: 75   },
 ];
 
 // Base landed cost multipliers per category (at neutral conditions)
 const BASE_LANDED_MULTIPLIER: Record<string, number> = {
-  "Electronics":   1.25, // high import dependency
-  "Apparel":       1.50, // long ocean routes
-  "Toys":          1.56, // high volume, China-origin
-  "Home & Garden": 1.36,
-  "Auto Parts":    1.28,
-  "Sporting Goods":1.30,
+  "Electronics":    1.25, // high import dependency
+  "Apparel":        1.50, // long ocean routes
+  "Toys":           1.56, // high volume, China-origin
+  "Home & Garden":  1.36,
+  "Auto Parts":     1.28,
+  "Sporting Goods": 1.30,
+  // Hormuz Crisis additions
+  "E-Grocery":      1.65, // fertilizer + cold-chain + last-mile; highest sensitivity
+  "Customs & Trade":1.15, // insurance + documentation; spikes sharply with war risk
 };
 
 // ─── Yahoo Finance helper ─────────────────────────────────────────────────────
@@ -157,11 +170,15 @@ function computeAnalysis(
   // ── Categories ──────────────────────────────────────────────────────────────
   const categories: CategoryMargin[] = BASE_CATEGORIES.map((cat) => {
     // Each category has different sensitivity to freight/oil
+    // E-Grocery: highest sensitivity — fertilizer + cold-chain + thin margins
+    // Customs & Trade: insurance-driven; spikes sharply with war risk premium
     const sensitivity = cat.id === "electronics" ? 1.2
       : cat.id === "apparel" ? 1.4
       : cat.id === "toys" ? 1.5
       : cat.id === "home-garden" ? 1.1
       : cat.id === "auto-parts" ? 0.9
+      : cat.id === "e-grocery" ? 2.2   // fertilizer shock amplifier
+      : cat.id === "customs" ? 1.8     // war-risk insurance amplifier
       : 1.0;
 
     const erosion = totalCostInflation * sensitivity * 0.01 * cat.baseMargin;

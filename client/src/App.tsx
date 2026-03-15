@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Margins from "./pages/Margins";
 import MerchantProfile from "./pages/MerchantProfile";
+import CrisisScenarios from "./pages/CrisisScenarios";
 import CookieConsent from "./components/CookieConsent";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/margins"} component={Margins} />
       <Route path={"/profile"} component={MerchantProfile} />
+      <Route path={"/scenarios"} component={CrisisScenarios} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

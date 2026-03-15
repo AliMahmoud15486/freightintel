@@ -231,3 +231,19 @@
 - [x] Add /profile route in App.tsx
 - [x] Add Merchant Profile nav item to NavigationSidebar
 - [x] Write vitest tests for merchantProfile router
+
+## Hormuz Crisis Impact Analysis — Option C
+- [x] Add fertilizer commodity prices (Urea UAN=F, DAP, Potash) to marketData router
+- [x] Add E-grocery category to marginAnalysis BASE_CATEGORIES and BASE_SKUs
+- [x] Add Customs/Trade category to marginAnalysis BASE_CATEGORIES and BASE_SKUs
+- [x] Add Hormuz Crisis scenario card to PredictiveRiskPanel
+- [x] Update Margins page to display new E-grocery and Customs categories
+- [x] Build crisisScenarios tRPC router: 5-element × 4-sector impact matrix with live data
+- [x] Build /scenarios Crisis Scenarios page: interactive 5×4 matrix header
+- [x] Build /scenarios page: element detail panels (Hidden Cargo, Nitrogen Fortress, Logistics Trap, 24-Hour Shock, Inflationary Tail)
+- [x] Build /scenarios page: sector impact columns (Inflation, E-commerce, E-grocery, Customs)
+- [x] Build /scenarios page: live signal indicators per cell (price feeds, news count, risk score)
+- [x] Build /scenarios page: summary matrix table with live severity badges
+- [x] Add /scenarios route in App.tsx
+- [x] Add Crisis Scenarios nav item to NavigationSidebar
+- [x] Write vitest tests for crisisScenarios router

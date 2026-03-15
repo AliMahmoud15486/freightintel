@@ -108,12 +108,12 @@ describe("marginAnalysis.getAnalysis", () => {
     expect(result.waterfall[result.waterfall.length - 1].isCurrent).toBe(true);
   });
 
-  it("returns 6 categories with valid risk levels", async () => {
+  it("returns 8 categories with valid risk levels", async () => {
     globalThis.fetch = mockFetchWithPrices(88.5, 84.2, 14.5, 30.0);
     const caller = appRouter.createCaller(createPublicContext());
     const result = await caller.marginAnalysis.getAnalysis();
 
-    expect(result.categories).toHaveLength(6);
+    expect(result.categories).toHaveLength(8);
     for (const cat of result.categories) {
       expect(cat.id).toBeTruthy();
       expect(cat.name).toBeTruthy();
@@ -123,12 +123,12 @@ describe("marginAnalysis.getAnalysis", () => {
     }
   });
 
-  it("returns 8 SKUs with landed cost > COGS", async () => {
+  it("returns 13 SKUs with landed cost > COGS", async () => {
     globalThis.fetch = mockFetchWithPrices(88.5, 84.2, 14.5, 30.0);
     const caller = appRouter.createCaller(createPublicContext());
     const result = await caller.marginAnalysis.getAnalysis();
 
-    expect(result.skus).toHaveLength(8);
+    expect(result.skus).toHaveLength(13);
     for (const sku of result.skus) {
       expect(sku.cogs).toBeGreaterThan(0);
       expect(sku.landedCost).toBeGreaterThan(sku.cogs);
@@ -153,7 +153,7 @@ describe("marginAnalysis.getAnalysis", () => {
 
     // Should still return valid data using fallback prices
     expect(result.kpis.brentPrice).toBeGreaterThan(0);
-    expect(result.skus.length).toBe(8);
-    expect(result.categories.length).toBe(6);
+    expect(result.skus.length).toBe(13);
+    expect(result.categories.length).toBe(8);
   });
 });

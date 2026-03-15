@@ -63,6 +63,7 @@ const PULSE_CACHE_TTL = 60_000; // 60 seconds
 /** Exposed only for unit tests — clears all in-memory caches */
 export function _resetCacheForTesting() {
   pulseCache = null;
+  fertilizerCache = null;
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -114,13 +115,78 @@ interface TickerItem {
   change: number;
   changePct: number;
   unit: string;
-  category: "energy" | "freight" | "logistics" | "metals";
+  category: "energy" | "freight" | "logistics" | "metals" | "agriculture";
 }
+
+// ─── fertilizer cache (30-min TTL) ───────────────────────────────────────────
+
+interface FertilizerData {
+  urea:   { price: number; change: number; changePct: number };
+  dap:    { price: number; change: number; changePct: number };
+  potash: { price: number; change: number; changePct: number };
+  corn:   { price: number; change: number; changePct: number };
+  wheat:  { price: number; change: number; changePct: number };
+  /** Composite Agflation Index: weighted avg of fertilizer + grain changes */
+  agflationIndex: number;
+  /** Estimated food CPI pressure in pp (percentage points) */
+  foodCpiPressure: number;
+  lastUpdated: string;
+}
+
+interface FertilizerCache { data: FertilizerData; fetchedAt: number; }
+let fertilizerCache: FertilizerCache | null = null;
+const FERTILIZER_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 interface PulseBarData {
   tickers: TickerItem[];
   usPortCongestion: { status: string; level: 1 | 2 | 3; label: string };
   lastUpdated: string;
+}
+
+async function buildFertilizerData(): Promise<FertilizerData> {
+  // Yahoo Finance symbols:
+  //   UAN  → CVR Partners (urea/ammonium nitrate producer — proxy for urea prices)
+  //   MOS  → Mosaic Company (DAP/potash producer — proxy for phosphate/potash)
+  //   NTR  → Nutrien (world's largest potash producer)
+  //   ZC=F → Corn futures ($/bushel)
+  //   ZW=F → Wheat futures ($/bushel)
+  const [uan, mos, ntr, corn, wheat] = await Promise.all([
+    fetchQuote("UAN"),
+    fetchQuote("MOS"),
+    fetchQuote("NTR"),
+    fetchQuote("ZC=F"),
+    fetchQuote("ZW=F"),
+  ]);
+
+  const ureaData   = calcChange(uan,   { price: 18.50,  pct: 1.2  });
+  const dapData    = calcChange(mos,   { price: 28.40,  pct: 0.8  });
+  const potashData = calcChange(ntr,   { price: 52.10,  pct: -0.5 });
+  const cornData   = calcChange(corn,  { price: 4.85,   pct: 1.5  });
+  const wheatData  = calcChange(wheat, { price: 5.42,   pct: 2.1  });
+
+  // Agflation Index: weighted average of % changes
+  // Weights: urea 30%, DAP 20%, potash 15%, corn 20%, wheat 15%
+  const agflationIndex =
+    ureaData.changePct   * 0.30 +
+    dapData.changePct    * 0.20 +
+    potashData.changePct * 0.15 +
+    cornData.changePct   * 0.20 +
+    wheatData.changePct  * 0.15;
+
+  // Food CPI pressure: each 10% rise in agflation index ≈ 0.8pp food CPI pressure
+  // with 18-24 month lag (we show the leading indicator)
+  const foodCpiPressure = Math.round((agflationIndex * 0.08) * 10) / 10;
+
+  return {
+    urea:   { price: ureaData.price,   change: ureaData.change,   changePct: ureaData.changePct   },
+    dap:    { price: dapData.price,    change: dapData.change,    changePct: dapData.changePct    },
+    potash: { price: potashData.price, change: potashData.change, changePct: potashData.changePct },
+    corn:   { price: cornData.price,   change: cornData.change,   changePct: cornData.changePct   },
+    wheat:  { price: wheatData.price,  change: wheatData.change,  changePct: wheatData.changePct  },
+    agflationIndex: Math.round(agflationIndex * 100) / 100,
+    foodCpiPressure,
+    lastUpdated: new Date().toISOString(),
+  };
 }
 
 async function buildPulseBarData(): Promise<PulseBarData> {
@@ -198,6 +264,16 @@ export const marketDataRouter = router({
       const merged      = mergeTimeSeries(wtiPoints, brentPoints, input.months);
       return { data: merged, lastUpdated: new Date().toISOString() };
     }),
+
+  /** Fertilizer & agricultural commodity prices — cached 30 min */
+  fertilizerPrices: publicProcedure.query(async () => {
+    if (fertilizerCache && Date.now() - fertilizerCache.fetchedAt < FERTILIZER_CACHE_TTL) {
+      return fertilizerCache.data;
+    }
+    const data = await buildFertilizerData();
+    fertilizerCache = { data, fetchedAt: Date.now() };
+    return data;
+  }),
 
   /** Current spot prices for margin calculations */
   currentPrices: publicProcedure.query(async () => {
