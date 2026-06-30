@@ -45,7 +45,8 @@ export default function CookieConsent() {
         background: "rgba(10, 14, 26, 0.97)",
         border: "1px solid rgba(233, 30, 140, 0.35)",
         borderRadius: "12px",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+        boxShadow:
+          "0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
         padding: "20px 24px",
         display: "flex",
         flexDirection: "column",
@@ -89,10 +90,12 @@ export default function CookieConsent() {
         }}
       >
         FreightIntel uses{" "}
-        <strong style={{ color: "rgba(255,255,255,0.8)" }}>Microsoft Clarity</strong> to
-        record anonymised session replays and heatmaps that help us improve the
-        dashboard experience. No personal data is sold. You can change your choice at
-        any time by clearing your browser storage.{" "}
+        <strong style={{ color: "rgba(255,255,255,0.8)" }}>
+          Microsoft Clarity
+        </strong>{" "}
+        to record anonymised session replays and heatmaps that help us improve
+        the dashboard experience. No personal data is sold. You can change your
+        choice at any time by clearing your browser storage.{" "}
         <a
           href="https://privacy.microsoft.com/en-us/privacystatement"
           target="_blank"
@@ -123,8 +126,8 @@ export default function CookieConsent() {
             cursor: "pointer",
             transition: "opacity 0.15s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+          onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+          onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
         >
           Accept All Cookies
         </button>
@@ -146,11 +149,11 @@ export default function CookieConsent() {
             cursor: "pointer",
             transition: "border-color 0.15s, color 0.15s",
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={e => {
             e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
             e.currentTarget.style.color = "rgba(255,255,255,0.8)";
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={e => {
             e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
             e.currentTarget.style.color = "rgba(255,255,255,0.55)";
           }}

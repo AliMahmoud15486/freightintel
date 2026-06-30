@@ -4,7 +4,14 @@
  * Features: severity filter, category filter (from sidebar), LLM-classified tags, refresh button
  */
 import { useState } from "react";
-import { MoreHorizontal, RefreshCw, ExternalLink, Clock, Rss, X } from "lucide-react";
+import {
+  MoreHorizontal,
+  RefreshCw,
+  ExternalLink,
+  Clock,
+  Rss,
+  X,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { clarityEvent } from "@/lib/clarity";
@@ -31,59 +38,94 @@ function timeAgo(dateStr: string): string {
   }
 }
 
-const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  critical: { bg: "rgba(239,68,68,0.12)", text: "#ef4444", border: "rgba(239,68,68,0.3)" },
-  warning: { bg: "rgba(245,158,11,0.12)", text: "#f59e0b", border: "rgba(245,158,11,0.3)" },
-  info: { bg: "rgba(59,130,246,0.12)", text: "#3b82f6", border: "rgba(59,130,246,0.3)" },
+const SEVERITY_COLORS: Record<
+  string,
+  { bg: string; text: string; border: string }
+> = {
+  critical: {
+    bg: "rgba(239,68,68,0.12)",
+    text: "#ef4444",
+    border: "rgba(239,68,68,0.3)",
+  },
+  warning: {
+    bg: "rgba(245,158,11,0.12)",
+    text: "#f59e0b",
+    border: "rgba(245,158,11,0.3)",
+  },
+  info: {
+    bg: "rgba(59,130,246,0.12)",
+    text: "#3b82f6",
+    border: "rgba(59,130,246,0.3)",
+  },
 };
 
 const SOURCE_COLORS: Record<string, string> = {
   "Supply Chain Dive": "#6366f1",
   "FT Commodities": "#E91E8C",
-  "Splash247": "#06b6d4",
+  Splash247: "#06b6d4",
 };
 
-export default function ImpactNewsFeed({ selectedCategories, onClearCategories }: Props) {
+export default function ImpactNewsFeed({
+  selectedCategories,
+  onClearCategories,
+}: Props) {
   const [filter, setFilter] = useState<Severity>("all");
   const { isMobile } = useBreakpoint();
 
-  const { data, isLoading, isError, refetch, isFetching } = trpc.news.feed.useQuery(undefined, {
-    refetchInterval: 15 * 60 * 1000,
-    staleTime: 14 * 60 * 1000,
-  });
+  const { data, isLoading, isError, refetch, isFetching } =
+    trpc.news.feed.useQuery(undefined, {
+      refetchInterval: 15 * 60 * 1000,
+      staleTime: 14 * 60 * 1000,
+    });
 
-  const { mutate: forceRefresh, isPending: isRefreshing } = trpc.news.refresh.useMutation({
-    onSuccess: () => { refetch(); clarityEvent("news_force_refreshed"); },
-  });
+  const { mutate: forceRefresh, isPending: isRefreshing } =
+    trpc.news.refresh.useMutation({
+      onSuccess: () => {
+        refetch();
+        clarityEvent("news_force_refreshed");
+      },
+    });
 
   const items = data?.items ?? [];
 
   // Apply severity filter first
-  const severityFiltered = filter === "all" ? items : items.filter((i) => i.severity === filter);
+  const severityFiltered =
+    filter === "all" ? items : items.filter(i => i.severity === filter);
 
   // Then apply multi-category filter from sidebar
   const hasFilter = selectedCategories && selectedCategories.size > 0;
   const filtered = hasFilter
-    ? severityFiltered.filter((i) =>
-        i.affectedCategories?.some((c) =>
+    ? severityFiltered.filter(i =>
+        i.affectedCategories?.some(c =>
           Array.from(selectedCategories!).some(
-            (sel) => sel.toLowerCase() === c.toLowerCase()
+            sel => sel.toLowerCase() === c.toLowerCase()
           )
         )
       )
     : severityFiltered;
 
-  const criticalCount = items.filter((i) => i.severity === "critical").length;
-  const warningCount = items.filter((i) => i.severity === "warning").length;
+  const criticalCount = items.filter(i => i.severity === "critical").length;
+  const warningCount = items.filter(i => i.severity === "warning").length;
 
   const lastUpdated = data?.lastUpdated
-    ? new Date(data.lastUpdated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    ? new Date(data.lastUpdated).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   const spinning = isRefreshing || isFetching;
 
   return (
-    <div className="ms-panel" style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <div
+      className="ms-panel"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
       {/* Header */}
       <div
         style={{
@@ -116,7 +158,13 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
           {lastUpdated && (
             <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
               <Clock size={10} style={{ color: "rgba(255,255,255,0.25)" }} />
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", color: "rgba(255,255,255,0.25)" }}>
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.6rem",
+                  color: "rgba(255,255,255,0.25)",
+                }}
+              >
                 {lastUpdated}
               </span>
             </div>
@@ -136,9 +184,21 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
               transition: "color 0.15s",
             }}
           >
-            <RefreshCw size={12} style={{ animation: spinning ? "spin 1s linear infinite" : "none" }} />
+            <RefreshCw
+              size={12}
+              style={{
+                animation: spinning ? "spin 1s linear infinite" : "none",
+              }}
+            />
           </button>
-          <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>
+          <button
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.3)",
+              cursor: "pointer",
+            }}
+          >
             <MoreHorizontal size={14} />
           </button>
         </div>
@@ -157,11 +217,23 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
             gap: "8px",
           }}
         >
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.3)" }}>
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "0.65rem",
+              color: "rgba(255,255,255,0.3)",
+            }}
+          >
             Prioritized costs with landing impacts and per-costs.
           </span>
           <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
-            {(data?.sources ?? ["Supply Chain Dive", "FT Commodities", "Splash247"]).map((src) => (
+            {(
+              data?.sources ?? [
+                "Supply Chain Dive",
+                "FT Commodities",
+                "Splash247",
+              ]
+            ).map(src => (
               <span
                 key={src}
                 style={{
@@ -195,11 +267,25 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
             flexShrink: 0,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", flex: 1 }}>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.62rem", color: "rgba(255,255,255,0.4)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              flexWrap: "wrap",
+              flex: 1,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.62rem",
+                color: "rgba(255,255,255,0.4)",
+              }}
+            >
               Filtered by:
             </span>
-            {Array.from(selectedCategories ?? []).map((cat) => (
+            {Array.from(selectedCategories ?? []).map(cat => (
               <span
                 key={cat}
                 style={{
@@ -217,7 +303,13 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
                 {cat}
               </span>
             ))}
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem", color: "rgba(255,255,255,0.3)" }}>
+            <span
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.6rem",
+                color: "rgba(255,255,255,0.3)",
+              }}
+            >
               ({filtered.length} result{filtered.length !== 1 ? "s" : ""})
             </span>
           </div>
@@ -258,7 +350,7 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
           flexShrink: 0,
         }}
       >
-        {(["all", "critical", "warning", "info"] as Severity[]).map((s) => (
+        {(["all", "critical", "warning", "info"] as Severity[]).map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -272,7 +364,8 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
               borderRadius: "4px",
               border: "none",
               cursor: "pointer",
-              background: filter === s ? "rgba(249,115,22,0.15)" : "transparent",
+              background:
+                filter === s ? "rgba(249,115,22,0.15)" : "transparent",
               color: filter === s ? "#f97316" : "rgba(255,255,255,0.35)",
               transition: "all 0.15s",
             }}
@@ -280,10 +373,25 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
             {s}
           </button>
         ))}
-        <span style={{ marginLeft: "auto", fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.25)" }}>
+        <span
+          style={{
+            marginLeft: "auto",
+            fontFamily: "'Inter', sans-serif",
+            fontSize: "0.65rem",
+            color: "rgba(255,255,255,0.25)",
+          }}
+        >
           {filtered.length} items
-          {criticalCount > 0 && <span style={{ color: "#ef4444", marginLeft: "6px" }}>● {criticalCount}</span>}
-          {warningCount > 0 && <span style={{ color: "#f59e0b", marginLeft: "4px" }}>● {warningCount}</span>}
+          {criticalCount > 0 && (
+            <span style={{ color: "#ef4444", marginLeft: "6px" }}>
+              ● {criticalCount}
+            </span>
+          )}
+          {warningCount > 0 && (
+            <span style={{ color: "#f59e0b", marginLeft: "4px" }}>
+              ● {warningCount}
+            </span>
+          )}
         </span>
       </div>
 
@@ -291,12 +399,37 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {/* Loading state */}
         {isLoading && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", gap: "12px" }}>
-            <RefreshCw size={22} style={{ color: "#f97316", animation: "spin 1s linear infinite" }} />
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "40px 20px",
+              gap: "12px",
+            }}
+          >
+            <RefreshCw
+              size={22}
+              style={{ color: "#f97316", animation: "spin 1s linear infinite" }}
+            />
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.75rem",
+                color: "rgba(255,255,255,0.4)",
+                textAlign: "center",
+              }}
+            >
               Fetching live news &amp; classifying with AI...
             </span>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.2)" }}>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.65rem",
+                color: "rgba(255,255,255,0.2)",
+              }}
+            >
               Supply Chain Dive · FT Commodities · Splash247
             </span>
           </div>
@@ -305,11 +438,25 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
         {/* Error state */}
         {isError && !isLoading && (
           <div style={{ padding: "20px 14px", textAlign: "center" }}>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.75rem",
+                color: "rgba(255,255,255,0.3)",
+              }}
+            >
               Unable to load news.{" "}
               <button
                 onClick={() => forceRefresh()}
-                style={{ background: "none", border: "none", color: "#f97316", cursor: "pointer", fontFamily: "inherit", fontSize: "inherit", textDecoration: "underline" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#f97316",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  textDecoration: "underline",
+                }}
               >
                 refresh
               </button>{" "}
@@ -321,7 +468,13 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
         {/* Empty state */}
         {!isLoading && !isError && filtered.length === 0 && (
           <div style={{ padding: "20px 14px", textAlign: "center" }}>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.75rem",
+                color: "rgba(255,255,255,0.3)",
+              }}
+            >
               {hasFilter
                 ? `No ${filter !== "all" ? filter + " " : ""}news for the selected categories.`
                 : `No ${filter !== "all" ? filter : ""} news items found.`}
@@ -329,7 +482,17 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
             {hasFilter && (
               <button
                 onClick={onClearCategories}
-                style={{ display: "block", margin: "8px auto 0", background: "none", border: "none", color: "#f97316", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", textDecoration: "underline" }}
+                style={{
+                  display: "block",
+                  margin: "8px auto 0",
+                  background: "none",
+                  border: "none",
+                  color: "#f97316",
+                  cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.7rem",
+                  textDecoration: "underline",
+                }}
               >
                 Clear filter
               </button>
@@ -346,14 +509,32 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
                 key={item.id}
                 style={{
                   padding: "12px 14px",
-                  borderBottom: idx < filtered.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                  borderBottom:
+                    idx < filtered.length - 1
+                      ? "1px solid rgba(255,255,255,0.05)"
+                      : "none",
                   transition: "background 0.15s",
                 }}
                 className="hover:bg-white/[0.02]"
               >
                 {/* Top row: severity badge + time + source + link */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", gap: "6px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "6px",
+                    gap: "6px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <span
                       style={{
                         fontFamily: "'Rajdhani', sans-serif",
@@ -375,7 +556,8 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
                       style={{
                         fontFamily: "'Inter', sans-serif",
                         fontSize: "0.6rem",
-                        color: SOURCE_COLORS[item.source] ?? "rgba(255,255,255,0.3)",
+                        color:
+                          SOURCE_COLORS[item.source] ?? "rgba(255,255,255,0.3)",
                         background: `${SOURCE_COLORS[item.source] ?? "#666"}15`,
                         padding: "1px 5px",
                         borderRadius: "3px",
@@ -385,15 +567,33 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
                       {item.source}
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.62rem", color: "rgba(255,255,255,0.25)" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: "0.62rem",
+                        color: "rgba(255,255,255,0.25)",
+                      }}
+                    >
                       {timeAgo(item.publishedAt)}
                     </span>
                     <a
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", transition: "color 0.15s" }}
+                      style={{
+                        color: "rgba(255,255,255,0.2)",
+                        display: "flex",
+                        alignItems: "center",
+                        transition: "color 0.15s",
+                      }}
                       className="hover:text-orange-400"
                     >
                       <ExternalLink size={10} />
@@ -425,15 +625,30 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
 
                 {/* AI summary */}
                 {item.summary && (
-                  <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5, margin: "0 0 7px 0" }}>
+                  <p
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: "0.7rem",
+                      color: "rgba(255,255,255,0.45)",
+                      lineHeight: 1.5,
+                      margin: "0 0 7px 0",
+                    }}
+                  >
                     {item.summary}
                   </p>
                 )}
 
                 {/* Tags */}
                 {item.tags.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "6px" }}>
-                    {item.tags.map((tag) => (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    {item.tags.map(tag => (
                       <span
                         key={tag}
                         style={{
@@ -454,15 +669,40 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
 
                 {/* Impact metrics */}
                 {(item.etaImpact || item.costImpact) && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "5px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "12px",
+                      marginBottom: "5px",
+                    }}
+                  >
                     {item.etaImpact && (
-                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.5)" }}>
-                        ETA <span style={{ color: "#f59e0b", fontWeight: 600 }}>{item.etaImpact}</span>
+                      <span
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: "0.68rem",
+                          color: "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        ETA{" "}
+                        <span style={{ color: "#f59e0b", fontWeight: 600 }}>
+                          {item.etaImpact}
+                        </span>
                       </span>
                     )}
                     {item.costImpact && (
-                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.5)" }}>
-                        Cost Impact <span style={{ color: "#ef4444", fontWeight: 600 }}>{item.costImpact}</span>
+                      <span
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: "0.68rem",
+                          color: "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        Cost Impact{" "}
+                        <span style={{ color: "#ef4444", fontWeight: 600 }}>
+                          {item.costImpact}
+                        </span>
                       </span>
                     )}
                   </div>
@@ -470,19 +710,25 @@ export default function ImpactNewsFeed({ selectedCategories, onClearCategories }
 
                 {/* Affected categories — highlight the active filter */}
                 {item.affectedCategories.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                    {item.affectedCategories.map((cat) => {
-                      const isActive = Array.from(selectedCategories ?? []).some(
-                  (sel) => sel.toLowerCase() === cat.toLowerCase()
-                );
+                  <div
+                    style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}
+                  >
+                    {item.affectedCategories.map(cat => {
+                      const isActive = Array.from(
+                        selectedCategories ?? []
+                      ).some(sel => sel.toLowerCase() === cat.toLowerCase());
                       return (
                         <span
                           key={cat}
                           style={{
                             fontFamily: "'Inter', sans-serif",
                             fontSize: "0.62rem",
-                            color: isActive ? "#f97316" : "rgba(255,255,255,0.4)",
-                            background: isActive ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.05)",
+                            color: isActive
+                              ? "#f97316"
+                              : "rgba(255,255,255,0.4)",
+                            background: isActive
+                              ? "rgba(249,115,22,0.12)"
+                              : "rgba(255,255,255,0.05)",
                             border: `1px solid ${isActive ? "rgba(249,115,22,0.3)" : "rgba(255,255,255,0.08)"}`,
                             borderRadius: "3px",
                             padding: "1px 6px",

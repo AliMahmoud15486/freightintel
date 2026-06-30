@@ -19,7 +19,9 @@ async function fetchYahooPrice(symbol: string): Promise<number | null> {
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
-    const json = await res.json() as { chart: { result: Array<{ meta: { regularMarketPrice: number } }> | null } };
+    const json = (await res.json()) as {
+      chart: { result: Array<{ meta: { regularMarketPrice: number } }> | null };
+    };
     return json.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
   } catch {
     return null;
@@ -47,7 +49,10 @@ export const marginCalculatorRouter = router({
     // Freight surcharge: map BDRY price to a 0–50% surcharge scale
     // BDRY typically trades 8–20; below 10 = low freight, above 16 = high freight
     const bdryPrice = bdry ?? 12.0;
-    const freightSurcharge = Math.min(50, Math.max(0, Math.round((bdryPrice - 8) * 2.5)));
+    const freightSurcharge = Math.min(
+      50,
+      Math.max(0, Math.round((bdryPrice - 8) * 2.5))
+    );
 
     // ZIM price proxy for disruption: below $20 = low, $20–35 = medium, above $35 = high
     const zimPrice = zim ?? 25.0;
@@ -81,7 +86,8 @@ export const marginCalculatorRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const disruptionLabel = ["Low", "Medium", "High"][input.disruptionLevel] ?? "Medium";
+      const disruptionLabel =
+        ["Low", "Medium", "High"][input.disruptionLevel] ?? "Medium";
       const prompt = `You are a supply chain margin analyst. A merchant is selling "${input.productName}" (${input.category}) sourced from ${input.origin}.
 
 Current conditions:
@@ -98,7 +104,11 @@ Write a single, concise, actionable sentence (max 180 characters) advising the m
       try {
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "You are a concise supply chain margin analyst. Respond with a single sentence only." },
+            {
+              role: "system",
+              content:
+                "You are a concise supply chain margin analyst. Respond with a single sentence only.",
+            },
             { role: "user", content: prompt },
           ],
         });

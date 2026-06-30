@@ -21,10 +21,38 @@ import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 // Stacked bar chart data — cost impact by category (static, domain knowledge)
 const barData = [
-  { category: "Raw\nMaterials", rawMaterials: 90, fuel: 60, logistics: 50, overhead: 40, total: 6.2 },
-  { category: "Home &\nGarden", rawMaterials: 70, fuel: 55, logistics: 45, overhead: 30, total: 4.8 },
-  { category: "Logistics", rawMaterials: 60, fuel: 65, logistics: 55, overhead: 35, total: 4.8 },
-  { category: "Overhead", rawMaterials: 50, fuel: 45, logistics: 40, overhead: 50, total: 3.9 },
+  {
+    category: "Raw\nMaterials",
+    rawMaterials: 90,
+    fuel: 60,
+    logistics: 50,
+    overhead: 40,
+    total: 6.2,
+  },
+  {
+    category: "Home &\nGarden",
+    rawMaterials: 70,
+    fuel: 55,
+    logistics: 45,
+    overhead: 30,
+    total: 4.8,
+  },
+  {
+    category: "Logistics",
+    rawMaterials: 60,
+    fuel: 65,
+    logistics: 55,
+    overhead: 35,
+    total: 4.8,
+  },
+  {
+    category: "Overhead",
+    rawMaterials: 50,
+    fuel: 45,
+    logistics: 40,
+    overhead: 50,
+    total: 3.9,
+  },
 ];
 
 const CHART_COLORS = {
@@ -49,9 +77,14 @@ const CustomTooltipLine = ({ active, payload, label }: any) => {
           fontSize: "0.75rem",
         }}
       >
-        <div style={{ color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>{label}</div>
+        <div style={{ color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>
+          {label}
+        </div>
         {payload.map((p: any) => (
-          <div key={p.name} style={{ color: p.color, display: "flex", gap: "8px" }}>
+          <div
+            key={p.name}
+            style={{ color: p.color, display: "flex", gap: "8px" }}
+          >
             <span>{p.name === "oilCost" ? "WTI Crude" : "Brent Crude"}:</span>
             <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>
               ${p.value?.toFixed(2)}
@@ -81,9 +114,14 @@ const CustomTooltipBar = ({ active, payload, label }: any) => {
           {label.replace("\n", " ")}
         </div>
         {payload.map((p: any) => (
-          <div key={p.name} style={{ color: p.fill, display: "flex", gap: "8px" }}>
+          <div
+            key={p.name}
+            style={{ color: p.fill, display: "flex", gap: "8px" }}
+          >
             <span style={{ textTransform: "capitalize" }}>{p.name}:</span>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>{p.value}</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {p.value}
+            </span>
           </div>
         ))}
       </div>
@@ -118,9 +156,13 @@ export default function CostInflationDrivers() {
   const lineData = oilHistory?.data ?? [];
 
   // Compute Y-axis domain from live data
-  const allValues = lineData.flatMap((d) => [d.oilCost, d.freightCost]).filter(Boolean);
-  const minVal = allValues.length > 0 ? Math.floor(Math.min(...allValues) * 0.9) : 0;
-  const maxVal = allValues.length > 0 ? Math.ceil(Math.max(...allValues) * 1.1) : 100;
+  const allValues = lineData
+    .flatMap(d => [d.oilCost, d.freightCost])
+    .filter(Boolean);
+  const minVal =
+    allValues.length > 0 ? Math.floor(Math.min(...allValues) * 0.9) : 0;
+  const maxVal =
+    allValues.length > 0 ? Math.ceil(Math.max(...allValues) * 1.1) : 100;
 
   return (
     <div className="ms-panel" style={{ height: "100%" }}>
@@ -137,7 +179,11 @@ export default function CostInflationDrivers() {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span className="panel-header">COST INFLATION DRIVERS</span>
           {isLoading ? (
-            <RefreshCw size={11} className="animate-spin" style={{ color: "#f97316" }} />
+            <RefreshCw
+              size={11}
+              className="animate-spin"
+              style={{ color: "#f97316" }}
+            />
           ) : oilHistory ? (
             <span
               style={{
@@ -155,7 +201,13 @@ export default function CostInflationDrivers() {
             </span>
           ) : null}
           {oilHistory && dataUpdatedAt && (
-            <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.25)", fontFamily: "'Inter', sans-serif" }}>
+            <span
+              style={{
+                fontSize: "0.6rem",
+                color: "rgba(255,255,255,0.25)",
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
               {new Date(dataUpdatedAt).toLocaleTimeString()}
             </span>
           )}
@@ -201,39 +253,86 @@ export default function CostInflationDrivers() {
             {[
               { color: CHART_COLORS.oil, label: "WTI Crude" },
               { color: CHART_COLORS.freight, label: "Brent Crude" },
-            ].map((item) => (
-              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <div style={{ width: 16, height: 2, background: item.color, borderRadius: 1 }} />
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.45)" }}>
+            ].map(item => (
+              <div
+                key={item.label}
+                style={{ display: "flex", alignItems: "center", gap: "4px" }}
+              >
+                <div
+                  style={{
+                    width: 16,
+                    height: 2,
+                    background: item.color,
+                    borderRadius: 1,
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "0.65rem",
+                    color: "rgba(255,255,255,0.45)",
+                  }}
+                >
                   {item.label}
                 </span>
               </div>
             ))}
           </div>
           {isLoading ? (
-            <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div
+              style={{
+                height: 200,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <div style={{ textAlign: "center" }}>
-                <RefreshCw size={20} className="animate-spin" style={{ color: "#f97316", margin: "0 auto 8px" }} />
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" }}>
+                <RefreshCw
+                  size={20}
+                  className="animate-spin"
+                  style={{ color: "#f97316", margin: "0 auto 8px" }}
+                />
+                <div
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "0.7rem",
+                    color: "rgba(255,255,255,0.3)",
+                  }}
+                >
                   Loading live data...
                 </div>
               </div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={lineData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <LineChart
+                data={lineData}
+                margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.05)"
+                />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
+                  tick={{
+                    fill: "rgba(255,255,255,0.4)",
+                    fontSize: 10,
+                    fontFamily: "'Inter', sans-serif",
+                  }}
                   axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
+                  tick={{
+                    fill: "rgba(255,255,255,0.4)",
+                    fontSize: 10,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v) => `$${v.toFixed(0)}`}
+                  tickFormatter={v => `$${v.toFixed(0)}`}
                   domain={[minVal, maxVal]}
                 />
                 <Tooltip content={<CustomTooltipLine />} />
@@ -259,7 +358,17 @@ export default function CostInflationDrivers() {
         </div>
 
         {/* Stacked Bar Chart */}
-        <div style={{ padding: stackCharts ? "12px 8px 0" : "0 8px", borderLeft: stackCharts ? "none" : "1px solid rgba(255,255,255,0.06)", borderTop: stackCharts ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+        <div
+          style={{
+            padding: stackCharts ? "12px 8px 0" : "0 8px",
+            borderLeft: stackCharts
+              ? "none"
+              : "1px solid rgba(255,255,255,0.06)",
+            borderTop: stackCharts
+              ? "1px solid rgba(255,255,255,0.06)"
+              : "none",
+          }}
+        >
           <div
             style={{
               fontFamily: "'Inter', sans-serif",
@@ -273,40 +382,92 @@ export default function CostInflationDrivers() {
             ESTIMATED ITEM COST IMPACT BY CATEGORY
           </div>
           {/* Legend */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              marginBottom: "6px",
+            }}
+          >
             {[
               { color: CHART_COLORS.rawMaterials, label: "Raw materials" },
               { color: CHART_COLORS.fuel, label: "Fuel" },
               { color: CHART_COLORS.logistics, label: "Logistics" },
               { color: CHART_COLORS.overhead, label: "Overhead" },
-            ].map((item) => (
-              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <div style={{ width: 8, height: 8, background: item.color, borderRadius: 2 }} />
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.62rem", color: "rgba(255,255,255,0.45)" }}>
+            ].map(item => (
+              <div
+                key={item.label}
+                style={{ display: "flex", alignItems: "center", gap: "4px" }}
+              >
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    background: item.color,
+                    borderRadius: 2,
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "0.62rem",
+                    color: "rgba(255,255,255,0.45)",
+                  }}
+                >
                   {item.label}
                 </span>
               </div>
             ))}
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={barData} margin={{ top: 18, right: 10, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <BarChart
+              data={barData}
+              margin={{ top: 18, right: 10, left: -15, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="rgba(255,255,255,0.05)"
+                vertical={false}
+              />
               <XAxis
                 dataKey="category"
-                tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 9, fontFamily: "'Inter', sans-serif" }}
+                tick={{
+                  fill: "rgba(255,255,255,0.4)",
+                  fontSize: 9,
+                  fontFamily: "'Inter', sans-serif",
+                }}
                 axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}
+                tick={{
+                  fill: "rgba(255,255,255,0.4)",
+                  fontSize: 10,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltipBar />} />
-              <Bar dataKey="rawMaterials" stackId="a" fill={CHART_COLORS.rawMaterials} radius={[0, 0, 0, 0]} />
+              <Bar
+                dataKey="rawMaterials"
+                stackId="a"
+                fill={CHART_COLORS.rawMaterials}
+                radius={[0, 0, 0, 0]}
+              />
               <Bar dataKey="fuel" stackId="a" fill={CHART_COLORS.fuel} />
-              <Bar dataKey="logistics" stackId="a" fill={CHART_COLORS.logistics} />
-              <Bar dataKey="overhead" stackId="a" fill={CHART_COLORS.overhead} radius={[3, 3, 0, 0]}>
+              <Bar
+                dataKey="logistics"
+                stackId="a"
+                fill={CHART_COLORS.logistics}
+              />
+              <Bar
+                dataKey="overhead"
+                stackId="a"
+                fill={CHART_COLORS.overhead}
+                radius={[3, 3, 0, 0]}
+              >
                 <LabelList dataKey="total" content={renderCustomBarLabel} />
               </Bar>
             </BarChart>

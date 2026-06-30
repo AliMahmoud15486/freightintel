@@ -4,7 +4,13 @@
  * Refreshes every 5 minutes (matching news cache cadence).
  */
 import { useState, useEffect, useRef } from "react";
-import { AlertTriangle, X, ChevronRight, ExternalLink, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  X,
+  ChevronRight,
+  ExternalLink,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
@@ -23,10 +29,10 @@ export default function AlertsSystem() {
 
   // Derive critical alerts from live news
   const criticalItems = (data?.items ?? []).filter(
-    (item) => item.severity === "critical" && !dismissed.has(item.id)
+    item => item.severity === "critical" && !dismissed.has(item.id)
   );
   const warningItems = (data?.items ?? []).filter(
-    (item) => item.severity === "warning" && !dismissed.has(item.id)
+    item => item.severity === "warning" && !dismissed.has(item.id)
   );
   const activeAlerts = [...criticalItems, ...warningItems];
   const criticalCount = criticalItems.length;
@@ -52,7 +58,7 @@ export default function AlertsSystem() {
   }, [criticalCount, data]);
 
   const dismissAlert = (id: string) => {
-    setDismissed((prev) => new Set(Array.from(prev).concat(id)));
+    setDismissed(prev => new Set(Array.from(prev).concat(id)));
   };
 
   // Relative time helper
@@ -83,7 +89,11 @@ export default function AlertsSystem() {
           flexShrink: 0,
         }}
       >
-        <RefreshCw size={12} className="animate-spin" style={{ color: "#ef4444" }} />
+        <RefreshCw
+          size={12}
+          className="animate-spin"
+          style={{ color: "#ef4444" }}
+        />
         <span
           style={{
             fontFamily: "'Rajdhani', sans-serif",
@@ -118,9 +128,12 @@ export default function AlertsSystem() {
           padding: "7px 16px",
           cursor: "pointer",
         }}
-        onClick={() => setExpanded((v) => !v)}
+        onClick={() => setExpanded(v => !v)}
       >
-        <div className="animate-blink" style={{ display: "flex", alignItems: "center" }}>
+        <div
+          className="animate-blink"
+          style={{ display: "flex", alignItems: "center" }}
+        >
           <AlertTriangle size={14} style={{ color: "#ef4444" }} />
         </div>
 
@@ -139,8 +152,10 @@ export default function AlertsSystem() {
 
         {/* Scrolling headline preview — hidden on mobile to save space */}
         {!isMobile && (
-          <div style={{ display: "flex", gap: "6px", flex: 1, overflow: "hidden" }}>
-            {activeAlerts.slice(0, 3).map((alert) => (
+          <div
+            style={{ display: "flex", gap: "6px", flex: 1, overflow: "hidden" }}
+          >
+            {activeAlerts.slice(0, 3).map(alert => (
               <span
                 key={alert.id}
                 style={{
@@ -158,9 +173,7 @@ export default function AlertsSystem() {
           </div>
         )}
         {/* Mobile: show count badge instead */}
-        {isMobile && (
-          <div style={{ flex: 1 }} />
-        )}
+        {isMobile && <div style={{ flex: 1 }} />}
 
         <ChevronRight
           size={14}
@@ -186,7 +199,7 @@ export default function AlertsSystem() {
             overflowY: "auto",
           }}
         >
-          {activeAlerts.map((alert) => {
+          {activeAlerts.map(alert => {
             const isCritical = alert.severity === "critical";
             const accentColor = isCritical ? "#ef4444" : "#f59e0b";
             return (
@@ -196,7 +209,9 @@ export default function AlertsSystem() {
                   display: "flex",
                   alignItems: "flex-start",
                   gap: "10px",
-                  background: isCritical ? "rgba(239,68,68,0.07)" : "rgba(245,158,11,0.07)",
+                  background: isCritical
+                    ? "rgba(239,68,68,0.07)"
+                    : "rgba(245,158,11,0.07)",
                   border: `1px solid ${isCritical ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
                   borderRadius: "5px",
                   padding: "8px 10px",
@@ -255,8 +270,15 @@ export default function AlertsSystem() {
                   </div>
                   {/* Tags */}
                   {alert.tags.length > 0 && (
-                    <div style={{ display: "flex", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
-                      {alert.tags.slice(0, 3).map((tag) => (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "4px",
+                        marginTop: "4px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {alert.tags.slice(0, 3).map(tag => (
                         <span
                           key={tag}
                           style={{
@@ -299,7 +321,7 @@ export default function AlertsSystem() {
                     href={alert.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                     style={{ color: "rgba(255,255,255,0.2)", display: "flex" }}
                     className="hover:text-white/50"
                   >
@@ -309,7 +331,10 @@ export default function AlertsSystem() {
 
                 {/* Dismiss */}
                 <button
-                  onClick={(e) => { e.stopPropagation(); dismissAlert(alert.id); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    dismissAlert(alert.id);
+                  }}
                   style={{
                     background: "none",
                     border: "none",

@@ -61,7 +61,7 @@
   --popover-foreground: oklch(0.92 0.005 220);
 
   /* Datajar gradient accent — magenta to orange */
-  --primary: oklch(0.68 0.18 45);           /* orange end of gradient */
+  --primary: oklch(0.68 0.18 45); /* orange end of gradient */
   --primary-foreground: oklch(0.1 0.01 45);
 
   --secondary: oklch(0.17 0.02 240);
@@ -70,7 +70,7 @@
   --muted: oklch(0.17 0.02 240);
   --muted-foreground: oklch(0.55 0.015 220);
 
-  --accent: oklch(0.55 0.28 330);           /* magenta start of gradient */
+  --accent: oklch(0.55 0.28 330); /* magenta start of gradient */
   --accent-foreground: oklch(0.98 0 0);
 
   --destructive: oklch(0.62 0.22 25);
@@ -90,7 +90,7 @@
   /* Sidebar */
   --sidebar: oklch(0.11 0.018 240);
   --sidebar-foreground: oklch(0.92 0.005 220);
-  --sidebar-primary: oklch(0.55 0.28 330);   /* magenta */
+  --sidebar-primary: oklch(0.55 0.28 330); /* magenta */
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.17 0.02 240);
   --sidebar-accent-foreground: oklch(0.92 0.005 220);
@@ -99,16 +99,17 @@
 
   /* Custom tokens — Datajar palette */
   --ms-orange: #f97316;
-  --ms-magenta: #E91E8C;
+  --ms-magenta: #e91e8c;
   --ms-red: #ef4444;
   --ms-amber: #f59e0b;
   --ms-green: #10b981;
   --ms-blue: #3b82f6;
   --ms-panel: #111827;
   --ms-panel-border: rgba(233, 30, 140, 0.12);
-  --ms-gradient: linear-gradient(90deg, #E91E8C 0%, #f97316 100%);
-  --ms-gradient-135: linear-gradient(135deg, #E91E8C 0%, #f97316 100%);
-  --ms-glow-gradient: 0 0 20px rgba(233, 30, 140, 0.25), 0 0 40px rgba(249, 115, 22, 0.15);
+  --ms-gradient: linear-gradient(90deg, #e91e8c 0%, #f97316 100%);
+  --ms-gradient-135: linear-gradient(135deg, #e91e8c 0%, #f97316 100%);
+  --ms-glow-gradient:
+    0 0 20px rgba(233, 30, 140, 0.25), 0 0 40px rgba(249, 115, 22, 0.15);
   --ms-glow-orange: 0 0 20px rgba(249, 115, 22, 0.3);
   --ms-glow-magenta: 0 0 20px rgba(233, 30, 140, 0.4);
   --ms-glow-red: 0 0 20px rgba(239, 68, 68, 0.4);
@@ -120,7 +121,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -133,8 +134,13 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Rajdhani', sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
     letter-spacing: 0.05em;
   }
@@ -189,7 +195,7 @@
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
     letter-spacing: 0.08em;
     font-size: 0.7rem;
@@ -201,7 +207,7 @@
     background: rgba(245, 158, 11, 0.15);
     color: #f59e0b;
     border: 1px solid rgba(245, 158, 11, 0.3);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
     letter-spacing: 0.08em;
     font-size: 0.7rem;
@@ -213,7 +219,7 @@
     background: rgba(59, 130, 246, 0.15);
     color: #3b82f6;
     border: 1px solid rgba(59, 130, 246, 0.3);
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
     letter-spacing: 0.08em;
     font-size: 0.7rem;
@@ -224,9 +230,9 @@
 
   /* Nav active state */
   .nav-item-active {
-    border-left: 3px solid #E91E8C;
+    border-left: 3px solid #e91e8c;
     background: rgba(233, 30, 140, 0.08);
-    color: #E91E8C;
+    color: #e91e8c;
   }
 
   /* Pulse animation for map hotspots */
@@ -239,7 +245,7 @@
 
   /* Section label style */
   .section-label {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -249,7 +255,7 @@
 
   /* Panel header */
   .panel-header {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -259,7 +265,7 @@
 
   /* Data value — monospace style */
   .data-value {
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-family: "JetBrains Mono", "Courier New", monospace;
     font-size: 0.875rem;
   }
 
@@ -271,7 +277,7 @@
     font-size: 0.7rem;
     padding: 1px 6px;
     border-radius: 3px;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
   }
 
   /* Alert counter badge */
@@ -286,7 +292,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: "Rajdhani", sans-serif;
   }
 
   /* Scrollbar styling */
@@ -298,42 +304,89 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(233,30,140,0.4) 0%, rgba(249,115,22,0.4) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(233, 30, 140, 0.4) 0%,
+      rgba(249, 115, 22, 0.4) 100%
+    );
     border-radius: 2px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(233,30,140,0.7) 0%, rgba(249,115,22,0.7) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(233, 30, 140, 0.7) 0%,
+      rgba(249, 115, 22, 0.7) 100%
+    );
   }
 }
 
 @keyframes ticker-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes pulse-red {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 0 20px rgba(239, 68, 68, 0.3); }
-  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0), 0 0 40px rgba(239, 68, 68, 0.5); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0.7),
+      0 0 20px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px rgba(239, 68, 68, 0),
+      0 0 40px rgba(239, 68, 68, 0.5);
+  }
 }
 
 @keyframes pulse-amber {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6), 0 0 15px rgba(245, 158, 11, 0.2); }
-  50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0), 0 0 30px rgba(245, 158, 11, 0.4); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(245, 158, 11, 0.6),
+      0 0 15px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(245, 158, 11, 0),
+      0 0 30px rgba(245, 158, 11, 0.4);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 @keyframes slideInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes countUp {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-blink {
@@ -349,7 +402,8 @@
 /* ── Mobile & Touch Responsive ─────────────────────────────────────────────── */
 
 /* Prevent horizontal overflow on all screen sizes */
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -368,7 +422,10 @@ img {
 
 /* Minimum touch target size (44×44px recommended by Apple/Google) */
 @media (pointer: coarse) {
-  button, [role="button"], select, a {
+  button,
+  [role="button"],
+  select,
+  a {
     min-height: 44px;
     min-width: 44px;
   }

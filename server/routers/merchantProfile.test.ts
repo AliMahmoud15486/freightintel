@@ -14,10 +14,13 @@ import type { TrpcContext } from "../_core/context";
 let mockProfileStore: Record<number, Record<string, unknown>> = {};
 let mockHistoryStore: Record<number, unknown[]> = {};
 
-vi.mock("../db", async (importOriginal) => {
+vi.mock("../db", async importOriginal => {
   const original = await importOriginal<typeof import("../db")>();
 
-  const makeSelectChain = (userId: number, tableHint: "profile" | "history") => ({
+  const makeSelectChain = (
+    userId: number,
+    tableHint: "profile" | "history"
+  ) => ({
     where: (_cond: unknown) => ({
       limit: (n: number) => {
         if (tableHint === "profile") {
@@ -44,7 +47,8 @@ vi.mock("../db", async (importOriginal) => {
         select: () => ({
           from: (table: unknown) => {
             // Detect which table by inspecting the drizzle table symbol name
-            const tableName = (table as any)?.[Symbol.for("drizzle:Name")] ?? "";
+            const tableName =
+              (table as any)?.[Symbol.for("drizzle:Name")] ?? "";
             const isHistory = tableName === "margin_history";
             // We don't know userId at from() time, so return a generic chain
             return {
@@ -54,12 +58,16 @@ vi.mock("../db", async (importOriginal) => {
                     const rows = Object.values(mockProfileStore);
                     return Promise.resolve(rows.slice(0, n));
                   }
-                  const allHistory = Object.values(mockHistoryStore).flat() as unknown[];
+                  const allHistory = Object.values(
+                    mockHistoryStore
+                  ).flat() as unknown[];
                   return Promise.resolve(allHistory.slice(0, n));
                 },
                 orderBy: (_ord: unknown) => ({
                   limit: (n: number) => {
-                    const allHistory = Object.values(mockHistoryStore).flat() as unknown[];
+                    const allHistory = Object.values(
+                      mockHistoryStore
+                    ).flat() as unknown[];
                     return Promise.resolve(allHistory.slice(0, n));
                   },
                 }),
@@ -73,10 +81,19 @@ vi.mock("../db", async (importOriginal) => {
             if (data.month !== undefined) {
               // marginHistory insert
               if (!mockHistoryStore[userId]) mockHistoryStore[userId] = [];
-              (mockHistoryStore[userId] as unknown[]).push({ id: Date.now(), ...data, createdAt: new Date() });
+              (mockHistoryStore[userId] as unknown[]).push({
+                id: Date.now(),
+                ...data,
+                createdAt: new Date(),
+              });
             } else {
               // merchantProfiles insert
-              mockProfileStore[userId] = { id: 1, ...data, createdAt: new Date(), updatedAt: new Date() };
+              mockProfileStore[userId] = {
+                id: 1,
+                ...data,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
             }
             return Promise.resolve();
           },
@@ -86,7 +103,10 @@ vi.mock("../db", async (importOriginal) => {
             where: (_cond: unknown) => {
               const keys = Object.keys(mockProfileStore);
               if (keys.length > 0) {
-                mockProfileStore[Number(keys[0])] = { ...mockProfileStore[Number(keys[0])], ...data };
+                mockProfileStore[Number(keys[0])] = {
+                  ...mockProfileStore[Number(keys[0])],
+                  ...data,
+                };
               }
               return Promise.resolve();
             },
@@ -101,7 +121,14 @@ vi.mock("../db", async (importOriginal) => {
 
 function makeAuthContext(userId = 42): TrpcContext {
   return {
-    user: { id: userId, name: "Test User", email: "test@example.com", role: "user", openId: "oid-42", createdAt: new Date() },
+    user: {
+      id: userId,
+      name: "Test User",
+      email: "test@example.com",
+      role: "user",
+      openId: "oid-42",
+      createdAt: new Date(),
+    },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
@@ -131,7 +158,10 @@ describe("merchantProfile.getProfile", () => {
   it("returns default margin targets with target and floor keys", async () => {
     const caller = appRouter.createCaller(makeAuthContext());
     const profile = await caller.merchantProfile.getProfile();
-    const targets = profile.marginTargets as Record<string, { target: number; floor: number }>;
+    const targets = profile.marginTargets as Record<
+      string,
+      { target: number; floor: number }
+    >;
 
     expect(targets).toBeDefined();
     // Default targets should have at least one category
@@ -146,7 +176,10 @@ describe("merchantProfile.getProfile", () => {
   it("returns default notification prefs with emailAlerts boolean", async () => {
     const caller = appRouter.createCaller(makeAuthContext());
     const profile = await caller.merchantProfile.getProfile();
-    const notifs = profile.notificationPrefs as { emailAlerts: boolean; marginDropThreshold: number };
+    const notifs = profile.notificationPrefs as {
+      emailAlerts: boolean;
+      marginDropThreshold: number;
+    };
 
     expect(typeof notifs.emailAlerts).toBe("boolean");
     expect(typeof notifs.marginDropThreshold).toBe("number");
@@ -164,7 +197,7 @@ describe("merchantProfile.upsertMarginTargets", () => {
     const caller = appRouter.createCaller(makeAuthContext());
     const result = await caller.merchantProfile.upsertMarginTargets({
       electronics: { target: 35, floor: 22 },
-      apparel:     { target: 40, floor: 25 },
+      apparel: { target: 40, floor: 25 },
     });
     expect(result.success).toBe(true);
   });
@@ -189,8 +222,8 @@ describe("merchantProfile.upsertCarrierPrefs", () => {
     const caller = appRouter.createCaller(makeAuthContext());
     const result = await caller.merchantProfile.upsertCarrierPrefs({
       preferredCarriers: ["Maersk", "MSC"],
-      avoidCarriers:     ["ZIM"],
-      preferredLanes:    ["Shanghai → Rotterdam"],
+      avoidCarriers: ["ZIM"],
+      preferredLanes: ["Shanghai → Rotterdam"],
     });
     expect(result.success).toBe(true);
   });
@@ -205,11 +238,11 @@ describe("merchantProfile.upsertNotificationPrefs", () => {
   it("accepts valid notification prefs and returns success", async () => {
     const caller = appRouter.createCaller(makeAuthContext());
     const result = await caller.merchantProfile.upsertNotificationPrefs({
-      emailAlerts:          true,
-      criticalOnly:         false,
-      weeklyDigest:         true,
-      marginDropAlert:      true,
-      marginDropThreshold:  5,
+      emailAlerts: true,
+      criticalOnly: false,
+      weeklyDigest: true,
+      marginDropAlert: true,
+      marginDropThreshold: 5,
     });
     expect(result.success).toBe(true);
   });
@@ -218,8 +251,11 @@ describe("merchantProfile.upsertNotificationPrefs", () => {
     const caller = appRouter.createCaller(makeAuthContext());
     await expect(
       caller.merchantProfile.upsertNotificationPrefs({
-        emailAlerts: true, criticalOnly: false, weeklyDigest: true,
-        marginDropAlert: true, marginDropThreshold: 0, // invalid
+        emailAlerts: true,
+        criticalOnly: false,
+        weeklyDigest: true,
+        marginDropAlert: true,
+        marginDropThreshold: 0, // invalid
       })
     ).rejects.toThrow();
   });
@@ -247,13 +283,13 @@ describe("merchantProfile.addMarginSnapshot", () => {
   it("accepts a valid snapshot and returns success", async () => {
     const caller = appRouter.createCaller(makeAuthContext());
     const result = await caller.merchantProfile.addMarginSnapshot({
-      month:            "2026-03",
-      avgMargin:        28.5,
-      bestMargin:       42.1,
-      worstMargin:      18.3,
-      avgBrentPrice:    85.0,
+      month: "2026-03",
+      avgMargin: 28.5,
+      bestMargin: 42.1,
+      worstMargin: 18.3,
+      avgBrentPrice: 85.0,
       criticalSkuCount: 2,
-      note:             "Test snapshot",
+      note: "Test snapshot",
     });
     expect(result.success).toBe(true);
     expect(["inserted", "updated"]).toContain(result.action);
@@ -263,7 +299,7 @@ describe("merchantProfile.addMarginSnapshot", () => {
     const caller = appRouter.createCaller(makeAuthContext());
     await expect(
       caller.merchantProfile.addMarginSnapshot({
-        month:     "March 2026", // invalid format
+        month: "March 2026", // invalid format
         avgMargin: 28.5,
       })
     ).rejects.toThrow();
@@ -273,7 +309,7 @@ describe("merchantProfile.addMarginSnapshot", () => {
     const caller = appRouter.createCaller(makeAuthContext());
     await expect(
       caller.merchantProfile.addMarginSnapshot({
-        month:     "2026-03",
+        month: "2026-03",
         avgMargin: 120, // invalid
       })
     ).rejects.toThrow();

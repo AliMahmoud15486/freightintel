@@ -37,7 +37,10 @@ interface NavigationSidebarProps {
   onSectionChange?: (id: string) => void;
 }
 
-export default function NavigationSidebar({ activeSection, onSectionChange }: NavigationSidebarProps) {
+export default function NavigationSidebar({
+  activeSection,
+  onSectionChange,
+}: NavigationSidebarProps) {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -46,44 +49,102 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
     refetchInterval: 5 * 60 * 1000,
     staleTime: 4 * 60 * 1000,
   });
-  const liveCriticalCount = (newsData?.items ?? []).filter((i) => i.severity === "critical").length;
+  const liveCriticalCount = (newsData?.items ?? []).filter(
+    i => i.severity === "critical"
+  ).length;
 
   // Section scroll handler — scrolls the inner dashboard container to the target section
   const scrollToSection = (sectionId: string) => {
     const target = document.getElementById(sectionId);
-    const container = document.querySelector('[data-scroll-container="main"]') as HTMLElement | null;
+    const container = document.querySelector(
+      '[data-scroll-container="main"]'
+    ) as HTMLElement | null;
     if (!target) return;
     if (container) {
       const containerRect = container.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
-      const offset = targetRect.top - containerRect.top + container.scrollTop - 8;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
+      const offset =
+        targetRect.top - containerRect.top + container.scrollTop - 8;
+      container.scrollTo({ top: offset, behavior: "smooth" });
     } else {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
   // Dashboard sections
   const dashboardSections = [
-    { icon: <Globe size={14} />,      label: "Supply Chain Map",   sectionId: "section-map"     },
-    { icon: <Ship size={14} />,       label: "Carrier Engine",     sectionId: "section-carrier" },
-    { icon: <BarChart3 size={14} />,  label: "Risk Forecast",      sectionId: "section-risk"    },
-    { icon: <Newspaper size={14} />,  label: "News Feed",          sectionId: "section-news"    },
+    {
+      icon: <Globe size={14} />,
+      label: "Supply Chain Map",
+      sectionId: "section-map",
+    },
+    {
+      icon: <Ship size={14} />,
+      label: "Carrier Engine",
+      sectionId: "section-carrier",
+    },
+    {
+      icon: <BarChart3 size={14} />,
+      label: "Risk Forecast",
+      sectionId: "section-risk",
+    },
+    {
+      icon: <Newspaper size={14} />,
+      label: "News Feed",
+      sectionId: "section-news",
+    },
   ];
 
   // Margins page sections
   const marginsSections = [
-    { icon: <TrendingUp size={14} />,  label: "Margin Analysis",    sectionId: "section-kpis"           },
-    { icon: <Calculator size={14} />,  label: "Margin Calculator",  sectionId: "section-margin-calculator" },
+    {
+      icon: <TrendingUp size={14} />,
+      label: "Margin Analysis",
+      sectionId: "section-kpis",
+    },
+    {
+      icon: <Calculator size={14} />,
+      label: "Margin Calculator",
+      sectionId: "section-margin-calculator",
+    },
   ];
 
-  const sectionItems = location === "/" ? dashboardSections : location.startsWith("/margins") ? marginsSections : [];
+  const sectionItems =
+    location === "/"
+      ? dashboardSections
+      : location.startsWith("/margins")
+        ? marginsSections
+        : [];
 
   const navItems: NavItem[] = [
-    { icon: <LayoutDashboard size={16} />, label: "Dashboard",       id: "dashboard", href: "/",          implemented: true  },
-    { icon: <TrendingUp size={16} />,     label: "Margins",         id: "margins",   href: "/margins",   implemented: true  },
-    { icon: <Flame size={16} />,          label: "Crisis Scenarios", id: "scenarios", href: "/scenarios", implemented: true  },
-    { icon: <User size={16} />,           label: "Merchant Profile", id: "profile",   href: "/profile",   implemented: true  },
+    {
+      icon: <LayoutDashboard size={16} />,
+      label: "Dashboard",
+      id: "dashboard",
+      href: "/",
+      implemented: true,
+    },
+    {
+      icon: <TrendingUp size={16} />,
+      label: "Margins",
+      id: "margins",
+      href: "/margins",
+      implemented: true,
+    },
+    {
+      icon: <Flame size={16} />,
+      label: "Crisis Scenarios",
+      id: "scenarios",
+      href: "/scenarios",
+      implemented: true,
+    },
+    {
+      icon: <User size={16} />,
+      label: "Merchant Profile",
+      id: "profile",
+      href: "/profile",
+      implemented: true,
+    },
   ];
 
   const isActive = (item: NavItem) => {
@@ -114,7 +175,8 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
         top: 0,
         zIndex: 30,
         flexShrink: 0,
-        transition: "width 0.22s cubic-bezier(0.4,0,0.2,1), min-width 0.22s cubic-bezier(0.4,0,0.2,1)",
+        transition:
+          "width 0.22s cubic-bezier(0.4,0,0.2,1), min-width 0.22s cubic-bezier(0.4,0,0.2,1)",
         overflow: "hidden",
       }}
     >
@@ -201,7 +263,7 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
 
         {/* Collapse toggle — floats on the right edge of the sidebar */}
         <button
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={() => setCollapsed(c => !c)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           style={{
             width: 20,
@@ -237,8 +299,15 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
       {collapsed && <div style={{ height: "14px" }} />}
 
       {/* Nav items */}
-      <nav style={{ flex: 1, padding: collapsed ? "0 6px" : "0 8px", overflowY: 'auto', overflowX: 'hidden' }}>
-        {navItems.map((item) => {
+      <nav
+        style={{
+          flex: 1,
+          padding: collapsed ? "0 6px" : "0 8px",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
+        {navItems.map(item => {
           const active = isActive(item);
           const navStyle: React.CSSProperties = {
             width: "100%",
@@ -293,7 +362,9 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
                     size={12}
                     style={{
                       flexShrink: 0,
-                      color: active ? "rgba(249,115,22,0.7)" : "rgba(255,255,255,0.25)",
+                      color: active
+                        ? "rgba(249,115,22,0.7)"
+                        : "rgba(255,255,255,0.25)",
                       transition: "color 0.15s ease",
                     }}
                   />
@@ -331,10 +402,16 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
         {/* SECTIONS quick-jump group — shown on Dashboard and Margins (hidden when collapsed) */}
         {!collapsed && sectionItems.length > 0 && (
           <>
-            <div style={{ padding: "14px 16px 6px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <div
+              style={{
+                padding: "14px 16px 6px",
+                marginTop: "4px",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
               <span className="section-label">JUMP TO</span>
             </div>
-            {sectionItems.map((item) => (
+            {sectionItems.map(item => (
               <button
                 key={item.sectionId}
                 onClick={() => scrollToSection(item.sectionId)}
@@ -356,7 +433,9 @@ export default function NavigationSidebar({ activeSection, onSectionChange }: Na
                 }}
                 className="hover:bg-white/5 hover:text-white/70"
               >
-                <span style={{ flexShrink: 0, color: "rgba(249,115,22,0.6)" }}>{item.icon}</span>
+                <span style={{ flexShrink: 0, color: "rgba(249,115,22,0.6)" }}>
+                  {item.icon}
+                </span>
                 <span
                   style={{
                     fontFamily: "'Rajdhani', sans-serif",

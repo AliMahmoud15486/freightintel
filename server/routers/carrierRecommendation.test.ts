@@ -6,13 +6,17 @@ import { describe, it, expect } from "vitest";
 
 // ─── Replicated scoring helpers (mirrors carrierRecommendation.ts) ─────────────
 
-function severityToDisruptionScore(severity: "critical" | "warning" | "none"): number {
+function severityToDisruptionScore(
+  severity: "critical" | "warning" | "none"
+): number {
   if (severity === "critical") return 100;
   if (severity === "warning") return 50;
   return 0;
 }
 
-function riskLevelFromScore(score: number): "low" | "medium" | "high" | "critical" {
+function riskLevelFromScore(
+  score: number
+): "low" | "medium" | "high" | "critical" {
   if (score >= 75) return "critical";
   if (score >= 50) return "high";
   if (score >= 25) return "medium";
@@ -35,14 +39,14 @@ function computeRiskScore({
   severity: "critical" | "warning" | "none";
   mentionCount: number;
   zoneOverlapFraction: number; // 0–1
-  reliabilityScore: number;    // 0–100
+  reliabilityScore: number; // 0–100
 }): number {
-  const signalA = severityToDisruptionScore(severity) * 0.40;
+  const signalA = severityToDisruptionScore(severity) * 0.4;
   const mentionScore = Math.min(mentionCount / 3, 1) * 100;
-  const signalB = mentionScore * 0.30;
-  const signalC = Math.min(zoneOverlapFraction, 1) * 100 * 0.20;
+  const signalB = mentionScore * 0.3;
+  const signalC = Math.min(zoneOverlapFraction, 1) * 100 * 0.2;
   const reliabilityRisk = 100 - reliabilityScore;
-  const signalD = reliabilityRisk * 0.10;
+  const signalD = reliabilityRisk * 0.1;
   return Math.round(signalA + signalB + signalC + signalD);
 }
 

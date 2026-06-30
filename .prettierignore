@@ -11,6 +11,10 @@ build/
 *.tsbuildinfo
 coverage/
 
+# Manus / tooling artifacts (generated, not source)
+.manus/
+client/public/__manus__/
+
 # Package files
 package-lock.json
 pnpm-lock.yaml

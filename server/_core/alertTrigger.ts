@@ -20,7 +20,7 @@ import { getAllSubscribers, getSentAlertByKey, insertSentAlert } from "../db";
  */
 function computeAlertKey(criticalItems: NewsItem[]): string {
   const sorted = [...criticalItems]
-    .map((i) => i.title.trim().toLowerCase())
+    .map(i => i.title.trim().toLowerCase())
     .sort()
     .join("|");
   return createHash("sha256").update(sorted).digest("hex").slice(0, 64);
@@ -28,7 +28,10 @@ function computeAlertKey(criticalItems: NewsItem[]): string {
 
 /** Exported for unit testing only */
 export function computeAlertKeyForTest(titles: string[]): string {
-  const sorted = [...titles].map((t) => t.trim().toLowerCase()).sort().join("|");
+  const sorted = [...titles]
+    .map(t => t.trim().toLowerCase())
+    .sort()
+    .join("|");
   return createHash("sha256").update(sorted).digest("hex").slice(0, 64);
 }
 
@@ -45,8 +48,10 @@ export interface AlertTriggerResult {
  * Main entry point: given the current classified news items, check if there
  * are new critical disruptions and send alert emails if needed.
  */
-export async function checkAndSendAlerts(newsItems: NewsItem[]): Promise<AlertTriggerResult> {
-  const criticalItems = newsItems.filter((i) => i.severity === "critical");
+export async function checkAndSendAlerts(
+  newsItems: NewsItem[]
+): Promise<AlertTriggerResult> {
+  const criticalItems = newsItems.filter(i => i.severity === "critical");
 
   if (criticalItems.length === 0) {
     return {
@@ -87,20 +92,22 @@ export async function checkAndSendAlerts(newsItems: NewsItem[]): Promise<AlertTr
     };
   }
 
-  console.log(`[alertTrigger] ${criticalItems.length} critical item(s) — sending to ${subscribers.length} subscriber(s)`);
+  console.log(
+    `[alertTrigger] ${criticalItems.length} critical item(s) — sending to ${subscribers.length} subscriber(s)`
+  );
 
   // Broadcast emails
   const results = await broadcastAlertEmails(
-    subscribers.map((s) => ({ email: s.email, name: s.name })),
+    subscribers.map(s => ({ email: s.email, name: s.name })),
     criticalItems
   );
 
-  const successCount = results.filter((r) => r.success).length;
+  const successCount = results.filter(r => r.success).length;
 
   // Record the sent alert to prevent duplicates
   const summary = criticalItems
     .slice(0, 3)
-    .map((i) => i.title.slice(0, 80))
+    .map(i => i.title.slice(0, 80))
     .join(" | ");
 
   await insertSentAlert({
@@ -110,7 +117,9 @@ export async function checkAndSendAlerts(newsItems: NewsItem[]): Promise<AlertTr
     summary,
   });
 
-  console.log(`[alertTrigger] Alert sent: ${successCount}/${subscribers.length} delivered`);
+  console.log(
+    `[alertTrigger] Alert sent: ${successCount}/${subscribers.length} delivered`
+  );
 
   return {
     triggered: true,

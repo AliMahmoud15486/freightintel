@@ -8,17 +8,19 @@
 ## 1. Live external data (real APIs, no key required)
 
 ### Yahoo Finance v8 API
+
 - Endpoint: `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}`
 - The **only genuine live numeric feed.** 14 tickers used as proxies:
 
-| Category | Symbols | Used for |
-|---|---|---|
-| Energy | `BZ=F` Brent, `CL=F` WTI, `NG=F` Nat Gas, `XLE` Energy ETF | Oil-price → margin impact, freight surcharge |
-| Freight | `BDRY` Dry Bulk ETF, `ZIM`, `MAERSK-B.CO`, `CHRW` | Freight-rate proxy / shipping health |
-| Metals | `GC=F` Gold | Pulse ticker |
-| Fertilizer / Ag | `UAN`, `MOS`, `NTR`, `ZC=F` Corn, `ZW=F` Wheat | Hormuz crisis → e-grocery margin |
+| Category        | Symbols                                                    | Used for                                     |
+| --------------- | ---------------------------------------------------------- | -------------------------------------------- |
+| Energy          | `BZ=F` Brent, `CL=F` WTI, `NG=F` Nat Gas, `XLE` Energy ETF | Oil-price → margin impact, freight surcharge |
+| Freight         | `BDRY` Dry Bulk ETF, `ZIM`, `MAERSK-B.CO`, `CHRW`          | Freight-rate proxy / shipping health         |
+| Metals          | `GC=F` Gold                                                | Pulse ticker                                 |
+| Fertilizer / Ag | `UAN`, `MOS`, `NTR`, `ZC=F` Corn, `ZW=F` Wheat             | Hormuz crisis → e-grocery margin             |
 
 ### RSS news feeds (7 sources, fetched server-side)
+
 - Supply Chain Dive
 - FT Commodities
 - Splash247
@@ -32,6 +34,7 @@
 ## 2. LLM-derived signals (Gemini 2.5 Flash interprets the RSS feeds)
 
 The news feeds are raw text. Gemini turns them into structured scoring inputs:
+
 - **Severity** — critical / warning / info
 - **Tags**
 - **Affected categories**
@@ -64,12 +67,12 @@ The news feeds are raw text. Gemini turns them into structured scoring inputs:
 
 `riskScore = 40% severity + 30% news + 20% zone overlap + 10% reliability`
 
-| Weight | Component | Source | Reliability |
-|---|---|---|---|
-| 40% | Disruption severity | Gemini classification of RSS news | LLM-judged, unverified |
-| 30% | News mentions | Gemini classification of RSS news | LLM-judged, unverified |
-| 20% | Zone overlap | Hardcoded lane zones | Seeded |
-| 10% | Carrier reliability | Invented constants | Seeded |
+| Weight | Component           | Source                            | Reliability            |
+| ------ | ------------------- | --------------------------------- | ---------------------- |
+| 40%    | Disruption severity | Gemini classification of RSS news | LLM-judged, unverified |
+| 30%    | News mentions       | Gemini classification of RSS news | LLM-judged, unverified |
+| 20%    | Zone overlap        | Hardcoded lane zones              | Seeded                 |
+| 10%    | Carrier reliability | Invented constants                | Seeded                 |
 
 ---
 
@@ -82,6 +85,7 @@ The news feeds are raw text. Gemini turns them into structured scoring inputs:
 The prices make it feel live; the freight intelligence is **seeded, not sourced**.
 
 ### To make it production-grade, swap seeded parts for real sources:
+
 - Carrier reliability → real schedule-reliability data (e.g. Sea-Intelligence)
 - Freight rates → real indices (Drewry WCI, Freightos FBX, Shanghai SCFI)
 - Disruption signals → a structured maritime/disruption feed instead of LLM-on-RSS

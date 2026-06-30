@@ -3,7 +3,14 @@
  * Auto-refreshes every 5 hours. Manual refresh button available.
  */
 import React, { useState } from "react";
-import { Ship, Plane, AlertTriangle, CheckCircle2, RefreshCw, Clock } from "lucide-react";
+import {
+  Ship,
+  Plane,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  Clock,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
@@ -21,19 +28,40 @@ interface CarrierRowProps {
   severity: "critical" | "warning" | "none";
 }
 
-function CarrierRow({ name, country, routes, affected, affectedRoutes, reason, severity }: CarrierRowProps) {
-  const dotColor   = severity === "critical" ? "#ef4444" : severity === "warning" ? "#f59e0b" : "#10b981";
-  const statusBg   = affected
-    ? severity === "critical" ? "rgba(239,68,68,0.07)" : "rgba(245,158,11,0.07)"
+function CarrierRow({
+  name,
+  country,
+  routes,
+  affected,
+  affectedRoutes,
+  reason,
+  severity,
+}: CarrierRowProps) {
+  const dotColor =
+    severity === "critical"
+      ? "#ef4444"
+      : severity === "warning"
+        ? "#f59e0b"
+        : "#10b981";
+  const statusBg = affected
+    ? severity === "critical"
+      ? "rgba(239,68,68,0.07)"
+      : "rgba(245,158,11,0.07)"
     : "rgba(16,185,129,0.06)";
   const statusBorder = affected
-    ? severity === "critical" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"
+    ? severity === "critical"
+      ? "rgba(239,68,68,0.2)"
+      : "rgba(245,158,11,0.2)"
     : "rgba(16,185,129,0.15)";
   const badgeColor = affected
-    ? severity === "critical" ? "#ef4444" : "#f59e0b"
+    ? severity === "critical"
+      ? "#ef4444"
+      : "#f59e0b"
     : "#10b981";
   const badgeLabel = affected
-    ? severity === "critical" ? "AFFECTED" : "DELAYED"
+    ? severity === "critical"
+      ? "AFFECTED"
+      : "DELAYED"
     : "OPERATING";
 
   return (
@@ -64,7 +92,14 @@ function CarrierRow({ name, country, routes, affected, affectedRoutes, reason, s
 
       {/* Carrier info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            flexWrap: "wrap",
+          }}
+        >
           <span
             style={{
               fontFamily: "'Rajdhani', sans-serif",
@@ -92,7 +127,10 @@ function CarrierRow({ name, country, routes, affected, affectedRoutes, reason, s
             style={{
               fontFamily: "'Inter', sans-serif",
               fontSize: "0.62rem",
-              color: severity === "critical" ? "rgba(239,68,68,0.75)" : "rgba(245,158,11,0.75)",
+              color:
+                severity === "critical"
+                  ? "rgba(239,68,68,0.75)"
+                  : "rgba(245,158,11,0.75)",
               marginTop: "2px",
               lineHeight: 1.3,
             }}
@@ -123,7 +161,8 @@ function CarrierRow({ name, country, routes, affected, affectedRoutes, reason, s
               marginTop: "2px",
             }}
           >
-            {routes[0]}{routes.length > 1 ? ` +${routes.length - 1} more` : ""}
+            {routes[0]}
+            {routes.length > 1 ? ` +${routes.length - 1} more` : ""}
           </div>
         )}
       </div>
@@ -156,18 +195,19 @@ export default function ShippingLinesPanel() {
   const { isMobile } = useBreakpoint();
   const [activeTab, setActiveTab] = useState<"marine" | "air">("marine");
 
-  const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.shippingLines.useQuery(undefined, {
-    refetchInterval: FIVE_HOURS_MS,          // auto-refresh every 5 hours
-    staleTime:       FIVE_HOURS_MS - 60_000, // keep fresh for just under 5 hours
-  });
+  const { data, isLoading, refetch, dataUpdatedAt } =
+    trpc.news.shippingLines.useQuery(undefined, {
+      refetchInterval: FIVE_HOURS_MS, // auto-refresh every 5 hours
+      staleTime: FIVE_HOURS_MS - 60_000, // keep fresh for just under 5 hours
+    });
 
   const carriers = data?.carriers ?? [];
-  const marine   = carriers.filter((c) => c.type === "marine");
-  const air      = carriers.filter((c) => c.type === "air");
+  const marine = carriers.filter(c => c.type === "marine");
+  const air = carriers.filter(c => c.type === "air");
   const displayed = activeTab === "marine" ? marine : air;
 
-  const affectedCount   = displayed.filter((c) => c.affected).length;
-  const unaffectedCount = displayed.filter((c) => !c.affected).length;
+  const affectedCount = displayed.filter(c => c.affected).length;
+  const unaffectedCount = displayed.filter(c => !c.affected).length;
 
   // Sort: critical first, then warning, then operating
   const sorted = [...displayed].sort((a, b) => {
@@ -177,12 +217,18 @@ export default function ShippingLinesPanel() {
 
   // Format last-updated timestamp
   const lastUpdated = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   // Next refresh time
   const nextRefresh = dataUpdatedAt
-    ? new Date(dataUpdatedAt + FIVE_HOURS_MS).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    ? new Date(dataUpdatedAt + FIVE_HOURS_MS).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   return (
@@ -200,7 +246,10 @@ export default function ShippingLinesPanel() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span className="panel-header" style={{ fontSize: isMobile ? "0.7rem" : undefined }}>
+          <span
+            className="panel-header"
+            style={{ fontSize: isMobile ? "0.7rem" : undefined }}
+          >
             SHIPPING LINES
           </span>
           {/* LIVE badge */}
@@ -217,7 +266,13 @@ export default function ShippingLinesPanel() {
           >
             <div
               className="animate-blink"
-              style={{ width: 4, height: 4, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 4px #10b981" }}
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                background: "#10b981",
+                boxShadow: "0 0 4px #10b981",
+              }}
             />
             <span
               style={{
@@ -330,11 +385,11 @@ export default function ShippingLinesPanel() {
           background: "rgba(0,0,0,0.2)",
         }}
       >
-        {(["marine", "air"] as const).map((tab) => {
+        {(["marine", "air"] as const).map(tab => {
           const isActive = activeTab === tab;
           const Icon = tab === "marine" ? Ship : Plane;
           const tabCarriers = tab === "marine" ? marine : air;
-          const tabAffected = tabCarriers.filter((c) => c.affected).length;
+          const tabAffected = tabCarriers.filter(c => c.affected).length;
           return (
             <button
               key={tab}
@@ -348,8 +403,12 @@ export default function ShippingLinesPanel() {
                 padding: "8px 12px",
                 background: "none",
                 border: "none",
-                borderBottom: isActive ? "2px solid #E91E8C" : "2px solid transparent",
-                color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+                borderBottom: isActive
+                  ? "2px solid #E91E8C"
+                  : "2px solid transparent",
+                color: isActive
+                  ? "rgba(255,255,255,0.9)"
+                  : "rgba(255,255,255,0.4)",
                 cursor: "pointer",
                 fontFamily: "'Rajdhani', sans-serif",
                 fontWeight: 700,
@@ -394,7 +453,7 @@ export default function ShippingLinesPanel() {
         }}
       >
         {isLoading && carriers.length === 0 ? (
-          [1, 2, 3, 4].map((i) => (
+          [1, 2, 3, 4].map(i => (
             <div
               key={i}
               style={{
@@ -420,9 +479,17 @@ export default function ShippingLinesPanel() {
         ) : (
           <>
             {/* Affected section */}
-            {sorted.filter((c) => c.affected).length > 0 && (
+            {sorted.filter(c => c.affected).length > 0 && (
               <>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px", marginTop: "2px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    marginBottom: "2px",
+                    marginTop: "2px",
+                  }}
+                >
                   <AlertTriangle size={10} color="#ef4444" />
                   <span
                     style={{
@@ -436,21 +503,24 @@ export default function ShippingLinesPanel() {
                     Disruption Impact
                   </span>
                 </div>
-                {sorted.filter((c) => c.affected).map((c) => (
-                  <CarrierRow key={c.id} {...c} />
-                ))}
+                {sorted
+                  .filter(c => c.affected)
+                  .map(c => (
+                    <CarrierRow key={c.id} {...c} />
+                  ))}
               </>
             )}
 
             {/* Operating normally section */}
-            {sorted.filter((c) => !c.affected).length > 0 && (
+            {sorted.filter(c => !c.affected).length > 0 && (
               <>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    marginTop: sorted.filter((c) => c.affected).length > 0 ? "8px" : "2px",
+                    marginTop:
+                      sorted.filter(c => c.affected).length > 0 ? "8px" : "2px",
                     marginBottom: "2px",
                   }}
                 >
@@ -467,9 +537,11 @@ export default function ShippingLinesPanel() {
                     Operating Normally
                   </span>
                 </div>
-                {sorted.filter((c) => !c.affected).map((c) => (
-                  <CarrierRow key={c.id} {...c} />
-                ))}
+                {sorted
+                  .filter(c => !c.affected)
+                  .map(c => (
+                    <CarrierRow key={c.id} {...c} />
+                  ))}
               </>
             )}
           </>

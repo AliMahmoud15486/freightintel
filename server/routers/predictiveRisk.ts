@@ -17,7 +17,12 @@ import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { freightLanes, riskForecasts, FreightLane, RiskForecast } from "../../drizzle/schema";
+import {
+  freightLanes,
+  riskForecasts,
+  FreightLane,
+  RiskForecast,
+} from "../../drizzle/schema";
 import { desc, eq, gte } from "drizzle-orm";
 import { getNewsCache, getShippingLinesCache } from "./news";
 
@@ -29,8 +34,8 @@ export interface LaneForecast {
   originPort: string;
   destinationPort: string;
   zones: string[];
-  probability30d: number;       // 0–100
-  probability60d: number;       // 0–100
+  probability30d: number; // 0–100
+  probability60d: number; // 0–100
   trend: "rising" | "stable" | "falling";
   keyRisks: string[];
   confidence: "high" | "medium" | "low";
@@ -48,7 +53,9 @@ const FORECAST_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 function seasonalRiskBonus(month: number, zones: string[]): number {
   // Red Sea / Suez: elevated risk year-round during current conflict
-  const hasRedSea = zones.some(z => z.includes("red_sea") || z.includes("suez") || z.includes("hormuz"));
+  const hasRedSea = zones.some(
+    z => z.includes("red_sea") || z.includes("suez") || z.includes("hormuz")
+  );
   // Pacific: typhoon season June–November adds transit risk
   const hasPacific = zones.some(z => z.includes("pacific"));
   // Atlantic: hurricane season June–November
@@ -66,25 +73,44 @@ function seasonalRiskBonus(month: number, zones: string[]): number {
 function buildForecastContext(lane: FreightLane): string {
   const newsItems = getNewsCache();
   const shippingLines = getShippingLinesCache();
-  const zones = (lane.zones ?? "").split(",").map(z => z.trim()).filter(Boolean);
+  const zones = (lane.zones ?? "")
+    .split(",")
+    .map(z => z.trim())
+    .filter(Boolean);
   const month = new Date().getMonth() + 1;
   const monthName = new Date().toLocaleString("en-US", { month: "long" });
 
   // Relevant news (items whose tags or content mention lane zones)
   const relevantNews = newsItems
     .filter(item => {
-      const text = `${item.title} ${item.summary} ${(item.tags ?? []).join(" ")}`.toLowerCase();
-      return zones.some(z => text.includes(z.replace(/_/g, " "))) ||
+      const text =
+        `${item.title} ${item.summary} ${(item.tags ?? []).join(" ")}`.toLowerCase();
+      return (
+        zones.some(z => text.includes(z.replace(/_/g, " "))) ||
         text.includes(lane.originPort.toLowerCase()) ||
-        text.includes(lane.destinationPort.toLowerCase());
+        text.includes(lane.destinationPort.toLowerCase())
+      );
     })
     .slice(0, 5);
 
-  const criticalNews = newsItems.filter(i => i.severity === "critical").slice(0, 5);
-  const warningNews = newsItems.filter(i => i.severity === "warning").slice(0, 3);
+  const criticalNews = newsItems
+    .filter(i => i.severity === "critical")
+    .slice(0, 5);
+  const warningNews = newsItems
+    .filter(i => i.severity === "warning")
+    .slice(0, 3);
 
   // Affected carriers on this lane
-  const laneCarrierIds = ["maersk", "msc", "cmacgm", "hapag", "cosco", "evergreen", "one", "yangming"];
+  const laneCarrierIds = [
+    "maersk",
+    "msc",
+    "cmacgm",
+    "hapag",
+    "cosco",
+    "evergreen",
+    "one",
+    "yangming",
+  ];
   const affectedCarriers = shippingLines
     .filter(c => c.affected && laneCarrierIds.includes(c.id))
     .map(c => `${c.name} (${c.severity}: ${c.reason})`);
@@ -125,7 +151,10 @@ async function generateLaneForecast(lane: FreightLane): Promise<{
   summary: string;
 }> {
   const context = buildForecastContext(lane);
-  const zones = (lane.zones ?? "").split(",").map(z => z.trim()).filter(Boolean);
+  const zones = (lane.zones ?? "")
+    .split(",")
+    .map(z => z.trim())
+    .filter(Boolean);
   const seasonal = seasonalRiskBonus(new Date().getMonth() + 1, zones);
 
   try {
@@ -178,7 +207,14 @@ Return a JSON object with exactly these fields:
               confidence: { type: "string", enum: ["high", "medium", "low"] },
               summary: { type: "string" },
             },
-            required: ["probability30d", "probability60d", "trend", "keyRisks", "confidence", "summary"],
+            required: [
+              "probability30d",
+              "probability60d",
+              "trend",
+              "keyRisks",
+              "confidence",
+              "summary",
+            ],
             additionalProperties: false,
           },
         },
@@ -190,28 +226,48 @@ Return a JSON object with exactly these fields:
     const parsed = JSON.parse(content);
 
     // Clamp probabilities to 0–100 and apply seasonal floor
-    const p30 = Math.max(seasonal, Math.min(100, Math.round(parsed.probability30d ?? 30)));
-    const p60 = Math.max(p30, Math.min(100, Math.round(parsed.probability60d ?? p30 + 10)));
+    const p30 = Math.max(
+      seasonal,
+      Math.min(100, Math.round(parsed.probability30d ?? 30))
+    );
+    const p60 = Math.max(
+      p30,
+      Math.min(100, Math.round(parsed.probability60d ?? p30 + 10))
+    );
 
     return {
       probability30d: p30,
       probability60d: p60,
-      trend: (["rising", "stable", "falling"].includes(parsed.trend) ? parsed.trend : "stable") as "rising" | "stable" | "falling",
-      keyRisks: Array.isArray(parsed.keyRisks) ? parsed.keyRisks.slice(0, 4) : [],
-      confidence: (["high", "medium", "low"].includes(parsed.confidence) ? parsed.confidence : "medium") as "high" | "medium" | "low",
-      summary: typeof parsed.summary === "string" ? parsed.summary : `Risk forecast for ${lane.name}.`,
+      trend: (["rising", "stable", "falling"].includes(parsed.trend)
+        ? parsed.trend
+        : "stable") as "rising" | "stable" | "falling",
+      keyRisks: Array.isArray(parsed.keyRisks)
+        ? parsed.keyRisks.slice(0, 4)
+        : [],
+      confidence: (["high", "medium", "low"].includes(parsed.confidence)
+        ? parsed.confidence
+        : "medium") as "high" | "medium" | "low",
+      summary:
+        typeof parsed.summary === "string"
+          ? parsed.summary
+          : `Risk forecast for ${lane.name}.`,
     };
   } catch (err) {
     console.warn(`[predictiveRisk] LLM forecast failed for ${lane.name}:`, err);
     // Fallback: derive from live signals
     const newsItems = getNewsCache();
-    const criticalCount = newsItems.filter(i => i.severity === "critical").length;
+    const criticalCount = newsItems.filter(
+      i => i.severity === "critical"
+    ).length;
     const p30 = Math.min(100, seasonal + criticalCount * 8);
     return {
       probability30d: p30,
       probability60d: Math.min(100, p30 + 10),
       trend: "stable",
-      keyRisks: criticalCount > 0 ? [`${criticalCount} active critical disruptions`] : ["No current signals"],
+      keyRisks:
+        criticalCount > 0
+          ? [`${criticalCount} active critical disruptions`]
+          : ["No current signals"],
       confidence: "low",
       summary: `Forecast based on ${criticalCount} active disruptions. LLM unavailable.`,
     };
@@ -238,14 +294,18 @@ async function getRecentForecast(laneId: number): Promise<RiskForecast | null> {
   return row;
 }
 
-async function saveForecast(laneId: number, laneName: string, forecast: {
-  probability30d: number;
-  probability60d: number;
-  trend: "rising" | "stable" | "falling";
-  keyRisks: string[];
-  confidence: "high" | "medium" | "low";
-  summary: string;
-}): Promise<void> {
+async function saveForecast(
+  laneId: number,
+  laneName: string,
+  forecast: {
+    probability30d: number;
+    probability60d: number;
+    trend: "rising" | "stable" | "falling";
+    keyRisks: string[];
+    confidence: "high" | "medium" | "low";
+    summary: string;
+  }
+): Promise<void> {
   const db = await getDb();
   if (!db) return;
 
@@ -277,8 +337,14 @@ async function getSparkline(laneId: number): Promise<number[]> {
 
 // ─── Compute full LaneForecast ────────────────────────────────────────────────
 
-async function computeForecast(lane: FreightLane, forceRefresh = false): Promise<LaneForecast> {
-  const zones = (lane.zones ?? "").split(",").map(z => z.trim()).filter(Boolean);
+async function computeForecast(
+  lane: FreightLane,
+  forceRefresh = false
+): Promise<LaneForecast> {
+  const zones = (lane.zones ?? "")
+    .split(",")
+    .map(z => z.trim())
+    .filter(Boolean);
 
   // Try DB cache first
   if (!forceRefresh) {
@@ -364,15 +430,20 @@ export const predictiveRiskRouter = router({
    * Returns forecast for a single lane by ID.
    */
   getForecast: publicProcedure
-    .input(z.object({
-      laneId: z.number().int().positive(),
-      forceRefresh: z.boolean().default(false),
-    }))
+    .input(
+      z.object({
+        laneId: z.number().int().positive(),
+        forceRefresh: z.boolean().default(false),
+      })
+    )
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return null;
 
-      const rows = await db.select().from(freightLanes).where(eq(freightLanes.id, input.laneId));
+      const rows = await db
+        .select()
+        .from(freightLanes)
+        .where(eq(freightLanes.id, input.laneId));
       if (rows.length === 0) return null;
 
       return computeForecast(rows[0], input.forceRefresh);

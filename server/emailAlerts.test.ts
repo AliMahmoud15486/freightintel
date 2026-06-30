@@ -13,7 +13,9 @@ describe("Resend API key", () => {
   it("should be configured in environment", () => {
     const key = process.env.RESEND_API_KEY;
     expect(key, "RESEND_API_KEY must be set").toBeTruthy();
-    expect(key!.startsWith("re_"), "RESEND_API_KEY must start with re_").toBe(true);
+    expect(key!.startsWith("re_"), "RESEND_API_KEY must start with re_").toBe(
+      true
+    );
   });
 
   it("should have a valid sender email configured", () => {
@@ -35,8 +37,8 @@ describe("Alert dedup key", () => {
       { title: "Red Sea attacks escalate" },
       { title: "Suez Canal blocked by tanker" },
     ];
-    const key1 = computeAlertKeyForTest(items1.map((i) => i.title));
-    const key2 = computeAlertKeyForTest(items2.map((i) => i.title));
+    const key1 = computeAlertKeyForTest(items1.map(i => i.title));
+    const key2 = computeAlertKeyForTest(items2.map(i => i.title));
     expect(key1).toBe(key2);
   });
 

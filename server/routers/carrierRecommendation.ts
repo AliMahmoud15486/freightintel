@@ -15,22 +15,32 @@ import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { freightLanes, laneCarriers, FreightLane, LaneCarrier } from "../../drizzle/schema";
+import {
+  freightLanes,
+  laneCarriers,
+  FreightLane,
+  LaneCarrier,
+} from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { getNewsCache, getShippingLinesCache, NewsItem, CarrierStatus } from "./news";
+import {
+  getNewsCache,
+  getShippingLinesCache,
+  NewsItem,
+  CarrierStatus,
+} from "./news";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CarrierScore {
   carrierId: string;
   carrierName: string;
-  riskScore: number;          // 0–100, lower = safer
+  riskScore: number; // 0–100, lower = safer
   riskLevel: "low" | "medium" | "high" | "critical";
   estimatedTransitDays: number;
-  delayDays: number;          // additional days due to disruption
-  costIndex: number;          // 1=cheap, 2=mid, 3=premium
-  reliabilityScore: number;   // 0–100 static baseline
-  rationale: string;          // LLM-generated plain-English explanation
+  delayDays: number; // additional days due to disruption
+  costIndex: number; // 1=cheap, 2=mid, 3=premium
+  reliabilityScore: number; // 0–100 static baseline
+  rationale: string; // LLM-generated plain-English explanation
   isBestOption: boolean;
   disruptionReasons: string[];
 }
@@ -59,13 +69,17 @@ const REC_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // ─── Scoring helpers ──────────────────────────────────────────────────────────
 
-function severityToDisruptionScore(severity: "critical" | "warning" | "none"): number {
+function severityToDisruptionScore(
+  severity: "critical" | "warning" | "none"
+): number {
   if (severity === "critical") return 100;
   if (severity === "warning") return 50;
   return 0;
 }
 
-function riskLevelFromScore(score: number): "low" | "medium" | "high" | "critical" {
+function riskLevelFromScore(
+  score: number
+): "low" | "medium" | "high" | "critical" {
   if (score >= 75) return "critical";
   if (score >= 50) return "high";
   if (score >= 25) return "medium";
@@ -81,7 +95,10 @@ function delayDaysFromRisk(riskScore: number, baseTransitDays: number): number {
 
 // ─── Main scoring function ────────────────────────────────────────────────────
 
-async function scoreCarriersForLane(lane: FreightLane, carriers: LaneCarrier[]): Promise<RecommendationResult | null> {
+async function scoreCarriersForLane(
+  lane: FreightLane,
+  carriers: LaneCarrier[]
+): Promise<RecommendationResult | null> {
   if (carriers.length === 0) return null;
 
   // Get live data from existing caches
@@ -89,7 +106,10 @@ async function scoreCarriersForLane(lane: FreightLane, carriers: LaneCarrier[]):
   const shippingLines: CarrierStatus[] = getShippingLinesCache();
 
   // Parse lane zones
-  const laneZones: string[] = (lane.zones ?? "").split(",").map((z: string) => z.trim()).filter(Boolean);
+  const laneZones: string[] = (lane.zones ?? "")
+    .split(",")
+    .map((z: string) => z.trim())
+    .filter(Boolean);
 
   // Score each carrier
   const scored: CarrierScore[] = carriers.map((carrier: LaneCarrier) => {
@@ -99,8 +119,10 @@ async function scoreCarriersForLane(lane: FreightLane, carriers: LaneCarrier[]):
         s.id === carrier.carrierId ||
         s.name.toLowerCase() === carrier.carrierName.toLowerCase()
     );
-    const severityScore = liveStatus ? severityToDisruptionScore(liveStatus.severity) : 0;
-    const signalA = severityScore * 0.40;
+    const severityScore = liveStatus
+      ? severityToDisruptionScore(liveStatus.severity)
+      : 0;
+    const signalA = severityScore * 0.4;
 
     // Signal B (30%): Count of news items mentioning this carrier
     const carrierMentions = newsItems.filter((item: NewsItem) => {
@@ -111,24 +133,31 @@ async function scoreCarriersForLane(lane: FreightLane, carriers: LaneCarrier[]):
       );
     });
     const mentionScore = Math.min(carrierMentions.length / 3, 1) * 100;
-    const signalB = mentionScore * 0.30;
+    const signalB = mentionScore * 0.3;
 
     // Signal C (20%): Zone overlap — does the lane pass through disrupted zones?
     const disruptedZones: string[] = newsItems
-      .filter((item: NewsItem) => item.severity === "critical" || item.severity === "warning")
+      .filter(
+        (item: NewsItem) =>
+          item.severity === "critical" || item.severity === "warning"
+      )
       .flatMap((item: NewsItem) => item.tags ?? [])
       .map((t: string) => t.toLowerCase());
 
     const zoneOverlapCount = laneZones.filter((zone: string) =>
-      disruptedZones.some((dz: string) => dz.includes(zone) || zone.includes(dz))
+      disruptedZones.some(
+        (dz: string) => dz.includes(zone) || zone.includes(dz)
+      )
     ).length;
     const zoneScore =
-      laneZones.length > 0 ? Math.min(zoneOverlapCount / laneZones.length, 1) * 100 : 0;
-    const signalC = zoneScore * 0.20;
+      laneZones.length > 0
+        ? Math.min(zoneOverlapCount / laneZones.length, 1) * 100
+        : 0;
+    const signalC = zoneScore * 0.2;
 
     // Signal D (10%): Inverse of static reliability
     const reliabilityRisk = 100 - carrier.reliabilityScore;
-    const signalD = reliabilityRisk * 0.10;
+    const signalD = reliabilityRisk * 0.1;
 
     const riskScore = Math.round(signalA + signalB + signalC + signalD);
     const riskLevel = riskLevelFromScore(riskScore);
@@ -177,7 +206,7 @@ async function scoreCarriersForLane(lane: FreightLane, carriers: LaneCarrier[]):
   // LLM rationale — generate for all carriers in one call
   const carrierSummaries = scored
     .map(
-      (c) =>
+      c =>
         `${c.carrierName}: riskScore=${c.riskScore}, riskLevel=${c.riskLevel}, transitDays=${c.estimatedTransitDays} (delay +${c.delayDays}d), costIndex=${c.costIndex}, reasons: ${c.disruptionReasons.join("; ") || "none"}`
     )
     .join("\n");
@@ -254,8 +283,12 @@ export const carrierRecommendationRouter = router({
     if (!db) return { lanes: [], origins: [], destinations: [] };
 
     const lanes = await db.select().from(freightLanes);
-    const origins = Array.from(new Set(lanes.map((l: FreightLane) => l.originRegion))).sort() as string[];
-    const destinations = Array.from(new Set(lanes.map((l: FreightLane) => l.destinationRegion))).sort() as string[];
+    const origins = Array.from(
+      new Set(lanes.map((l: FreightLane) => l.originRegion))
+    ).sort() as string[];
+    const destinations = Array.from(
+      new Set(lanes.map((l: FreightLane) => l.destinationRegion))
+    ).sort() as string[];
     return { lanes, origins, destinations };
   }),
 

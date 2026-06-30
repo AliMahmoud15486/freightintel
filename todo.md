@@ -1,6 +1,7 @@
 # Margin Sentinel — Project TODO
 
 ## Core Dashboard Features
+
 - [x] Global Pulse Bar with animated ticker
 - [x] Navigation Sidebar with routing (Dashboard, Maps, Oil Data, Margins, Alerts, Reports)
 - [x] Top Header with notifications and user profile
@@ -12,6 +13,7 @@
 - [x] Alerts System with badge notifications
 
 ## Live Data API Integration
+
 - [x] Yahoo Finance API integration (BZ=F Brent Crude, CL=F WTI Crude)
 - [x] Live pulse bar with real Brent/WTI prices (refreshes every 60s)
 - [x] Live 6-month oil history chart (WTI + Brent weekly data)
@@ -21,6 +23,7 @@
 - [x] FBX Container Index static proxy (BDI returns 0 on Yahoo Finance)
 
 ## Margins Analysis Page
+
 - [x] Margins page route (/margins)
 - [x] KPI cards (avg margin, oil impact, critical SKUs, margin at risk, best performer)
 - [x] Margin waterfall chart (base → current with cost erosion breakdown)
@@ -31,6 +34,7 @@
 - [x] Live oil price display in page header
 
 ## Navigation
+
 - [x] Dashboard link (/) — implemented
 - [x] Margins link (/margins) — implemented
 - [ ] Maps page (/maps) — coming soon
@@ -39,12 +43,14 @@
 - [ ] Reports page (/reports) — coming soon
 
 ## Testing
+
 - [x] Vitest tests for marketData.pulseBar (live prices, daily change, fallback)
 - [x] Vitest tests for marketData.oilHistory (data points, fallback)
 - [x] Vitest tests for marketData.currentPrices
 - [x] Auth logout test (existing)
 
 ## Change Requests
+
 - [x] Remove Landing Cost Calculator from Retailer Action Panel
 - [x] Remove user profile (Alexis Sedoser) from NavigationSidebar
 - [x] Remove login/user profile from TopHeader
@@ -138,6 +144,7 @@
 - [ ] Add Datajar.co branding to email alert template
 
 ## Carrier Recommendation Engine
+
 - [x] DB schema: freight_lanes table (20 major trade routes seeded)
 - [x] DB schema: lane_carriers junction table (70+ carrier-lane mappings seeded)
 - [x] Scoring engine: 4-signal risk score (severity 40%, news mentions 30%, zone overlap 20%, reliability 10%)
@@ -152,6 +159,7 @@
 - [x] Vitest tests: 16 tests covering all scoring functions (30 total tests passing)
 
 ## Predictive Risk Scoring
+
 - [x] DB schema: risk_forecasts table (laneId, laneName, probability30d, probability60d, trend, keyRisks, confidence, generatedAt)
 - [x] Forecasting engine: tRPC predictiveRisk.getAllForecasts — runs LLM forecast for all 20 lanes, 30-min DB cache
 - [x] Forecasting engine: tRPC predictiveRisk.getForecast — single lane forecast with DB caching
@@ -163,25 +171,30 @@
 - [x] Checkpoint: 0 TypeScript errors, 54 tests passing
 
 ## Map Fixes
+
 - [x] Fix zoom in / zoom out buttons on Supply Chain Map to correctly control Google Maps zoom level
 - [x] Add drag-to-pan to Supply Chain Map — click and drag to move when zoomed in (mouse + touch)
 
 ## Map Overlay Fixes
+
 - [x] Audit and fix Shipping Routes overlay — increased strokeWidth 0.3→0.7, glow opacity improved, all 7 routes confirmed working
 - [x] Audit and fix Port Status overlay — marker size 14px→18px, pulse animation on disrupted/warning ports, 20 ports confirmed correct coordinates
 - [x] Audit and fix Weather Impact overlay — blob opacity 0.18→0.75, ring size 28px→34px, 6 weather zones confirmed visible
 
 ## Live Map Overlays
+
 - [x] Shipping Routes: derive route status dynamically from live disruption hotspots (proximity to waypoints)
 - [x] Shipping Routes: update badge count from live data (not hardcoded static count)
 - [x] Weather Impact: derive weather zones from live news items mentioning storms, cyclones, typhoons, hurricanes
 - [x] Weather Impact: update badge count from live data
 
 ## Map UX Enhancements
+
 - [x] Scroll-wheel zoom on Supply Chain Map (mouse wheel + trackpad pinch)
 - [x] Port Status live linkage: show matching live news headline in port tooltip for disrupted ports
 
 ## Margin Impact Calculator
+
 - [x] tRPC procedure: marginCalculator.getDefaults — returns live oil price, freight index, disruption level as slider defaults
 - [x] tRPC procedure: marginCalculator.getInsight — LLM-generated 1-line insight for the current calculation result
 - [x] MarginImpactCalculator component: input panel (product name, category, unit cost, selling price, origin, container, units/month)
@@ -197,17 +210,20 @@
 - [x] TypeScript: 0 errors
 
 ## Nav & Layout Refactor
+
 - [ ] Move MarginImpactCalculator from Dashboard to the Margins page
 - [ ] Remove section-margin JUMP TO entry from Dashboard sidebar
 - [ ] Add down-arrow / section indicator beside Dashboard and Margins nav items in sidebar
 
 ## Sidebar Branding & Collapse
+
 - [x] Replace "Margin Sentinel" logo in sidebar with "Freight Intel" + "Powered by Datajar" branding
 - [x] Make navigation sidebar collapsible (toggle open/closed with a button)
 - [x] Collapsed state: show only icons (no labels), with tooltip on hover
 - [ ] Persist collapsed state across page navigation
 
 ## Margins Page Live Data
+
 - [x] Add marginAnalysis tRPC procedure: live KPIs (critical SKUs, margin at risk, best performer)
 - [x] Add marginAnalysis waterfall: compute oil surcharge and freight cost impact from live prices
 - [x] Add marginAnalysis categories: adjust current margins based on live oil/freight multipliers
@@ -218,6 +234,7 @@
 - [x] Add last-updated timestamp to each panel on Margins page
 
 ## Merchant Profile Page
+
 - [x] Add merchantProfiles DB table (business details, margin targets JSON, carrier prefs JSON, notification prefs JSON)
 - [x] Add marginHistory DB table (monthly margin snapshots per user)
 - [x] Run pnpm db:push to migrate schema
@@ -233,6 +250,7 @@
 - [x] Write vitest tests for merchantProfile router
 
 ## Hormuz Crisis Impact Analysis — Option C
+
 - [x] Add fertilizer commodity prices (Urea UAN=F, DAP, Potash) to marketData router
 - [x] Add E-grocery category to marginAnalysis BASE_CATEGORIES and BASE_SKUs
 - [x] Add Customs/Trade category to marginAnalysis BASE_CATEGORIES and BASE_SKUs
@@ -249,6 +267,7 @@
 - [x] Write vitest tests for crisisScenarios router
 
 ## UX Fixes — Round 3
+
 - [x] Fix spacing between Shipping Companies panel and Carrier Recommendation Engine on Dashboard
 - [x] Add crisis score banner/widget to Dashboard (live overall crisis score + top 2 critical cells)
 - [x] Add crisis impact column to Margins page SKU table (shows which crisis elements affect each category)
@@ -260,4 +279,5 @@
 - [x] Merchant Profile: History — improve chart and table layout, add empty state illustration
 
 ## Dashboard Layout Fix
+
 - [x] Fix Carrier Recommendation Engine block: ensure it is fully visually separated from Shipping Companies / Crisis Banner above (no overlap, clear top margin, own container)

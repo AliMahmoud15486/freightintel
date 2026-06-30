@@ -67,9 +67,24 @@ function trendColor(trend: "rising" | "stable" | "falling"): string {
 
 function confidenceBadge(conf: "high" | "medium" | "low") {
   const cfg = {
-    high:   { label: "HIGH CONF",   bg: "rgba(16,185,129,0.1)",  border: "rgba(16,185,129,0.25)", color: "#10b981" },
-    medium: { label: "MED CONF",    bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.25)", color: "#f59e0b" },
-    low:    { label: "LOW CONF",    bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.3)" },
+    high: {
+      label: "HIGH CONF",
+      bg: "rgba(16,185,129,0.1)",
+      border: "rgba(16,185,129,0.25)",
+      color: "#10b981",
+    },
+    medium: {
+      label: "MED CONF",
+      bg: "rgba(245,158,11,0.1)",
+      border: "rgba(245,158,11,0.25)",
+      color: "#f59e0b",
+    },
+    low: {
+      label: "LOW CONF",
+      bg: "rgba(255,255,255,0.05)",
+      border: "rgba(255,255,255,0.1)",
+      color: "rgba(255,255,255,0.3)",
+    },
   }[conf];
   return (
     <span
@@ -105,7 +120,9 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
           justifyContent: "center",
         }}
       >
-        <span style={{ fontSize: "0.55rem", color: "rgba(255,255,255,0.2)" }}>—</span>
+        <span style={{ fontSize: "0.55rem", color: "rgba(255,255,255,0.2)" }}>
+          —
+        </span>
       </div>
     );
   }
@@ -279,16 +296,29 @@ function LaneRow({ forecast, rank }: { forecast: LaneForecast; rank: number }) {
         <Sparkline data={forecast.sparkline} color={color} />
 
         {/* Trend */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           {trendIcon(forecast.trend)}
         </div>
 
         {/* Expand chevron */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {expanded
-            ? <ChevronUp size={12} color="rgba(255,255,255,0.3)" />
-            : <ChevronDown size={12} color="rgba(255,255,255,0.2)" />
-          }
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {expanded ? (
+            <ChevronUp size={12} color="rgba(255,255,255,0.3)" />
+          ) : (
+            <ChevronDown size={12} color="rgba(255,255,255,0.2)" />
+          )}
         </div>
       </div>
 
@@ -319,7 +349,14 @@ function LaneRow({ forecast, rank }: { forecast: LaneForecast; rank: number }) {
 
           {/* Key risks */}
           {forecast.keyRisks.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "6px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "4px",
+                marginBottom: "6px",
+              }}
+            >
               {forecast.keyRisks.map((risk, i) => (
                 <span
                   key={i}
@@ -340,7 +377,14 @@ function LaneRow({ forecast, rank }: { forecast: LaneForecast; rank: number }) {
           )}
 
           {/* Metadata row */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
             {confidenceBadge(forecast.confidence)}
             <span
               style={{
@@ -349,7 +393,10 @@ function LaneRow({ forecast, rank }: { forecast: LaneForecast; rank: number }) {
                 color: "rgba(255,255,255,0.2)",
               }}
             >
-              Trend: <span style={{ color: trendColor(forecast.trend) }}>{forecast.trend}</span>
+              Trend:{" "}
+              <span style={{ color: trendColor(forecast.trend) }}>
+                {forecast.trend}
+              </span>
             </span>
             {forecast.zones.length > 0 && (
               <span
@@ -374,13 +421,14 @@ function LaneRow({ forecast, rank }: { forecast: LaneForecast; rank: number }) {
 export default function PredictiveRiskPanel() {
   const [forceRefresh, setForceRefresh] = useState(false);
 
-  const { data, isLoading, isFetching, refetch } = trpc.predictiveRisk.getAllForecasts.useQuery(
-    { forceRefresh },
-    {
-      staleTime: 25 * 60 * 1000, // 25 min — slightly under the 30-min server cache
-      refetchInterval: 30 * 60 * 1000,
-    }
-  );
+  const { data, isLoading, isFetching, refetch } =
+    trpc.predictiveRisk.getAllForecasts.useQuery(
+      { forceRefresh },
+      {
+        staleTime: 25 * 60 * 1000, // 25 min — slightly under the 30-min server cache
+        refetchInterval: 30 * 60 * 1000,
+      }
+    );
 
   const handleRefresh = useCallback(() => {
     setForceRefresh(true);
@@ -395,9 +443,12 @@ export default function PredictiveRiskPanel() {
 
   // ── KPI derivations ──────────────────────────────────────────────────────────
   const highestRisk = forecasts[0] ?? null;
-  const avgProb30d = forecasts.length > 0
-    ? Math.round(forecasts.reduce((s, f) => s + f.probability30d, 0) / forecasts.length)
-    : 0;
+  const avgProb30d =
+    forecasts.length > 0
+      ? Math.round(
+          forecasts.reduce((s, f) => s + f.probability30d, 0) / forecasts.length
+        )
+      : 0;
   const risingCount = forecasts.filter(f => f.trend === "rising").length;
 
   const isActive = !isLoading && forecasts.length > 0;
@@ -583,9 +634,10 @@ export default function PredictiveRiskPanel() {
             style={{
               padding: "8px 10px",
               borderRadius: "5px",
-              background: risingCount > 5
-                ? "rgba(239,68,68,0.06)"
-                : "rgba(255,255,255,0.02)",
+              background:
+                risingCount > 5
+                  ? "rgba(239,68,68,0.06)"
+                  : "rgba(255,255,255,0.02)",
               border: `1px solid ${risingCount > 5 ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.05)"}`,
             }}
           >
@@ -606,7 +658,12 @@ export default function PredictiveRiskPanel() {
                 fontFamily: "'Rajdhani', sans-serif",
                 fontWeight: 700,
                 fontSize: "1.1rem",
-                color: risingCount > 5 ? "#ef4444" : risingCount > 2 ? "#f59e0b" : "#10b981",
+                color:
+                  risingCount > 5
+                    ? "#ef4444"
+                    : risingCount > 2
+                      ? "#f59e0b"
+                      : "#10b981",
               }}
             >
               {risingCount}
@@ -733,7 +790,14 @@ export default function PredictiveRiskPanel() {
             gap: "8px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              minWidth: 0,
+            }}
+          >
             <Flame size={13} color="#ef4444" style={{ flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
               <div
@@ -759,7 +823,8 @@ export default function PredictiveRiskPanel() {
                   whiteSpace: "nowrap",
                 }}
               >
-                5-element impact across Inflation · E-commerce · E-grocery · Customs
+                5-element impact across Inflation · E-commerce · E-grocery ·
+                Customs
               </div>
             </div>
           </div>

@@ -38,13 +38,28 @@ interface CalcResult {
 }
 
 function calculateMargins(inputs: CalcInputs): CalcResult {
-  const { unitCost, sellingPrice, unitsPerMonth, containerIndex, oilPrice, freightSurcharge, disruptionLevel } = inputs;
+  const {
+    unitCost,
+    sellingPrice,
+    unitsPerMonth,
+    containerIndex,
+    oilPrice,
+    freightSurcharge,
+    disruptionLevel,
+  } = inputs;
 
   if (sellingPrice <= 0 || unitCost <= 0) {
     return {
-      baseMargin: 0, freightImpact: 0, oilImpact: 0, disruptionImpact: 0,
-      currentMargin: 0, delta: 0, revenueAtRisk: 0, unitsAffected: 0,
-      breakEvenPrice: unitCost, totalCostPerUnit: unitCost,
+      baseMargin: 0,
+      freightImpact: 0,
+      oilImpact: 0,
+      disruptionImpact: 0,
+      currentMargin: 0,
+      delta: 0,
+      revenueAtRisk: 0,
+      unitsAffected: 0,
+      breakEvenPrice: unitCost,
+      totalCostPerUnit: unitCost,
     };
   }
 
@@ -52,24 +67,35 @@ function calculateMargins(inputs: CalcInputs): CalcResult {
 
   const containerBaseCost = CONTAINER_TYPES[containerIndex]?.baseCost ?? 3200;
   const effectiveUnits = Math.max(unitsPerMonth, 1);
-  const freightCostPerUnit = (containerBaseCost / effectiveUnits) * (1 + freightSurcharge / 100);
+  const freightCostPerUnit =
+    (containerBaseCost / effectiveUnits) * (1 + freightSurcharge / 100);
   const freightImpact = (freightCostPerUnit / sellingPrice) * 100;
 
   const oilBaseline = 75;
   const oilDelta = oilPrice - oilBaseline;
-  const oilImpact = Math.max(0, (oilDelta * 0.08) / sellingPrice * unitCost);
+  const oilImpact = Math.max(0, ((oilDelta * 0.08) / sellingPrice) * unitCost);
 
   const disruptionImpacts = [0.5, 2.5, 5.5];
   const disruptionImpact = disruptionImpacts[disruptionLevel] ?? 0.5;
 
-  const currentMargin = Math.max(-99, baseMargin - freightImpact - oilImpact - disruptionImpact);
+  const currentMargin = Math.max(
+    -99,
+    baseMargin - freightImpact - oilImpact - disruptionImpact
+  );
   const delta = currentMargin - baseMargin;
 
   const marginErosionPerUnit = (Math.abs(delta) / 100) * sellingPrice;
   const revenueAtRisk = Math.round(marginErosionPerUnit * effectiveUnits);
-  const unitsAffected = delta < -5 ? Math.round(effectiveUnits * 0.8) : Math.round(effectiveUnits * 0.4);
+  const unitsAffected =
+    delta < -5
+      ? Math.round(effectiveUnits * 0.8)
+      : Math.round(effectiveUnits * 0.4);
 
-  const totalCostPerUnit = unitCost + freightCostPerUnit + (oilImpact / 100) * sellingPrice + (disruptionImpact / 100) * sellingPrice;
+  const totalCostPerUnit =
+    unitCost +
+    freightCostPerUnit +
+    (oilImpact / 100) * sellingPrice +
+    (disruptionImpact / 100) * sellingPrice;
   const breakEvenPrice = totalCostPerUnit / (1 - baseMargin / 100);
 
   return {
@@ -94,7 +120,7 @@ describe("calculateMargins", () => {
     sellingPrice: 65,
     unitsPerMonth: 500,
     containerIndex: 1, // 40ft Standard, $3200
-    oilPrice: 75,      // at baseline, no oil impact
+    oilPrice: 75, // at baseline, no oil impact
     freightSurcharge: 0,
     disruptionLevel: 0, // Low
   };
@@ -118,9 +144,17 @@ describe("calculateMargins", () => {
   });
 
   it("freight surcharge increases freight impact", () => {
-    const noSurcharge = calculateMargins({ ...baseInputs, freightSurcharge: 0 });
-    const withSurcharge = calculateMargins({ ...baseInputs, freightSurcharge: 30 });
-    expect(withSurcharge.freightImpact).toBeGreaterThan(noSurcharge.freightImpact);
+    const noSurcharge = calculateMargins({
+      ...baseInputs,
+      freightSurcharge: 0,
+    });
+    const withSurcharge = calculateMargins({
+      ...baseInputs,
+      freightSurcharge: 30,
+    });
+    expect(withSurcharge.freightImpact).toBeGreaterThan(
+      noSurcharge.freightImpact
+    );
   });
 
   it("oil above baseline creates positive oil impact", () => {
@@ -159,14 +193,24 @@ describe("calculateMargins", () => {
   });
 
   it("delta is negative when costs erode margin", () => {
-    const result = calculateMargins({ ...baseInputs, disruptionLevel: 2, freightSurcharge: 30, oilPrice: 100 });
+    const result = calculateMargins({
+      ...baseInputs,
+      disruptionLevel: 2,
+      freightSurcharge: 30,
+      oilPrice: 100,
+    });
     expect(result.delta).toBeLessThan(0);
   });
 
   it("current margin never falls below -99", () => {
     const result = calculateMargins({
-      unitCost: 60, sellingPrice: 65, unitsPerMonth: 10,
-      containerIndex: 2, oilPrice: 130, freightSurcharge: 50, disruptionLevel: 2,
+      unitCost: 60,
+      sellingPrice: 65,
+      unitsPerMonth: 10,
+      containerIndex: 2,
+      oilPrice: 130,
+      freightSurcharge: 50,
+      disruptionLevel: 2,
     });
     expect(result.currentMargin).toBeGreaterThanOrEqual(-99);
   });
@@ -196,7 +240,12 @@ describe("calculateMargins", () => {
 
   it("units affected is higher when delta is severe (> -5pp)", () => {
     const mild = calculateMargins({ ...baseInputs, disruptionLevel: 0 });
-    const severe = calculateMargins({ ...baseInputs, disruptionLevel: 2, freightSurcharge: 50, oilPrice: 120 });
+    const severe = calculateMargins({
+      ...baseInputs,
+      disruptionLevel: 2,
+      freightSurcharge: 50,
+      oilPrice: 120,
+    });
     // Severe should have delta < -5, triggering 80% affected vs 40%
     if (severe.delta < -5) {
       expect(severe.unitsAffected).toBe(Math.round(500 * 0.8));

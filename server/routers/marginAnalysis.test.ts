@@ -23,7 +23,15 @@ function makePriceResponse(price: number) {
           },
           timestamp: [Date.now() / 1000],
           indicators: {
-            quote: [{ open: [price], close: [price], high: [price * 1.01], low: [price * 0.99], volume: [1000] }],
+            quote: [
+              {
+                open: [price],
+                close: [price],
+                high: [price * 1.01],
+                low: [price * 0.99],
+                volume: [1000],
+              },
+            ],
           },
         },
       ],
@@ -32,13 +40,21 @@ function makePriceResponse(price: number) {
   };
 }
 
-function mockFetchWithPrices(brent: number, wti: number, bdry: number, zim: number) {
+function mockFetchWithPrices(
+  brent: number,
+  wti: number,
+  bdry: number,
+  zim: number
+) {
   const responses = [brent, wti, bdry, zim].map(makePriceResponse);
   let idx = 0;
   return vi.fn().mockImplementation(() => {
     const body = responses[idx] ?? responses[responses.length - 1];
     idx++;
-    return Promise.resolve({ ok: true, json: () => Promise.resolve(body) } as Response);
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(body),
+    } as Response);
   });
 }
 
@@ -147,7 +163,9 @@ describe("marginAnalysis.getAnalysis", () => {
   });
 
   it("falls back gracefully when Yahoo Finance is unavailable", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) } as Response);
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: false, json: async () => ({}) } as Response);
     const caller = appRouter.createCaller(createPublicContext());
     const result = await caller.marginAnalysis.getAnalysis();
 

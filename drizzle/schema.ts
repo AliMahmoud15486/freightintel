@@ -1,4 +1,12 @@
-import { float, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  float,
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -127,11 +135,15 @@ export const riskForecasts = mysqlTable("risk_forecasts", {
   /** Probability of significant disruption in next 60 days, 0–100 */
   probability60d: int("probability60d").notNull(),
   /** Whether risk is rising, stable, or falling vs. previous forecast */
-  trend: mysqlEnum("trend", ["rising", "stable", "falling"]).notNull().default("stable"),
+  trend: mysqlEnum("trend", ["rising", "stable", "falling"])
+    .notNull()
+    .default("stable"),
   /** JSON array of key risk factor strings */
   keyRisks: text("keyRisks"),
   /** LLM confidence in this forecast */
-  confidence: mysqlEnum("confidence", ["high", "medium", "low"]).notNull().default("medium"),
+  confidence: mysqlEnum("confidence", ["high", "medium", "low"])
+    .notNull()
+    .default("medium"),
   /** Short summary sentence for the forecast */
   summary: text("summary"),
   generatedAt: timestamp("generatedAt").defaultNow().notNull(),

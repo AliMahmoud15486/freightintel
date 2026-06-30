@@ -24,29 +24,29 @@ The product is branded **Margin Sentinel**; the repo is `freightintel`.
 
 ## Tech stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | React 18 + Vite, Wouter (routing), Tailwind CSS, Radix UI, Recharts, framer-motion |
-| API | tRPC over Express |
-| Data layer | Drizzle ORM on MySQL |
-| LLM | Gemini 2.5 Flash via Manus Forge gateway (OpenAI-compatible `/v1/chat/completions`) |
-| Email | Resend |
-| Storage | AWS S3 |
-| Tooling | TypeScript, Vitest, Prettier, pnpm |
+| Layer      | Tech                                                                                |
+| ---------- | ----------------------------------------------------------------------------------- |
+| Frontend   | React 18 + Vite, Wouter (routing), Tailwind CSS, Radix UI, Recharts, framer-motion  |
+| API        | tRPC over Express                                                                   |
+| Data layer | Drizzle ORM on MySQL                                                                |
+| LLM        | Gemini 2.5 Flash via Manus Forge gateway (OpenAI-compatible `/v1/chat/completions`) |
+| Email      | Resend                                                                              |
+| Storage    | AWS S3                                                                              |
+| Tooling    | TypeScript, Vitest, Prettier, pnpm                                                  |
 
-**Architecture:** an *LLM-augmented rule engine* — deterministic scoring formulas make the decisions; the LLM only classifies messy news text and writes human-readable rationale. If the LLM call fails, the system falls back to deterministic signals.
+**Architecture:** an _LLM-augmented rule engine_ — deterministic scoring formulas make the decisions; the LLM only classifies messy news text and writes human-readable rationale. If the LLM call fails, the system falls back to deterministic signals.
 
 ---
 
 ## Pages / routes
 
-| Route | Page | Purpose |
-|---|---|---|
-| `/` | Home / Dashboard | Pulse ticker, disruption map, crisis banner, carrier engine |
-| `/margins` | Margins | Category & SKU margin analysis, waterfall, crisis indicators |
-| `/scenarios` | Crisis Scenarios | Interactive Hormuz crisis impact matrix |
-| `/profile` | Merchant Profile | Margin targets, carrier prefs, notifications, history |
-| `*` | NotFound | 404 fallback |
+| Route        | Page             | Purpose                                                      |
+| ------------ | ---------------- | ------------------------------------------------------------ |
+| `/`          | Home / Dashboard | Pulse ticker, disruption map, crisis banner, carrier engine  |
+| `/margins`   | Margins          | Category & SKU margin analysis, waterfall, crisis indicators |
+| `/scenarios` | Crisis Scenarios | Interactive Hormuz crisis impact matrix                      |
+| `/profile`   | Merchant Profile | Margin targets, carrier prefs, notifications, history        |
+| `*`          | NotFound         | 404 fallback                                                 |
 
 ---
 
@@ -72,16 +72,19 @@ seed-lanes.mjs   Seeds freight_lanes + lane_carriers
 ## Getting started
 
 ### Prerequisites
+
 - Node.js (built/tested on Node 20+; repo pins `@types/node` 24)
 - pnpm `10.4.1`
 - A MySQL database
 
 ### Install
+
 ```bash
 pnpm install
 ```
 
 ### Environment variables
+
 Create a `.env` file:
 
 ```bash
@@ -104,12 +107,14 @@ ALERT_FROM_EMAIL=onboarding@resend.dev
 ```
 
 ### Database setup
+
 ```bash
 pnpm db:push          # generate + run Drizzle migrations
 node seed-lanes.mjs   # seed freight lanes & carriers
 ```
 
 ### Run
+
 ```bash
 pnpm dev              # dev server (tsx watch)
 pnpm build            # production build (Vite + esbuild)
@@ -120,15 +125,15 @@ pnpm start            # run production build
 
 ## Scripts
 
-| Script | Command |
-|---|---|
-| `pnpm dev` | Start dev server with hot reload |
-| `pnpm build` | Build client (Vite) + bundle server (esbuild) |
-| `pnpm start` | Run the production build |
-| `pnpm check` | TypeScript type-check (`tsc --noEmit`) |
-| `pnpm format` | Format with Prettier |
-| `pnpm test` | Run the Vitest suite |
-| `pnpm db:push` | Generate & run Drizzle migrations |
+| Script         | Command                                       |
+| -------------- | --------------------------------------------- |
+| `pnpm dev`     | Start dev server with hot reload              |
+| `pnpm build`   | Build client (Vite) + bundle server (esbuild) |
+| `pnpm start`   | Run the production build                      |
+| `pnpm check`   | TypeScript type-check (`tsc --noEmit`)        |
+| `pnpm format`  | Format with Prettier                          |
+| `pnpm test`    | Run the Vitest suite                          |
+| `pnpm db:push` | Generate & run Drizzle migrations             |
 
 ---
 
@@ -140,7 +145,7 @@ pnpm test
 
 Vitest covers the tRPC routers (carrier recommendation, crisis scenarios, margin analysis/calculator, market data, merchant profile, predictive risk) plus auth and email-alert logic. CI runs via GitHub Actions (`.github/workflows/test.yml`).
 
-> ⚠️ The LLM layer has **no evals and no tracing** — tests assert router behavior and output *shape*, not the accuracy of LLM classifications.
+> ⚠️ The LLM layer has **no evals and no tracing** — tests assert router behavior and output _shape_, not the accuracy of LLM classifications.
 
 ---
 
@@ -149,6 +154,7 @@ Vitest covers the tRPC routers (carrier recommendation, crisis scenarios, margin
 Active prototype (Manus-assisted build). See [`todo.md`](todo.md) for the working backlog and [`ideas.md`](ideas.md) for the design direction (chosen theme: "Dark Intelligence" — cyber-industrial, orange-on-navy).
 
 Production hardening would focus on:
+
 - Replacing hand-seeded carrier reliability with real schedule-reliability data
 - Real freight-rate indices (Drewry WCI, Freightos FBX, Shanghai SCFI)
 - A structured disruption feed instead of LLM-on-RSS

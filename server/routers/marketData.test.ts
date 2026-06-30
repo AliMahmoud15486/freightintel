@@ -86,17 +86,27 @@ describe("marketData.pulseBar", () => {
 
   it("returns live Brent and WTI prices from Yahoo Finance", async () => {
     const brent = makeYahooResponse(83.5, 81.0, [79.0, 81.0, 83.5]);
-    const wti   = makeYahooResponse(76.2, 74.0, [72.0, 74.0, 76.2]);
-    const other = makeYahooResponse(10.0,  9.5, [ 9.0,  9.5, 10.0]);
+    const wti = makeYahooResponse(76.2, 74.0, [72.0, 74.0, 76.2]);
+    const other = makeYahooResponse(10.0, 9.5, [9.0, 9.5, 10.0]);
     // 9 symbols: BZ=F, CL=F, NG=F, GC=F, BDRY, ZIM, MAERSK-B.CO, CHRW, XLE
-    globalThis.fetch = mockFetchSequence([brent, wti, other, other, other, other, other, other, other]);
+    globalThis.fetch = mockFetchSequence([
+      brent,
+      wti,
+      other,
+      other,
+      other,
+      other,
+      other,
+      other,
+      other,
+    ]);
 
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.marketData.pulseBar();
 
-    const brentTicker = result.tickers.find((t) => t.symbol === "BZ=F");
-    const wtiTicker   = result.tickers.find((t) => t.symbol === "CL=F");
+    const brentTicker = result.tickers.find(t => t.symbol === "BZ=F");
+    const wtiTicker = result.tickers.find(t => t.symbol === "CL=F");
 
     expect(brentTicker).toBeDefined();
     expect(wtiTicker).toBeDefined();
@@ -111,15 +121,25 @@ describe("marketData.pulseBar", () => {
   it("uses daily change from second-to-last close (not chartPreviousClose)", async () => {
     // chartPreviousClose = 60 (week ago), but second-to-last close = 80 → change = +3.75%
     const brent = makeYahooResponse(83.0, 60.0, [60.0, 70.0, 80.0, 83.0]);
-    const wti   = makeYahooResponse(76.0, 55.0, [55.0, 65.0, 73.0, 76.0]);
-    const other = makeYahooResponse(10.0,  9.0, [ 8.0,  9.0, 10.0]);
-    globalThis.fetch = mockFetchSequence([brent, wti, other, other, other, other, other, other, other]);
+    const wti = makeYahooResponse(76.0, 55.0, [55.0, 65.0, 73.0, 76.0]);
+    const other = makeYahooResponse(10.0, 9.0, [8.0, 9.0, 10.0]);
+    globalThis.fetch = mockFetchSequence([
+      brent,
+      wti,
+      other,
+      other,
+      other,
+      other,
+      other,
+      other,
+      other,
+    ]);
 
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.marketData.pulseBar();
 
-    const brentTicker = result.tickers.find((t) => t.symbol === "BZ=F")!;
+    const brentTicker = result.tickers.find(t => t.symbol === "BZ=F")!;
     // 83 - 80 = 3, 3/80 = 3.75%
     expect(brentTicker.changePct).toBeCloseTo(3.75, 1);
     expect(brentTicker.change).toBeCloseTo(3.0, 1);
@@ -133,8 +153,8 @@ describe("marketData.pulseBar", () => {
     const result = await caller.marketData.pulseBar();
 
     expect(result.tickers.length).toBeGreaterThan(0);
-    const brent = result.tickers.find((t) => t.label === "BRENT CRUDE");
-    const wti   = result.tickers.find((t) => t.label === "WTI CRUDE");
+    const brent = result.tickers.find(t => t.label === "BRENT CRUDE");
+    const wti = result.tickers.find(t => t.label === "WTI CRUDE");
     expect(brent!.price).toBe(84.5);
     expect(wti!.price).toBe(80.25);
   });
@@ -148,7 +168,7 @@ describe("marketData.pulseBar", () => {
     const result = await caller.marketData.pulseBar();
 
     expect(result.tickers.length).toBe(9);
-    result.tickers.forEach((t) => {
+    result.tickers.forEach(t => {
       expect(t).toHaveProperty("label");
       expect(t).toHaveProperty("symbol");
       expect(t).toHaveProperty("price");
@@ -175,8 +195,12 @@ describe("marketData.oilHistory", () => {
   });
 
   it("returns merged WTI and Brent history data points", async () => {
-    const wtiHistory   = makeYahooResponse(76.0, 65.0, [65.0, 68.0, 72.0, 76.0]);
-    const brentHistory = makeYahooResponse(83.0, 70.0, [70.0, 73.0, 78.0, 83.0]);
+    const wtiHistory = makeYahooResponse(76.0, 65.0, [65.0, 68.0, 72.0, 76.0]);
+    const brentHistory = makeYahooResponse(
+      83.0,
+      70.0,
+      [70.0, 73.0, 78.0, 83.0]
+    );
     globalThis.fetch = mockFetchSequence([wtiHistory, brentHistory]);
 
     const ctx = createPublicContext();
@@ -198,7 +222,7 @@ describe("marketData.oilHistory", () => {
     const result = await caller.marketData.oilHistory({ months: 6 });
 
     expect(result.data.length).toBe(6);
-    result.data.forEach((point) => {
+    result.data.forEach(point => {
       expect(point.oilCost).toBeGreaterThan(0);
       expect(point.freightCost).toBeGreaterThan(0);
     });
@@ -220,7 +244,7 @@ describe("marketData.currentPrices", () => {
   });
 
   it("returns current WTI and Brent prices", async () => {
-    const wtiResp   = makeYahooResponse(76.5, 73.0, [73.0, 76.5]);
+    const wtiResp = makeYahooResponse(76.5, 73.0, [73.0, 76.5]);
     const brentResp = makeYahooResponse(83.8, 80.0, [80.0, 83.8]);
     globalThis.fetch = mockFetchSequence([wtiResp, brentResp]);
 

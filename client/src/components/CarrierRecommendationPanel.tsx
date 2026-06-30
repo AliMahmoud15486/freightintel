@@ -6,7 +6,16 @@
  */
 import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
-import { RefreshCw, Ship, ChevronDown, ChevronUp, Star, AlertTriangle, TrendingUp, Clock } from "lucide-react";
+import {
+  RefreshCw,
+  Ship,
+  ChevronDown,
+  ChevronUp,
+  Star,
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+} from "lucide-react";
 
 // ─── Region display labels ────────────────────────────────────────────────────
 
@@ -30,7 +39,10 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 function regionLabel(key: string): string {
-  return REGION_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return (
+    REGION_LABELS[key] ??
+    key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+  );
 }
 
 // ─── Cost index label ─────────────────────────────────────────────────────────
@@ -51,10 +63,30 @@ function costColor(index: number): string {
 
 function riskBadge(level: "low" | "medium" | "high" | "critical") {
   const cfg = {
-    low:      { label: "LOW RISK",      bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.3)",  color: "#10b981" },
-    medium:   { label: "MEDIUM RISK",   bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.3)",  color: "#f59e0b" },
-    high:     { label: "HIGH RISK",     bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   color: "#ef4444" },
-    critical: { label: "CRITICAL RISK", bg: "rgba(239,68,68,0.18)",   border: "rgba(239,68,68,0.5)",   color: "#ef4444" },
+    low: {
+      label: "LOW RISK",
+      bg: "rgba(16,185,129,0.12)",
+      border: "rgba(16,185,129,0.3)",
+      color: "#10b981",
+    },
+    medium: {
+      label: "MEDIUM RISK",
+      bg: "rgba(245,158,11,0.12)",
+      border: "rgba(245,158,11,0.3)",
+      color: "#f59e0b",
+    },
+    high: {
+      label: "HIGH RISK",
+      bg: "rgba(239,68,68,0.12)",
+      border: "rgba(239,68,68,0.3)",
+      color: "#ef4444",
+    },
+    critical: {
+      label: "CRITICAL RISK",
+      bg: "rgba(239,68,68,0.18)",
+      border: "rgba(239,68,68,0.5)",
+      color: "#ef4444",
+    },
   }[level];
   return (
     <span
@@ -101,8 +133,8 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
   const borderColor = carrier.isBestOption
     ? "rgba(233,30,140,0.4)"
     : carrier.riskLevel === "critical" || carrier.riskLevel === "high"
-    ? "rgba(239,68,68,0.2)"
-    : "rgba(255,255,255,0.06)";
+      ? "rgba(239,68,68,0.2)"
+      : "rgba(255,255,255,0.06)";
 
   const bgColor = carrier.isBestOption
     ? "rgba(233,30,140,0.05)"
@@ -154,7 +186,15 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
 
         {/* Main info */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "4px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              flexWrap: "wrap",
+              marginBottom: "4px",
+            }}
+          >
             <span
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
@@ -170,7 +210,8 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
                 style={{
                   padding: "1px 6px",
                   borderRadius: "3px",
-                  background: "linear-gradient(90deg, rgba(233,30,140,0.25), rgba(249,115,22,0.25))",
+                  background:
+                    "linear-gradient(90deg, rgba(233,30,140,0.25), rgba(249,115,22,0.25))",
                   border: "1px solid rgba(233,30,140,0.4)",
                   color: "#E91E8C",
                   fontFamily: "'Rajdhani', sans-serif",
@@ -186,7 +227,14 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
           </div>
 
           {/* Metrics row */}
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "5px" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              flexWrap: "wrap",
+              marginBottom: "5px",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
               <Clock size={10} color="rgba(255,255,255,0.3)" />
               <span
@@ -198,7 +246,10 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
               >
                 {carrier.estimatedTransitDays}d transit
                 {carrier.delayDays > 0 && (
-                  <span style={{ color: "#f59e0b" }}> (+{carrier.delayDays}d delay)</span>
+                  <span style={{ color: "#f59e0b" }}>
+                    {" "}
+                    (+{carrier.delayDays}d delay)
+                  </span>
                 )}
               </span>
             </div>
@@ -245,7 +296,7 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
           {carrier.disruptionReasons.length > 0 && (
             <>
               <button
-                onClick={() => setExpanded((v) => !v)}
+                onClick={() => setExpanded(v => !v)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -301,18 +352,18 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
               carrier.riskScore >= 75
                 ? "rgba(239,68,68,0.15)"
                 : carrier.riskScore >= 50
-                ? "rgba(239,68,68,0.1)"
-                : carrier.riskScore >= 25
-                ? "rgba(245,158,11,0.1)"
-                : "rgba(16,185,129,0.1)",
+                  ? "rgba(239,68,68,0.1)"
+                  : carrier.riskScore >= 25
+                    ? "rgba(245,158,11,0.1)"
+                    : "rgba(16,185,129,0.1)",
             border: `1.5px solid ${
               carrier.riskScore >= 75
                 ? "rgba(239,68,68,0.4)"
                 : carrier.riskScore >= 50
-                ? "rgba(239,68,68,0.25)"
-                : carrier.riskScore >= 25
-                ? "rgba(245,158,11,0.3)"
-                : "rgba(16,185,129,0.3)"
+                  ? "rgba(239,68,68,0.25)"
+                  : carrier.riskScore >= 25
+                    ? "rgba(245,158,11,0.3)"
+                    : "rgba(16,185,129,0.3)"
             }`,
             display: "flex",
             flexDirection: "column",
@@ -329,8 +380,8 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
                 carrier.riskScore >= 50
                   ? "#ef4444"
                   : carrier.riskScore >= 25
-                  ? "#f59e0b"
-                  : "#10b981",
+                    ? "#f59e0b"
+                    : "#10b981",
               lineHeight: 1,
             }}
           >
@@ -357,9 +408,13 @@ function CarrierCard({ carrier, rank }: CarrierCardProps) {
 export default function CarrierRecommendationPanel() {
   const [originRegion, setOriginRegion] = useState("");
   const [destinationRegion, setDestinationRegion] = useState("");
-  const [cargoType, setCargoType] = useState<"general" | "hazmat" | "refrigerated" | "bulk" | "high-value">("general");
+  const [cargoType, setCargoType] = useState<
+    "general" | "hazmat" | "refrigerated" | "bulk" | "high-value"
+  >("general");
   const [urgency, setUrgency] = useState<"standard" | "express">("standard");
-  const [containerSize, setContainerSize] = useState<"20ft" | "40ft" | "lcl">("40ft");
+  const [containerSize, setContainerSize] = useState<"20ft" | "40ft" | "lcl">(
+    "40ft"
+  );
   const [hasQueried, setHasQueried] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(false);
 
@@ -373,7 +428,14 @@ export default function CarrierRecommendationPanel() {
     isFetching,
     refetch,
   } = trpc.carrierRecommendation.recommend.useQuery(
-    { originRegion, destinationRegion, cargoType, urgency, containerSize, forceRefresh },
+    {
+      originRegion,
+      destinationRegion,
+      cargoType,
+      urgency,
+      containerSize,
+      forceRefresh,
+    },
     {
       enabled: hasQueried && !!originRegion && !!destinationRegion,
       staleTime: 9 * 60 * 1000,
@@ -423,10 +485,7 @@ export default function CarrierRecommendationPanel() {
   };
 
   return (
-    <div
-      className="ms-panel"
-      style={{ padding: "14px 16px" }}
-    >
+    <div className="ms-panel" style={{ padding: "14px 16px" }}>
       {/* Panel header */}
       <div
         style={{
@@ -505,12 +564,17 @@ export default function CarrierRecommendationPanel() {
           <div style={labelStyle}>Origin</div>
           <select
             value={originRegion}
-            onChange={(e) => { setOriginRegion(e.target.value); setHasQueried(false); }}
+            onChange={e => {
+              setOriginRegion(e.target.value);
+              setHasQueried(false);
+            }}
             style={selectStyle}
           >
             <option value="">Select origin…</option>
-            {origins.map((o) => (
-              <option key={o} value={o}>{regionLabel(o)}</option>
+            {origins.map(o => (
+              <option key={o} value={o}>
+                {regionLabel(o)}
+              </option>
             ))}
           </select>
         </div>
@@ -520,12 +584,17 @@ export default function CarrierRecommendationPanel() {
           <div style={labelStyle}>Destination</div>
           <select
             value={destinationRegion}
-            onChange={(e) => { setDestinationRegion(e.target.value); setHasQueried(false); }}
+            onChange={e => {
+              setDestinationRegion(e.target.value);
+              setHasQueried(false);
+            }}
             style={selectStyle}
           >
             <option value="">Select destination…</option>
-            {destinations.map((d) => (
-              <option key={d} value={d}>{regionLabel(d)}</option>
+            {destinations.map(d => (
+              <option key={d} value={d}>
+                {regionLabel(d)}
+              </option>
             ))}
           </select>
         </div>
@@ -535,7 +604,7 @@ export default function CarrierRecommendationPanel() {
           <div style={labelStyle}>Cargo Type</div>
           <select
             value={cargoType}
-            onChange={(e) => setCargoType(e.target.value as typeof cargoType)}
+            onChange={e => setCargoType(e.target.value as typeof cargoType)}
             style={selectStyle}
           >
             <option value="general">General</option>
@@ -551,7 +620,9 @@ export default function CarrierRecommendationPanel() {
           <div style={labelStyle}>Container</div>
           <select
             value={containerSize}
-            onChange={(e) => setContainerSize(e.target.value as typeof containerSize)}
+            onChange={e =>
+              setContainerSize(e.target.value as typeof containerSize)
+            }
             style={selectStyle}
           >
             <option value="20ft">20ft FCL</option>
@@ -565,7 +636,7 @@ export default function CarrierRecommendationPanel() {
           <div style={labelStyle}>Urgency</div>
           <select
             value={urgency}
-            onChange={(e) => setUrgency(e.target.value as typeof urgency)}
+            onChange={e => setUrgency(e.target.value as typeof urgency)}
             style={selectStyle}
           >
             <option value="standard">Standard</option>
@@ -587,8 +658,12 @@ export default function CarrierRecommendationPanel() {
               ? "rgba(255,255,255,0.04)"
               : "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
           border: "none",
-          cursor: !originRegion || !destinationRegion ? "not-allowed" : "pointer",
-          color: !originRegion || !destinationRegion ? "rgba(255,255,255,0.25)" : "#fff",
+          cursor:
+            !originRegion || !destinationRegion ? "not-allowed" : "pointer",
+          color:
+            !originRegion || !destinationRegion
+              ? "rgba(255,255,255,0.25)"
+              : "#fff",
           fontFamily: "'Rajdhani', sans-serif",
           fontWeight: 700,
           fontSize: "0.8rem",
@@ -609,7 +684,7 @@ export default function CarrierRecommendationPanel() {
             gap: "8px",
           }}
         >
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div
               key={i}
               style={{
@@ -644,7 +719,8 @@ export default function CarrierRecommendationPanel() {
               color: "rgba(255,255,255,0.5)",
             }}
           >
-            No direct lane found for this origin–destination pair. Try a different combination.
+            No direct lane found for this origin–destination pair. Try a
+            different combination.
           </span>
         </div>
       )}
@@ -674,7 +750,11 @@ export default function CarrierRecommendationPanel() {
             >
               {recommendation.lane.name}
             </span>
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.7rem" }}>·</span>
+            <span
+              style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.7rem" }}
+            >
+              ·
+            </span>
             <span
               style={{
                 fontFamily: "'Inter', sans-serif",
@@ -684,7 +764,11 @@ export default function CarrierRecommendationPanel() {
             >
               Base transit: {recommendation.lane.baseTransitDays} days
             </span>
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.7rem" }}>·</span>
+            <span
+              style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.7rem" }}
+            >
+              ·
+            </span>
             <span
               style={{
                 fontFamily: "'Inter', sans-serif",
@@ -699,7 +783,11 @@ export default function CarrierRecommendationPanel() {
           {/* Carrier cards */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {recommendation.carriers.map((carrier, i) => (
-              <CarrierCard key={carrier.carrierId} carrier={carrier} rank={i + 1} />
+              <CarrierCard
+                key={carrier.carrierId}
+                carrier={carrier}
+                rank={i + 1}
+              />
             ))}
           </div>
 
@@ -713,7 +801,9 @@ export default function CarrierRecommendationPanel() {
               textAlign: "right",
             }}
           >
-            Scored at {new Date(recommendation.generatedAt).toLocaleTimeString()} · Based on live disruption data
+            Scored at{" "}
+            {new Date(recommendation.generatedAt).toLocaleTimeString()} · Based
+            on live disruption data
           </div>
         </>
       )}
@@ -728,7 +818,11 @@ export default function CarrierRecommendationPanel() {
             fontSize: "0.72rem",
           }}
         >
-          Select an origin and destination, then click <strong style={{ color: "rgba(255,255,255,0.35)" }}>Find Best Carriers</strong> to get AI-scored recommendations based on live disruption data.
+          Select an origin and destination, then click{" "}
+          <strong style={{ color: "rgba(255,255,255,0.35)" }}>
+            Find Best Carriers
+          </strong>{" "}
+          to get AI-scored recommendations based on live disruption data.
         </div>
       )}
     </div>

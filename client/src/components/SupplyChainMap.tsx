@@ -6,7 +6,15 @@
  *  4. Weather Impact    — weather disruption zones with storm indicators
  */
 import { useState, useMemo, useRef } from "react";
-import { MoreHorizontal, ZoomIn, ZoomOut, RefreshCw, Anchor, Wind, Ship } from "lucide-react";
+import {
+  MoreHorizontal,
+  ZoomIn,
+  ZoomOut,
+  RefreshCw,
+  Anchor,
+  Wind,
+  Ship,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import ShippingLinesPanel from "@/components/ShippingLinesPanel";
@@ -49,9 +57,9 @@ const SHIPPING_ROUTES = [
     color: "#3b82f6",
     status: "normal" as const,
     points: [
-      [121.5, 31.2],   // Shanghai
-      [139.7, 35.7],   // Tokyo
-      [-118.2, 33.7],  // Los Angeles
+      [121.5, 31.2], // Shanghai
+      [139.7, 35.7], // Tokyo
+      [-118.2, 33.7], // Los Angeles
     ],
   },
   {
@@ -60,13 +68,13 @@ const SHIPPING_ROUTES = [
     color: "#ef4444",
     status: "critical" as const,
     points: [
-      [121.5, 31.2],   // Shanghai
-      [103.8, 1.3],    // Singapore
-      [55.3, 25.2],    // Dubai
-      [32.5, 30.0],    // Suez Canal
-      [14.5, 40.8],    // Mediterranean
-      [2.3, 48.9],     // Paris (Le Havre)
-      [-0.1, 51.5],    // London (Felixstowe)
+      [121.5, 31.2], // Shanghai
+      [103.8, 1.3], // Singapore
+      [55.3, 25.2], // Dubai
+      [32.5, 30.0], // Suez Canal
+      [14.5, 40.8], // Mediterranean
+      [2.3, 48.9], // Paris (Le Havre)
+      [-0.1, 51.5], // London (Felixstowe)
     ],
   },
   {
@@ -75,10 +83,10 @@ const SHIPPING_ROUTES = [
     color: "#f59e0b",
     status: "warning" as const,
     points: [
-      [121.5, 31.2],   // Shanghai
-      [103.8, 1.3],    // Singapore
-      [18.4, -33.9],   // Cape Town
-      [2.3, 48.9],     // Le Havre
+      [121.5, 31.2], // Shanghai
+      [103.8, 1.3], // Singapore
+      [18.4, -33.9], // Cape Town
+      [2.3, 48.9], // Le Havre
     ],
   },
   {
@@ -87,10 +95,10 @@ const SHIPPING_ROUTES = [
     color: "#10b981",
     status: "normal" as const,
     points: [
-      [-74.0, 40.7],   // New York
-      [-8.6, 41.1],    // Porto
-      [2.3, 48.9],     // Le Havre
-      [13.4, 52.5],    // Hamburg
+      [-74.0, 40.7], // New York
+      [-8.6, 41.1], // Porto
+      [2.3, 48.9], // Le Havre
+      [13.4, 52.5], // Hamburg
     ],
   },
   {
@@ -99,9 +107,9 @@ const SHIPPING_ROUTES = [
     color: "#f59e0b",
     status: "warning" as const,
     points: [
-      [-118.2, 33.7],  // Los Angeles
-      [-79.5, 9.0],    // Panama
-      [-74.0, 40.7],   // New York
+      [-118.2, 33.7], // Los Angeles
+      [-79.5, 9.0], // Panama
+      [-74.0, 40.7], // New York
     ],
   },
   {
@@ -110,10 +118,10 @@ const SHIPPING_ROUTES = [
     color: "#10b981",
     status: "normal" as const,
     points: [
-      [121.5, 31.2],   // Shanghai
-      [114.2, 22.3],   // Hong Kong
-      [103.8, 1.3],    // Singapore
-      [80.3, 13.1],    // Chennai
+      [121.5, 31.2], // Shanghai
+      [114.2, 22.3], // Hong Kong
+      [103.8, 1.3], // Singapore
+      [80.3, 13.1], // Chennai
     ],
   },
   {
@@ -122,9 +130,9 @@ const SHIPPING_ROUTES = [
     color: "#10b981",
     status: "normal" as const,
     points: [
-      [-90.1, 29.9],   // New Orleans
-      [-74.0, 40.7],   // New York
-      [-8.6, 41.1],    // Porto
+      [-90.1, 29.9], // New Orleans
+      [-74.0, 40.7], // New York
+      [-8.6, 41.1], // Porto
     ],
   },
 ];
@@ -139,40 +147,160 @@ const routeStatusColor = {
 // ─── Major world ports ────────────────────────────────────────────────────────
 
 const WORLD_PORTS = [
-  { id: "shanghai",    name: "Shanghai",       lat: 31.2,  lng: 121.5, status: "congested" as const },
-  { id: "singapore",  name: "Singapore",       lat: 1.3,   lng: 103.8, status: "open"      as const },
-  { id: "rotterdam",  name: "Rotterdam",       lat: 51.9,  lng: 4.5,   status: "open"      as const },
-  { id: "losangeles", name: "Los Angeles",     lat: 33.7,  lng: -118.2,status: "congested" as const },
-  { id: "dubai",      name: "Dubai (Jebel Ali)",lat: 25.0, lng: 55.1,  status: "warning"   as const },
-  { id: "hamburg",    name: "Hamburg",          lat: 53.5,  lng: 10.0,  status: "open"      as const },
-  { id: "busan",      name: "Busan",            lat: 35.1,  lng: 129.0, status: "open"      as const },
-  { id: "hongkong",   name: "Hong Kong",        lat: 22.3,  lng: 114.2, status: "open"      as const },
-  { id: "newyork",    name: "New York",         lat: 40.7,  lng: -74.0, status: "open"      as const },
-  { id: "antwerp",    name: "Antwerp",          lat: 51.2,  lng: 4.4,   status: "open"      as const },
-  { id: "suez",       name: "Suez Canal",       lat: 30.0,  lng: 32.5,  status: "closed"    as const },
-  { id: "hormuz",     name: "Strait of Hormuz", lat: 26.5,  lng: 56.5,  status: "closed"    as const },
-  { id: "panama",     name: "Panama Canal",     lat: 9.0,   lng: -79.5, status: "warning"   as const },
-  { id: "colombo",    name: "Colombo",          lat: 6.9,   lng: 79.8,  status: "open"      as const },
-  { id: "felixstowe", name: "Felixstowe",       lat: 51.9,  lng: 1.3,   status: "open"      as const },
-  { id: "ningbo",     name: "Ningbo",           lat: 29.9,  lng: 121.6, status: "congested" as const },
-  { id: "tianjin",    name: "Tianjin",          lat: 39.0,  lng: 117.7, status: "open"      as const },
-  { id: "tokyo",      name: "Tokyo",            lat: 35.7,  lng: 139.7, status: "open"      as const },
-  { id: "mumbai",     name: "Mumbai",           lat: 18.9,  lng: 72.8,  status: "warning"   as const },
-  { id: "capetown",   name: "Cape Town",        lat: -33.9, lng: 18.4,  status: "open"      as const },
+  {
+    id: "shanghai",
+    name: "Shanghai",
+    lat: 31.2,
+    lng: 121.5,
+    status: "congested" as const,
+  },
+  {
+    id: "singapore",
+    name: "Singapore",
+    lat: 1.3,
+    lng: 103.8,
+    status: "open" as const,
+  },
+  {
+    id: "rotterdam",
+    name: "Rotterdam",
+    lat: 51.9,
+    lng: 4.5,
+    status: "open" as const,
+  },
+  {
+    id: "losangeles",
+    name: "Los Angeles",
+    lat: 33.7,
+    lng: -118.2,
+    status: "congested" as const,
+  },
+  {
+    id: "dubai",
+    name: "Dubai (Jebel Ali)",
+    lat: 25.0,
+    lng: 55.1,
+    status: "warning" as const,
+  },
+  {
+    id: "hamburg",
+    name: "Hamburg",
+    lat: 53.5,
+    lng: 10.0,
+    status: "open" as const,
+  },
+  {
+    id: "busan",
+    name: "Busan",
+    lat: 35.1,
+    lng: 129.0,
+    status: "open" as const,
+  },
+  {
+    id: "hongkong",
+    name: "Hong Kong",
+    lat: 22.3,
+    lng: 114.2,
+    status: "open" as const,
+  },
+  {
+    id: "newyork",
+    name: "New York",
+    lat: 40.7,
+    lng: -74.0,
+    status: "open" as const,
+  },
+  {
+    id: "antwerp",
+    name: "Antwerp",
+    lat: 51.2,
+    lng: 4.4,
+    status: "open" as const,
+  },
+  {
+    id: "suez",
+    name: "Suez Canal",
+    lat: 30.0,
+    lng: 32.5,
+    status: "closed" as const,
+  },
+  {
+    id: "hormuz",
+    name: "Strait of Hormuz",
+    lat: 26.5,
+    lng: 56.5,
+    status: "closed" as const,
+  },
+  {
+    id: "panama",
+    name: "Panama Canal",
+    lat: 9.0,
+    lng: -79.5,
+    status: "warning" as const,
+  },
+  {
+    id: "colombo",
+    name: "Colombo",
+    lat: 6.9,
+    lng: 79.8,
+    status: "open" as const,
+  },
+  {
+    id: "felixstowe",
+    name: "Felixstowe",
+    lat: 51.9,
+    lng: 1.3,
+    status: "open" as const,
+  },
+  {
+    id: "ningbo",
+    name: "Ningbo",
+    lat: 29.9,
+    lng: 121.6,
+    status: "congested" as const,
+  },
+  {
+    id: "tianjin",
+    name: "Tianjin",
+    lat: 39.0,
+    lng: 117.7,
+    status: "open" as const,
+  },
+  {
+    id: "tokyo",
+    name: "Tokyo",
+    lat: 35.7,
+    lng: 139.7,
+    status: "open" as const,
+  },
+  {
+    id: "mumbai",
+    name: "Mumbai",
+    lat: 18.9,
+    lng: 72.8,
+    status: "warning" as const,
+  },
+  {
+    id: "capetown",
+    name: "Cape Town",
+    lat: -33.9,
+    lng: 18.4,
+    status: "open" as const,
+  },
 ];
 
 const portStatusColor = {
-  open:      "#10b981",
+  open: "#10b981",
   congested: "#f59e0b",
-  warning:   "#f97316",
-  closed:    "#ef4444",
+  warning: "#f97316",
+  closed: "#ef4444",
 };
 
 const portStatusLabel = {
-  open:      "Open",
+  open: "Open",
   congested: "Congested",
-  warning:   "Delays",
-  closed:    "Disrupted",
+  warning: "Delays",
+  closed: "Disrupted",
 };
 
 // ─── Weather disruption zones ─────────────────────────────────────────────────
@@ -242,28 +370,32 @@ const WEATHER_ZONES = [
 
 const weatherSeverityColor = {
   critical: "#ef4444",
-  warning:  "#f59e0b",
-  info:     "#3b82f6",
+  warning: "#f59e0b",
+  info: "#3b82f6",
 };
 
 const weatherTypeIcon: Record<string, string> = {
-  cyclone:   "🌀",
-  typhoon:   "🌀",
+  cyclone: "🌀",
+  typhoon: "🌀",
   hurricane: "🌀",
-  storm:     "⛈",
+  storm: "⛈",
 };
 
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 
 function DisruptionTooltip({ disruption }: { disruption: LiveDisruption }) {
   const isCritical = disruption.severity === "critical";
-  const isWarning  = disruption.severity === "warning";
-  const accentColor = isCritical ? "#ef4444" : isWarning ? "#f59e0b" : "#10b981";
+  const isWarning = disruption.severity === "warning";
+  const accentColor = isCritical
+    ? "#ef4444"
+    : isWarning
+      ? "#f59e0b"
+      : "#10b981";
   const borderColor = isCritical
     ? "rgba(239,68,68,0.4)"
     : isWarning
-    ? "rgba(245,158,11,0.4)"
-    : "rgba(16,185,129,0.4)";
+      ? "rgba(245,158,11,0.4)"
+      : "rgba(16,185,129,0.4)";
 
   return (
     <div
@@ -283,23 +415,69 @@ function DisruptionTooltip({ disruption }: { disruption: LiveDisruption }) {
         whiteSpace: "nowrap",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: accentColor, boxShadow: `0 0 6px ${accentColor}`, flexShrink: 0 }} />
-        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.78rem", letterSpacing: "0.06em", color: accentColor, textTransform: "uppercase" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          marginBottom: "4px",
+        }}
+      >
+        <div
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: accentColor,
+            boxShadow: `0 0 6px ${accentColor}`,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.78rem",
+            letterSpacing: "0.06em",
+            color: accentColor,
+            textTransform: "uppercase",
+          }}
+        >
           {disruption.name}
         </span>
       </div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", color: "rgba(255,255,255,0.65)", marginBottom: "6px", whiteSpace: "normal", lineHeight: 1.4 }}>
+      <div
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "0.7rem",
+          color: "rgba(255,255,255,0.65)",
+          marginBottom: "6px",
+          whiteSpace: "normal",
+          lineHeight: 1.4,
+        }}
+      >
         {disruption.description}
       </div>
       <div style={{ display: "flex", gap: "12px" }}>
         {disruption.delayDays != null && (
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", color: "#10b981" }}>
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.72rem",
+              color: "#10b981",
+            }}
+          >
             +{disruption.delayDays} day delay
           </div>
         )}
         {disruption.costImpact && (
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", color: accentColor }}>
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.72rem",
+              color: accentColor,
+            }}
+          >
             {disruption.costImpact} cost
           </div>
         )}
@@ -308,7 +486,7 @@ function DisruptionTooltip({ disruption }: { disruption: LiveDisruption }) {
   );
 }
 
-function PortTooltip({ port }: { port: typeof WORLD_PORTS[0] }) {
+function PortTooltip({ port }: { port: (typeof WORLD_PORTS)[0] }) {
   const color = portStatusColor[port.status];
   return (
     <div
@@ -327,13 +505,34 @@ function PortTooltip({ port }: { port: typeof WORLD_PORTS[0] }) {
         whiteSpace: "nowrap",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          marginBottom: "4px",
+        }}
+      >
         <Anchor size={10} color={color} />
-        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.75rem", color, letterSpacing: "0.06em" }}>
+        <span
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.75rem",
+            color,
+            letterSpacing: "0.06em",
+          }}
+        >
           {port.name}
         </span>
       </div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.5)" }}>
+      <div
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "0.68rem",
+          color: "rgba(255,255,255,0.5)",
+        }}
+      >
         Status: <span style={{ color }}>{portStatusLabel[port.status]}</span>
       </div>
     </div>
@@ -359,13 +558,38 @@ function WeatherTooltip({ zone }: { zone: WeatherZoneEntry }) {
         whiteSpace: "nowrap",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-        <span style={{ fontSize: "0.9rem" }}>{weatherTypeIcon[zone.type] ?? "🌩"}</span>
-        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.75rem", color, letterSpacing: "0.06em" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          marginBottom: "4px",
+        }}
+      >
+        <span style={{ fontSize: "0.9rem" }}>
+          {weatherTypeIcon[zone.type] ?? "🌩"}
+        </span>
+        <span
+          style={{
+            fontFamily: "'Rajdhani', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.75rem",
+            color,
+            letterSpacing: "0.06em",
+          }}
+        >
           {zone.name}
         </span>
       </div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.55)", whiteSpace: "normal", lineHeight: 1.4 }}>
+      <div
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: "0.68rem",
+          color: "rgba(255,255,255,0.55)",
+          whiteSpace: "normal",
+          lineHeight: 1.4,
+        }}
+      >
         {zone.impact}
       </div>
     </div>
@@ -374,7 +598,7 @@ function WeatherTooltip({ zone }: { zone: WeatherZoneEntry }) {
 
 // ─── Overlay components ───────────────────────────────────────────────────────
 
-type RouteEntry = typeof SHIPPING_ROUTES[0];
+type RouteEntry = (typeof SHIPPING_ROUTES)[0];
 type WeatherZoneEntry = {
   id: string;
   name: string;
@@ -393,15 +617,29 @@ function ShippingRoutesOverlay({ routes }: { routes: RouteEntry[] }) {
   // Convert route waypoints to SVG polyline points (percentage-based viewBox 0-100)
   return (
     <svg
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 4, pointerEvents: "none" }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 4,
+        pointerEvents: "none",
+      }}
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
     >
       <defs>
-        {routes.map((route) => {
+        {routes.map(route => {
           const color = routeStatusColor[route.status];
           return (
-            <filter key={`glow-${route.id}`} id={`glow-${route.id}`} x="-50%" y="-50%" width="200%" height="200%">
+            <filter
+              key={`glow-${route.id}`}
+              id={`glow-${route.id}`}
+              x="-50%"
+              y="-50%"
+              width="200%"
+              height="200%"
+            >
               <feGaussianBlur stdDeviation="0.3" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -417,10 +655,13 @@ function ShippingRoutesOverlay({ routes }: { routes: RouteEntry[] }) {
         `}</style>
       </defs>
 
-      {routes.map((route) => {
+      {routes.map(route => {
         const color = routeStatusColor[route.status];
         const pts = route.points
-          .map(([lng, lat]) => `${lngToX(lng).toFixed(2)},${latToY(lat).toFixed(2)}`)
+          .map(
+            ([lng, lat]) =>
+              `${lngToX(lng).toFixed(2)},${latToY(lat).toFixed(2)}`
+          )
           .join(" ");
         const isHovered = hoveredRoute === route.id;
 
@@ -442,8 +683,16 @@ function ShippingRoutesOverlay({ routes }: { routes: RouteEntry[] }) {
               stroke={color}
               strokeWidth={isHovered ? "1.2" : "0.7"}
               strokeOpacity={isHovered ? 1.0 : 0.85}
-              strokeDasharray={route.status === "critical" ? "2 1.5" : route.status === "warning" ? "3 1.5" : "4 1.5"}
-              style={{ animation: `dash-flow ${route.status === "critical" ? "1.2s" : "2s"} linear infinite` }}
+              strokeDasharray={
+                route.status === "critical"
+                  ? "2 1.5"
+                  : route.status === "warning"
+                    ? "3 1.5"
+                    : "4 1.5"
+              }
+              style={{
+                animation: `dash-flow ${route.status === "critical" ? "1.2s" : "2s"} linear infinite`,
+              }}
             />
             {/* Invisible hit area for hover */}
             <polyline
@@ -467,12 +716,14 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
 
   // Elevate port status and attach nearest live disruption for tooltip
   const enhancedPorts = useMemo(() => {
-    return WORLD_PORTS.map((port) => {
+    return WORLD_PORTS.map(port => {
       // Find the closest disruption within 8° (approx 800km)
       let nearest: LiveDisruption | null = null;
       let nearestDist = Infinity;
       for (const d of disruptions) {
-        const dist = Math.sqrt((d.lat - port.lat) ** 2 + (d.lng - port.lng) ** 2);
+        const dist = Math.sqrt(
+          (d.lat - port.lat) ** 2 + (d.lng - port.lng) ** 2
+        );
         if (dist < 8 && dist < nearestDist) {
           nearest = d;
           nearestDist = dist;
@@ -481,19 +732,29 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
       if (nearest) {
         return {
           ...port,
-          status: nearest.severity === "critical" ? "closed" as const : "warning" as const,
+          status:
+            nearest.severity === "critical"
+              ? ("closed" as const)
+              : ("warning" as const),
           liveHeadline: nearest.name,
-          liveDescription: nearest.description.slice(0, 80) + (nearest.description.length > 80 ? "…" : ""),
+          liveDescription:
+            nearest.description.slice(0, 80) +
+            (nearest.description.length > 80 ? "…" : ""),
           liveSeverity: nearest.severity,
         };
       }
-      return { ...port, liveHeadline: null, liveDescription: null, liveSeverity: null };
+      return {
+        ...port,
+        liveHeadline: null,
+        liveDescription: null,
+        liveSeverity: null,
+      };
     });
   }, [disruptions]);
 
   return (
     <>
-      {enhancedPorts.map((port) => {
+      {enhancedPorts.map(port => {
         const x = lngToX(port.lng);
         const y = latToY(port.lat);
         if (x < 1 || x > 99 || y < 1 || y > 99) return null;
@@ -503,7 +764,14 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
         return (
           <div
             key={port.id}
-            style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)", zIndex: isActive ? 15 : 4, cursor: "pointer" }}
+            style={{
+              position: "absolute",
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: "translate(-50%, -50%)",
+              zIndex: isActive ? 15 : 4,
+              cursor: "pointer",
+            }}
             onMouseEnter={() => setActivePort(port.id)}
             onMouseLeave={() => setActivePort(null)}
           >
@@ -521,10 +789,21 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
                 justifyContent: "center",
                 position: "relative",
                 zIndex: 2,
-                animation: port.status === "closed" || port.status === "warning" ? "port-pulse 1.8s ease-in-out infinite" : undefined,
+                animation:
+                  port.status === "closed" || port.status === "warning"
+                    ? "port-pulse 1.8s ease-in-out infinite"
+                    : undefined,
               }}
             >
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, boxShadow: `0 0 4px ${color}` }} />
+              <div
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: color,
+                  boxShadow: `0 0 4px ${color}`,
+                }}
+              />
             </div>
             {/* Port name label */}
             {isActive && (
@@ -547,34 +826,73 @@ function PortStatusOverlay({ disruptions }: { disruptions: LiveDisruption[] }) {
                 }}
               >
                 {/* Port name + status */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: port.liveHeadline ? 4 : 0 }}>
-                  <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.72rem", color, letterSpacing: "0.05em" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: port.liveHeadline ? 4 : 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                      color,
+                      letterSpacing: "0.05em",
+                    }}
+                  >
                     {port.name}
                   </div>
-                  <div style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "0.55rem",
-                    fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase" as const,
-                    color: "rgba(255,255,255,0.45)",
-                    background: `${color}20`,
-                    border: `1px solid ${color}40`,
-                    borderRadius: 3,
-                    padding: "1px 4px",
-                  }}>
+                  <div
+                    style={{
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: "0.55rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase" as const,
+                      color: "rgba(255,255,255,0.45)",
+                      background: `${color}20`,
+                      border: `1px solid ${color}40`,
+                      borderRadius: 3,
+                      padding: "1px 4px",
+                    }}
+                  >
                     {portStatusLabel[port.status]}
                   </div>
                 </div>
                 {/* Live news headline if disrupted */}
                 {port.liveHeadline && (
                   <>
-                    <div style={{ width: "100%", height: 1, background: `${color}25`, marginBottom: 4 }} />
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.63rem", color: "rgba(255,255,255,0.75)", lineHeight: 1.4, marginBottom: 2 }}>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: 1,
+                        background: `${color}25`,
+                        marginBottom: 4,
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: "0.63rem",
+                        color: "rgba(255,255,255,0.75)",
+                        lineHeight: 1.4,
+                        marginBottom: 2,
+                      }}
+                    >
                       {port.liveHeadline}
                     </div>
                     {port.liveDescription && (
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.58rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.35 }}>
+                      <div
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: "0.58rem",
+                          color: "rgba(255,255,255,0.4)",
+                          lineHeight: 1.35,
+                        }}
+                      >
                         {port.liveDescription}
                       </div>
                     )}
@@ -596,7 +914,14 @@ function WeatherOverlay({ zones }: { zones: WeatherZoneEntry[] }) {
     <>
       {/* SVG for weather zone blobs */}
       <svg
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 3, pointerEvents: "none" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 3,
+          pointerEvents: "none",
+        }}
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
@@ -615,10 +940,16 @@ function WeatherOverlay({ zones }: { zones: WeatherZoneEntry[] }) {
               to { transform-origin: center; transform: rotate(360deg); }
             }
           `}</style>
-          {zones.map((zone) => {
+          {zones.map(zone => {
             const color = weatherSeverityColor[zone.severity];
             return (
-              <radialGradient key={`wg-${zone.id}`} id={`wg-${zone.id}`} cx="50%" cy="50%" r="50%">
+              <radialGradient
+                key={`wg-${zone.id}`}
+                id={`wg-${zone.id}`}
+                cx="50%"
+                cy="50%"
+                r="50%"
+              >
                 <stop offset="0%" stopColor={color} stopOpacity="0.75" />
                 <stop offset="50%" stopColor={color} stopOpacity="0.35" />
                 <stop offset="100%" stopColor={color} stopOpacity="0" />
@@ -627,7 +958,7 @@ function WeatherOverlay({ zones }: { zones: WeatherZoneEntry[] }) {
           })}
         </defs>
 
-        {zones.map((zone) => {
+        {zones.map(zone => {
           const cx = lngToX(zone.lng);
           const cy = latToY(zone.lat);
           const r = zone.radius;
@@ -643,14 +974,16 @@ function WeatherOverlay({ zones }: { zones: WeatherZoneEntry[] }) {
               rx={rx * 2.2}
               ry={ry * 2.2}
               fill={`url(#wg-${zone.id})`}
-              style={{ animation: `weather-pulse ${zone.severity === "critical" ? "1.5s" : "2.5s"} ease-in-out infinite` }}
+              style={{
+                animation: `weather-pulse ${zone.severity === "critical" ? "1.5s" : "2.5s"} ease-in-out infinite`,
+              }}
             />
           );
         })}
       </svg>
 
       {/* Interactive zone markers */}
-      {zones.map((zone) => {
+      {zones.map(zone => {
         const x = lngToX(zone.lng);
         const y = latToY(zone.lat);
         if (x < 1 || x > 99 || y < 1 || y > 99) return null;
@@ -660,7 +993,14 @@ function WeatherOverlay({ zones }: { zones: WeatherZoneEntry[] }) {
         return (
           <div
             key={zone.id}
-            style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)", zIndex: isActive ? 15 : 5, cursor: "pointer" }}
+            style={{
+              position: "absolute",
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: "translate(-50%, -50%)",
+              zIndex: isActive ? 15 : 5,
+              cursor: "pointer",
+            }}
             onMouseEnter={() => setActiveZone(zone.id)}
             onMouseLeave={() => setActiveZone(null)}
           >
@@ -722,24 +1062,66 @@ function DisruptionHotspots({ locations }: { locations: LiveDisruption[] }) {
         const id = `${loc.name}-${idx}`;
         const isActive = activeId === id;
         const isCritical = loc.severity === "critical";
-        const isWarning  = loc.severity === "warning";
-        const dotColor  = isCritical ? "#ef4444" : isWarning ? "#f59e0b" : "#10b981";
-        const glowColor = isCritical ? "rgba(239,68,68,0.35)" : isWarning ? "rgba(245,158,11,0.3)" : "rgba(16,185,129,0.25)";
-        const pulseAnim = isCritical ? "pulse-red 2s ease-in-out infinite" : isWarning ? "pulse-amber 2.5s ease-in-out infinite" : "pulse-green 3s ease-in-out infinite";
-        const dotSize   = isCritical ? 14 : isWarning ? 12 : 10;
-        const glowSize  = isCritical ? 52 : isWarning ? 44 : 36;
+        const isWarning = loc.severity === "warning";
+        const dotColor = isCritical
+          ? "#ef4444"
+          : isWarning
+            ? "#f59e0b"
+            : "#10b981";
+        const glowColor = isCritical
+          ? "rgba(239,68,68,0.35)"
+          : isWarning
+            ? "rgba(245,158,11,0.3)"
+            : "rgba(16,185,129,0.25)";
+        const pulseAnim = isCritical
+          ? "pulse-red 2s ease-in-out infinite"
+          : isWarning
+            ? "pulse-amber 2.5s ease-in-out infinite"
+            : "pulse-green 3s ease-in-out infinite";
+        const dotSize = isCritical ? 14 : isWarning ? 12 : 10;
+        const glowSize = isCritical ? 52 : isWarning ? 44 : 36;
 
         if (x < 2 || x > 98 || y < 2 || y > 98) return null;
 
         return (
           <div
             key={id}
-            style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)", cursor: "pointer", zIndex: isActive ? 15 : 3 }}
+            style={{
+              position: "absolute",
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: "translate(-50%, -50%)",
+              cursor: "pointer",
+              zIndex: isActive ? 15 : 3,
+            }}
             onMouseEnter={() => setActiveId(id)}
             onMouseLeave={() => setActiveId(null)}
           >
-            <div style={{ width: glowSize, height: glowSize, borderRadius: "50%", background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", animation: pulseAnim }} />
-            <div style={{ width: dotSize, height: dotSize, borderRadius: "50%", background: dotColor, border: `2px solid ${dotColor}cc`, boxShadow: `0 0 10px ${dotColor}cc`, position: "relative", zIndex: 2 }} />
+            <div
+              style={{
+                width: glowSize,
+                height: glowSize,
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                animation: pulseAnim,
+              }}
+            />
+            <div
+              style={{
+                width: dotSize,
+                height: dotSize,
+                borderRadius: "50%",
+                background: dotColor,
+                border: `2px solid ${dotColor}cc`,
+                boxShadow: `0 0 10px ${dotColor}cc`,
+                position: "relative",
+                zIndex: 2,
+              }}
+            />
             {isActive && <DisruptionTooltip disruption={loc} />}
           </div>
         );
@@ -753,15 +1135,47 @@ function DisruptionHotspots({ locations }: { locations: LiveDisruption[] }) {
 function MapLegend({ mode }: { mode: string }) {
   if (mode === "Shipping Routes") {
     return (
-      <div style={{ position: "absolute", bottom: "12px", left: "12px", background: "rgba(10,14,26,0.88)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 12px", display: "flex", gap: "14px", zIndex: 5 }}>
+      <div
+        style={{
+          position: "absolute",
+          bottom: "12px",
+          left: "12px",
+          background: "rgba(10,14,26,0.88)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "6px",
+          padding: "8px 12px",
+          display: "flex",
+          gap: "14px",
+          zIndex: 5,
+        }}
+      >
         {[
           { color: "#ef4444", label: "Critical" },
           { color: "#f59e0b", label: "Disrupted" },
           { color: "#10b981", label: "Normal" },
-        ].map((item) => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <div style={{ width: 20, height: 2, background: item.color, borderRadius: 1, boxShadow: `0 0 4px ${item.color}` }} />
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.66rem", color: "rgba(255,255,255,0.5)" }}>{item.label}</span>
+        ].map(item => (
+          <div
+            key={item.label}
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            <div
+              style={{
+                width: 20,
+                height: 2,
+                background: item.color,
+                borderRadius: 1,
+                boxShadow: `0 0 4px ${item.color}`,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.66rem",
+                color: "rgba(255,255,255,0.5)",
+              }}
+            >
+              {item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -769,16 +1183,48 @@ function MapLegend({ mode }: { mode: string }) {
   }
   if (mode === "Port Status") {
     return (
-      <div style={{ position: "absolute", bottom: "12px", left: "12px", background: "rgba(10,14,26,0.88)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 12px", display: "flex", gap: "14px", zIndex: 5 }}>
+      <div
+        style={{
+          position: "absolute",
+          bottom: "12px",
+          left: "12px",
+          background: "rgba(10,14,26,0.88)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "6px",
+          padding: "8px 12px",
+          display: "flex",
+          gap: "14px",
+          zIndex: 5,
+        }}
+      >
         {[
           { color: "#10b981", label: "Open" },
           { color: "#f59e0b", label: "Congested" },
           { color: "#f97316", label: "Delays" },
           { color: "#ef4444", label: "Disrupted" },
-        ].map((item) => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "2px", background: item.color, boxShadow: `0 0 5px ${item.color}` }} />
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.66rem", color: "rgba(255,255,255,0.5)" }}>{item.label}</span>
+        ].map(item => (
+          <div
+            key={item.label}
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "2px",
+                background: item.color,
+                boxShadow: `0 0 5px ${item.color}`,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.66rem",
+                color: "rgba(255,255,255,0.5)",
+              }}
+            >
+              {item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -786,15 +1232,39 @@ function MapLegend({ mode }: { mode: string }) {
   }
   if (mode === "Weather Impact") {
     return (
-      <div style={{ position: "absolute", bottom: "12px", left: "12px", background: "rgba(10,14,26,0.88)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 12px", display: "flex", gap: "14px", zIndex: 5 }}>
+      <div
+        style={{
+          position: "absolute",
+          bottom: "12px",
+          left: "12px",
+          background: "rgba(10,14,26,0.88)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "6px",
+          padding: "8px 12px",
+          display: "flex",
+          gap: "14px",
+          zIndex: 5,
+        }}
+      >
         {[
           { color: "#ef4444", label: "Critical Storm" },
           { color: "#f59e0b", label: "Warning" },
           { color: "#3b82f6", label: "Monitoring" },
-        ].map((item) => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        ].map(item => (
+          <div
+            key={item.label}
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          >
             <Wind size={10} color={item.color} />
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.66rem", color: "rgba(255,255,255,0.5)" }}>{item.label}</span>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.66rem",
+                color: "rgba(255,255,255,0.5)",
+              }}
+            >
+              {item.label}
+            </span>
           </div>
         ))}
       </div>
@@ -802,15 +1272,47 @@ function MapLegend({ mode }: { mode: string }) {
   }
   // Default: Interland Monitor
   return (
-    <div style={{ position: "absolute", bottom: "12px", left: "12px", background: "rgba(10,14,26,0.88)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 12px", display: "flex", gap: "16px", zIndex: 5 }}>
+    <div
+      style={{
+        position: "absolute",
+        bottom: "12px",
+        left: "12px",
+        background: "rgba(10,14,26,0.88)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: "6px",
+        padding: "8px 12px",
+        display: "flex",
+        gap: "16px",
+        zIndex: 5,
+      }}
+    >
       {[
         { color: "#ef4444", label: "Critical" },
         { color: "#f59e0b", label: "Warning" },
         { color: "#10b981", label: "Normal" },
-      ].map((item) => (
-        <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "rgba(255,255,255,0.5)" }}>{item.label}</span>
+      ].map(item => (
+        <div
+          key={item.label}
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
+        >
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: item.color,
+              boxShadow: `0 0 6px ${item.color}`,
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "0.68rem",
+              color: "rgba(255,255,255,0.5)",
+            }}
+          >
+            {item.label}
+          </span>
         </div>
       ))}
     </div>
@@ -841,11 +1343,11 @@ export default function SupplyChainMap() {
   const zoomScale = ZOOM_LEVELS[zoomIdx];
 
   function handleZoomIn() {
-    setZoomIdx((prev) => {
+    setZoomIdx(prev => {
       const next = Math.min(prev + 1, ZOOM_MAX);
       // Clamp existing pan to new limits
       const lim = maxPan(ZOOM_LEVELS[next]);
-      setPan((p) => ({
+      setPan(p => ({
         x: Math.max(-lim.x, Math.min(lim.x, p.x)),
         y: Math.max(-lim.y, Math.min(lim.y, p.y)),
       }));
@@ -853,13 +1355,13 @@ export default function SupplyChainMap() {
     });
   }
   function handleZoomOut() {
-    setZoomIdx((prev) => {
+    setZoomIdx(prev => {
       const next = Math.max(prev - 1, ZOOM_MIN);
       if (next === 0) {
         setPan({ x: 0, y: 0 });
       } else {
         const lim = maxPan(ZOOM_LEVELS[next]);
-        setPan((p) => ({
+        setPan(p => ({
           x: Math.max(-lim.x, Math.min(lim.x, p.x)),
           y: Math.max(-lim.y, Math.min(lim.y, p.y)),
         }));
@@ -928,17 +1430,22 @@ export default function SupplyChainMap() {
     }
   }
 
-  const { data, isLoading, refetch, dataUpdatedAt } = trpc.news.disruptions.useQuery(undefined, {
-    refetchInterval: 5 * 60 * 1000,
-    staleTime: 4 * 60 * 1000,
-  });
+  const { data, isLoading, refetch, dataUpdatedAt } =
+    trpc.news.disruptions.useQuery(undefined, {
+      refetchInterval: 5 * 60 * 1000,
+      staleTime: 4 * 60 * 1000,
+    });
 
-  const locations: LiveDisruption[] = (data?.locations ?? []) as LiveDisruption[];
-  const criticalCount = locations.filter((l) => l.severity === "critical").length;
-  const warningCount  = locations.filter((l) => l.severity === "warning").length;
+  const locations: LiveDisruption[] = (data?.locations ??
+    []) as LiveDisruption[];
+  const criticalCount = locations.filter(l => l.severity === "critical").length;
+  const warningCount = locations.filter(l => l.severity === "warning").length;
 
   const lastUpdated = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    ? new Date(dataUpdatedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : null;
 
   // ── Live Shipping Routes ──────────────────────────────────────────────────
@@ -946,246 +1453,527 @@ export default function SupplyChainMap() {
   // any waypoint. If so, escalate the route status to critical/warning.
   const liveRoutes = useMemo(() => {
     if (locations.length === 0) return SHIPPING_ROUTES;
-    return SHIPPING_ROUTES.map((route) => {
+    return SHIPPING_ROUTES.map(route => {
       let worstLevel = 0; // 0=normal, 1=warning, 2=critical
       for (const [lng, lat] of route.points) {
         for (const d of locations) {
           const dist = Math.sqrt((d.lat - lat) ** 2 + (d.lng - lng) ** 2);
           if (dist < 12) {
-            if (d.severity === "critical") { worstLevel = 2; break; }
+            if (d.severity === "critical") {
+              worstLevel = 2;
+              break;
+            }
             if (d.severity === "warning" && worstLevel < 1) worstLevel = 1;
           }
         }
         if (worstLevel === 2) break;
       }
-      if (worstLevel === 0) return { ...route, status: "normal" as const, color: routeStatusColor.normal };
-      if (worstLevel === 2) return { ...route, status: "critical" as const, color: routeStatusColor.critical };
-      return { ...route, status: "warning" as const, color: routeStatusColor.warning };
+      if (worstLevel === 0)
+        return {
+          ...route,
+          status: "normal" as const,
+          color: routeStatusColor.normal,
+        };
+      if (worstLevel === 2)
+        return {
+          ...route,
+          status: "critical" as const,
+          color: routeStatusColor.critical,
+        };
+      return {
+        ...route,
+        status: "warning" as const,
+        color: routeStatusColor.warning,
+      };
     });
   }, [locations]);
 
   // ── Live Weather Zones ────────────────────────────────────────────────────
   // Extract weather-related disruptions from live news locations.
   // Keywords: storm, cyclone, typhoon, hurricane, monsoon, flood, blizzard.
-  const WEATHER_KEYWORDS = /storm|cyclone|typhoon|hurricane|monsoon|flood|blizzard|gale|squall|tropical/i;
+  const WEATHER_KEYWORDS =
+    /storm|cyclone|typhoon|hurricane|monsoon|flood|blizzard|gale|squall|tropical/i;
   const liveWeatherZones = useMemo<WeatherZoneEntry[]>(() => {
     const fromLive = locations
-      .filter((d) => WEATHER_KEYWORDS.test(d.name) || WEATHER_KEYWORDS.test(d.description))
+      .filter(
+        d =>
+          WEATHER_KEYWORDS.test(d.name) || WEATHER_KEYWORDS.test(d.description)
+      )
       .map((d, i) => ({
         id: `live-weather-${i}`,
         name: d.name,
         lat: d.lat,
         lng: d.lng,
         radius: d.severity === "critical" ? 7 : 5,
-        type: (/typhoon/i.test(d.name + d.description) ? "typhoon"
-          : /hurricane/i.test(d.name + d.description) ? "hurricane"
-          : /cyclone/i.test(d.name + d.description) ? "cyclone"
-          : "storm") as "typhoon" | "hurricane" | "cyclone" | "storm",
-        severity: d.severity === "critical" ? "critical" as const
-          : d.severity === "warning" ? "warning" as const
-          : "info" as const,
+        type: (/typhoon/i.test(d.name + d.description)
+          ? "typhoon"
+          : /hurricane/i.test(d.name + d.description)
+            ? "hurricane"
+            : /cyclone/i.test(d.name + d.description)
+              ? "cyclone"
+              : "storm") as "typhoon" | "hurricane" | "cyclone" | "storm",
+        severity:
+          d.severity === "critical"
+            ? ("critical" as const)
+            : d.severity === "warning"
+              ? ("warning" as const)
+              : ("info" as const),
         impact: d.description.slice(0, 60),
         isLive: true,
       }));
     // Merge: live zones take priority; keep static zones that don't overlap a live zone
-    const staticFiltered: WeatherZoneEntry[] = WEATHER_ZONES
-      .filter((sz) => !fromLive.some((lz) => Math.sqrt((lz.lat - sz.lat) ** 2 + (lz.lng - sz.lng) ** 2) < 15))
-      .map((sz) => ({ ...sz, type: sz.type as WeatherZoneEntry["type"] }));
+    const staticFiltered: WeatherZoneEntry[] = WEATHER_ZONES.filter(
+      sz =>
+        !fromLive.some(
+          lz => Math.sqrt((lz.lat - sz.lat) ** 2 + (lz.lng - sz.lng) ** 2) < 15
+        )
+    ).map(sz => ({ ...sz, type: sz.type as WeatherZoneEntry["type"] }));
     return [...fromLive, ...staticFiltered];
   }, [locations]);
 
   // Mode-specific badge text
   const badgeText = useMemo(() => {
     if (filterMode === "Shipping Routes") {
-      const disrupted = liveRoutes.filter((r) => r.status !== "normal").length;
-      return disrupted > 0 ? `${disrupted} ROUTES DISRUPTED` : "ALL ROUTES CLEAR";
+      const disrupted = liveRoutes.filter(r => r.status !== "normal").length;
+      return disrupted > 0
+        ? `${disrupted} ROUTES DISRUPTED`
+        : "ALL ROUTES CLEAR";
     }
     if (filterMode === "Port Status") {
-      const closed = WORLD_PORTS.filter((p) => p.status === "closed" || p.status === "warning").length;
+      const closed = WORLD_PORTS.filter(
+        p => p.status === "closed" || p.status === "warning"
+      ).length;
       return `${closed} PORTS IMPACTED`;
     }
     if (filterMode === "Weather Impact") {
-      const critical = liveWeatherZones.filter((z) => z.severity === "critical").length;
-      return critical > 0 ? `${critical} CRITICAL STORMS` : "CONDITIONS MONITORED";
+      const critical = liveWeatherZones.filter(
+        z => z.severity === "critical"
+      ).length;
+      return critical > 0
+        ? `${critical} CRITICAL STORMS`
+        : "CONDITIONS MONITORED";
     }
     return isLoading && locations.length === 0
       ? "LOADING..."
       : `${criticalCount} CRITICAL · ${warningCount} WARNING`;
-  }, [filterMode, isLoading, locations.length, criticalCount, warningCount, liveRoutes, liveWeatherZones]);
+  }, [
+    filterMode,
+    isLoading,
+    locations.length,
+    criticalCount,
+    warningCount,
+    liveRoutes,
+    liveWeatherZones,
+  ]);
 
-  const badgeColor = filterMode === "Shipping Routes"
-    ? "#ef4444"
-    : filterMode === "Port Status"
-    ? "#E91E8C"
-    : filterMode === "Weather Impact"
-    ? "#f59e0b"
-    : "#ef4444";
+  const badgeColor =
+    filterMode === "Shipping Routes"
+      ? "#ef4444"
+      : filterMode === "Port Status"
+        ? "#E91E8C"
+        : filterMode === "Weather Impact"
+          ? "#f59e0b"
+          : "#ef4444";
 
   // Mode label for header
   const modeSubtitle: Record<string, string> = {
     "Interland Monitor": "Heatmap",
-    "Shipping Routes":   "Live Routes",
-    "Port Status":       "Port Congestion",
-    "Weather Impact":    "Storm Tracker",
+    "Shipping Routes": "Live Routes",
+    "Port Status": "Port Congestion",
+    "Weather Impact": "Storm Tracker",
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "8px" : "12px" }}>
     <div
-      className="ms-panel"
-      style={{ overflow: "hidden", position: "relative", display: "flex", flexDirection: "column", minHeight: isMobile ? "320px" : "460px" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: isMobile ? "8px" : "12px",
+      }}
     >
-      {/* Panel Header */}
       <div
+        className="ms-panel"
         style={{
-          display: "flex",
-          alignItems: isMobile ? "flex-start" : "center",
-          flexDirection: isMobile ? "column" : "row",
-          justifyContent: "space-between",
-          padding: isMobile ? "10px 12px" : "12px 16px",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          background: "rgba(10,14,26,0.6)",
-          gap: isMobile ? "8px" : "0",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <span className="panel-header" style={{ fontSize: isMobile ? "0.7rem" : undefined }}>SUPPLY CHAIN MAP</span>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.72rem", color: "rgba(255,255,255,0.35)" }}>
-            ({modeSubtitle[filterMode] ?? filterMode})
-          </span>
-          <div style={{ display: "flex", alignItems: "center", gap: "4px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "4px", padding: "2px 6px" }}>
-            <div className="animate-blink" style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 4px #10b981" }} />
-            <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.65rem", color: "#10b981", letterSpacing: "0.06em" }}>LIVE</span>
-          </div>
-          {lastUpdated && !isMobile && (
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "rgba(255,255,255,0.25)" }}>
-              {lastUpdated}
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", width: isMobile ? "100%" : "auto" }}>
-          <select
-            value={filterMode}
-            onChange={(e) => setFilterMode(e.target.value)}
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "rgba(255,255,255,0.7)", fontSize: "0.72rem", padding: isMobile ? "6px 8px" : "4px 8px", fontFamily: "'Inter', sans-serif", cursor: "pointer", flex: isMobile ? 1 : "none" }}
-          >
-            <option value="Interland Monitor">Interland Monitor</option>
-            <option value="Shipping Routes">Shipping Routes</option>
-            <option value="Port Status">Port Status</option>
-            <option value="Weather Impact">Weather Impact</option>
-          </select>
-          <button onClick={() => refetch()} title="Refresh" style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "6px", display: "flex", alignItems: "center" }}>
-            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-          </button>
-          {!isMobile && (
-            <button style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px" }}>
-              <MoreHorizontal size={16} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Map Container */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: isMobile ? "clamp(240px, 55vw, 340px)" : isTablet ? "clamp(300px, 40vh, 420px)" : "clamp(380px, 45vh, 560px)",
-          flex: "0 0 auto",
           overflow: "hidden",
-          background: "#060b14",
-          cursor: zoomScale > 1 ? (isDragging.current ? "grabbing" : "grab") : "default",
-          userSelect: "none",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: isMobile ? "320px" : "460px",
         }}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onWheel={onWheel}
       >
-        {/* Zoomable inner layer */}
+        {/* Panel Header */}
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            transformOrigin: "center center",
-            transform: `scale(${zoomScale}) translate(${pan.x / zoomScale}px, ${pan.y / zoomScale}px)`,
-            transition: isDragging.current ? "none" : "transform 0.25s ease",
+            display: "flex",
+            alignItems: isMobile ? "flex-start" : "center",
+            flexDirection: isMobile ? "column" : "row",
+            justifyContent: "space-between",
+            padding: isMobile ? "10px 12px" : "12px 16px",
+            borderBottom: "1px solid rgba(255,255,255,0.07)",
+            background: "rgba(10,14,26,0.6)",
+            gap: isMobile ? "8px" : "0",
           }}
         >
-        {/* Background map image */}
-        <img
-          src={MAP_BG}
-          alt="Supply Chain Map"
-          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: 0.9 }}
-        />
-
-        {/* Loading overlay */}
-        {isLoading && locations.length === 0 && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(6,11,20,0.5)", zIndex: 10 }}>
-            <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.8rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em" }}>
-              LOADING LIVE DISRUPTIONS...
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              className="panel-header"
+              style={{ fontSize: isMobile ? "0.7rem" : undefined }}
+            >
+              SUPPLY CHAIN MAP
+            </span>
+            <span
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.72rem",
+                color: "rgba(255,255,255,0.35)",
+              }}
+            >
+              ({modeSubtitle[filterMode] ?? filterMode})
+            </span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                background: "rgba(16,185,129,0.1)",
+                border: "1px solid rgba(16,185,129,0.25)",
+                borderRadius: "4px",
+                padding: "2px 6px",
+              }}
+            >
+              <div
+                className="animate-blink"
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: "#10b981",
+                  boxShadow: "0 0 4px #10b981",
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 700,
+                  fontSize: "0.65rem",
+                  color: "#10b981",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                LIVE
+              </span>
             </div>
+            {lastUpdated && !isMobile && (
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "0.65rem",
+                  color: "rgba(255,255,255,0.25)",
+                }}
+              >
+                {lastUpdated}
+              </span>
+            )}
           </div>
-        )}
-
-        {/* ── Mode-specific overlays ── */}
-        {filterMode === "Interland Monitor" && <DisruptionHotspots locations={locations} />}
-        {filterMode === "Shipping Routes"   && <ShippingRoutesOverlay routes={liveRoutes} />}
-        {filterMode === "Port Status"       && <PortStatusOverlay disruptions={locations} />}
-        {filterMode === "Weather Impact"    && <WeatherOverlay zones={liveWeatherZones} />}
-
-        {/* Zoom controls — outside the zoomable layer so they stay fixed */}
-
-        {/* Legend */}
-        <MapLegend mode={filterMode} />
-
-        {/* Scanline texture */}
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)", pointerEvents: "none", zIndex: 1 }} />
-
-        {/* Bottom gradient fade */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60px", background: "linear-gradient(to top, rgba(6,11,20,0.7) 0%, transparent 100%)", pointerEvents: "none", zIndex: 2 }} />
-
-        {/* Close the zoomable inner layer */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              width: isMobile ? "100%" : "auto",
+            }}
+          >
+            <select
+              value={filterMode}
+              onChange={e => setFilterMode(e.target.value)}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                color: "rgba(255,255,255,0.7)",
+                fontSize: "0.72rem",
+                padding: isMobile ? "6px 8px" : "4px 8px",
+                fontFamily: "'Inter', sans-serif",
+                cursor: "pointer",
+                flex: isMobile ? 1 : "none",
+              }}
+            >
+              <option value="Interland Monitor">Interland Monitor</option>
+              <option value="Shipping Routes">Shipping Routes</option>
+              <option value="Port Status">Port Status</option>
+              <option value="Weather Impact">Weather Impact</option>
+            </select>
+            <button
+              onClick={() => refetch()}
+              title="Refresh"
+              style={{
+                background: "none",
+                border: "none",
+                color: "rgba(255,255,255,0.35)",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <RefreshCw
+                size={14}
+                className={isLoading ? "animate-spin" : ""}
+              />
+            </button>
+            {!isMobile && (
+              <button
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "rgba(255,255,255,0.35)",
+                  cursor: "pointer",
+                  padding: "4px",
+                }}
+              >
+                <MoreHorizontal size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Zoom controls — fixed over the map, outside the zoomable layer */}
-        <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "2px", zIndex: 10 }}>
-          <button
-            title="Zoom in"
-            disabled={zoomIdx >= ZOOM_MAX}
-            onClick={handleZoomIn}
-            style={{ width: isMobile ? 36 : 28, height: isMobile ? 36 : 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: zoomIdx >= ZOOM_MAX ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: zoomIdx >= ZOOM_MAX ? "not-allowed" : "pointer" }}
-          >
-            <ZoomIn size={isMobile ? 16 : 14} />
-          </button>
-          <button
-            title="Zoom out"
-            disabled={zoomIdx <= ZOOM_MIN}
-            onClick={handleZoomOut}
-            style={{ width: isMobile ? 36 : 28, height: isMobile ? 36 : 28, background: "rgba(10,14,26,0.85)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: zoomIdx <= ZOOM_MIN ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: zoomIdx <= ZOOM_MIN ? "not-allowed" : "pointer" }}
-          >
-            <ZoomOut size={isMobile ? 16 : 14} />
-          </button>
-        </div>
-
-        {/* Status badge (top-right) */}
+        {/* Map Container */}
         <div
-          style={{ position: "absolute", top: "12px", right: "12px", background: `${badgeColor}22`, border: `1px solid ${badgeColor}44`, borderRadius: "6px", padding: "6px 10px", display: "flex", alignItems: "center", gap: "6px", zIndex: 5 }}
+          style={{
+            position: "relative",
+            width: "100%",
+            height: isMobile
+              ? "clamp(240px, 55vw, 340px)"
+              : isTablet
+                ? "clamp(300px, 40vh, 420px)"
+                : "clamp(380px, 45vh, 560px)",
+            flex: "0 0 auto",
+            overflow: "hidden",
+            background: "#060b14",
+            cursor:
+              zoomScale > 1
+                ? isDragging.current
+                  ? "grabbing"
+                  : "grab"
+                : "default",
+            userSelect: "none",
+          }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onWheel={onWheel}
         >
-          <div className="animate-blink" style={{ width: 6, height: 6, borderRadius: "50%", background: badgeColor, boxShadow: `0 0 6px ${badgeColor}` }} />
-          <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: "0.72rem", color: badgeColor, letterSpacing: "0.06em" }}>
-            {badgeText}
-          </span>
+          {/* Zoomable inner layer */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              transformOrigin: "center center",
+              transform: `scale(${zoomScale}) translate(${pan.x / zoomScale}px, ${pan.y / zoomScale}px)`,
+              transition: isDragging.current ? "none" : "transform 0.25s ease",
+            }}
+          >
+            {/* Background map image */}
+            <img
+              src={MAP_BG}
+              alt="Supply Chain Map"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                opacity: 0.9,
+              }}
+            />
+
+            {/* Loading overlay */}
+            {isLoading && locations.length === 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(6,11,20,0.5)",
+                  zIndex: 10,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "0.8rem",
+                    color: "rgba(255,255,255,0.4)",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  LOADING LIVE DISRUPTIONS...
+                </div>
+              </div>
+            )}
+
+            {/* ── Mode-specific overlays ── */}
+            {filterMode === "Interland Monitor" && (
+              <DisruptionHotspots locations={locations} />
+            )}
+            {filterMode === "Shipping Routes" && (
+              <ShippingRoutesOverlay routes={liveRoutes} />
+            )}
+            {filterMode === "Port Status" && (
+              <PortStatusOverlay disruptions={locations} />
+            )}
+            {filterMode === "Weather Impact" && (
+              <WeatherOverlay zones={liveWeatherZones} />
+            )}
+
+            {/* Zoom controls — outside the zoomable layer so they stay fixed */}
+
+            {/* Legend */}
+            <MapLegend mode={filterMode} />
+
+            {/* Scanline texture */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage:
+                  "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)",
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            />
+
+            {/* Bottom gradient fade */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "60px",
+                background:
+                  "linear-gradient(to top, rgba(6,11,20,0.7) 0%, transparent 100%)",
+                pointerEvents: "none",
+                zIndex: 2,
+              }}
+            />
+
+            {/* Close the zoomable inner layer */}
+          </div>
+
+          {/* Zoom controls — fixed over the map, outside the zoomable layer */}
+          <div
+            style={{
+              position: "absolute",
+              top: "12px",
+              left: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+              zIndex: 10,
+            }}
+          >
+            <button
+              title="Zoom in"
+              disabled={zoomIdx >= ZOOM_MAX}
+              onClick={handleZoomIn}
+              style={{
+                width: isMobile ? 36 : 28,
+                height: isMobile ? 36 : 28,
+                background: "rgba(10,14,26,0.85)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                color:
+                  zoomIdx >= ZOOM_MAX
+                    ? "rgba(255,255,255,0.2)"
+                    : "rgba(255,255,255,0.7)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: zoomIdx >= ZOOM_MAX ? "not-allowed" : "pointer",
+              }}
+            >
+              <ZoomIn size={isMobile ? 16 : 14} />
+            </button>
+            <button
+              title="Zoom out"
+              disabled={zoomIdx <= ZOOM_MIN}
+              onClick={handleZoomOut}
+              style={{
+                width: isMobile ? 36 : 28,
+                height: isMobile ? 36 : 28,
+                background: "rgba(10,14,26,0.85)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "4px",
+                color:
+                  zoomIdx <= ZOOM_MIN
+                    ? "rgba(255,255,255,0.2)"
+                    : "rgba(255,255,255,0.7)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: zoomIdx <= ZOOM_MIN ? "not-allowed" : "pointer",
+              }}
+            >
+              <ZoomOut size={isMobile ? 16 : 14} />
+            </button>
+          </div>
+
+          {/* Status badge (top-right) */}
+          <div
+            style={{
+              position: "absolute",
+              top: "12px",
+              right: "12px",
+              background: `${badgeColor}22`,
+              border: `1px solid ${badgeColor}44`,
+              borderRadius: "6px",
+              padding: "6px 10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              zIndex: 5,
+            }}
+          >
+            <div
+              className="animate-blink"
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: badgeColor,
+                boxShadow: `0 0 6px ${badgeColor}`,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 700,
+                fontSize: "0.72rem",
+                color: badgeColor,
+                letterSpacing: "0.06em",
+              }}
+            >
+              {badgeText}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* Shipping Lines Panel — below the map */}
-    <ShippingLinesPanel />
+      {/* Shipping Lines Panel — below the map */}
+      <ShippingLinesPanel />
     </div>
   );
 }

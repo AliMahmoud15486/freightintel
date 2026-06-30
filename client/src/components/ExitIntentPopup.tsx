@@ -58,7 +58,7 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
             WebkitBackdropFilter: "blur(6px)",
             animation: "exitOverlayIn 0.25s ease",
           }}
-          onClick={(e) => {
+          onClick={e => {
             // Dismiss when clicking the dark backdrop
             if (e.target === e.currentTarget) handleDismiss();
           }}
@@ -73,7 +73,8 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
               padding: "40px 44px 36px",
               maxWidth: "460px",
               width: "calc(100vw - 40px)",
-              boxShadow: "0 0 60px rgba(233,30,140,0.18), 0 24px 64px rgba(0,0,0,0.6)",
+              boxShadow:
+                "0 0 60px rgba(233,30,140,0.18), 0 24px 64px rgba(0,0,0,0.6)",
               textAlign: "center",
               animation: "exitCardIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
             }}
@@ -97,13 +98,17 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
                 padding: "5px",
                 transition: "background 0.15s, color 0.15s",
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.8)";
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(255,255,255,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "rgba(255,255,255,0.8)";
               }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.4)";
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(255,255,255,0.06)";
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "rgba(255,255,255,0.4)";
               }}
             >
               <X size={15} />
@@ -115,7 +120,8 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
                 width: "56px",
                 height: "56px",
                 borderRadius: "14px",
-                background: "linear-gradient(135deg, rgba(233,30,140,0.2), rgba(249,115,22,0.2))",
+                background:
+                  "linear-gradient(135deg, rgba(233,30,140,0.2), rgba(249,115,22,0.2))",
                 border: "1px solid rgba(233,30,140,0.3)",
                 display: "flex",
                 alignItems: "center",
@@ -166,7 +172,9 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
                 margin: "0 0 28px",
               }}
             >
-              Get instant email alerts when critical shipping disruptions hit your supply chain — Suez Canal closures, port strikes, weather events, and more.
+              Get instant email alerts when critical shipping disruptions hit
+              your supply chain — Suez Canal closures, port strikes, weather
+              events, and more.
             </p>
 
             {/* CTA button */}
@@ -191,13 +199,15 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
                 boxShadow: "0 4px 20px rgba(233,30,140,0.35)",
                 transition: "opacity 0.15s, transform 0.15s",
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                (e.currentTarget as HTMLButtonElement).style.transform =
+                  "translateY(-1px)";
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={e => {
                 (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                (e.currentTarget as HTMLButtonElement).style.transform =
+                  "translateY(0)";
               }}
             >
               <Bell size={16} />
@@ -221,11 +231,13 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
                 width: "100%",
                 textAlign: "center",
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.5)";
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "rgba(255,255,255,0.5)";
               }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.25)";
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.color =
+                  "rgba(255,255,255,0.25)";
               }}
             >
               No thanks, I'll miss the alerts
@@ -248,7 +260,8 @@ export default function ExitIntentPopup({ alreadySubscribed = false }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                  background:
+                    "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",

@@ -12,10 +12,14 @@ import { marginCalculatorRouter } from "./routers/marginCalculator";
 import { marginAnalysisRouter } from "./routers/marginAnalysis";
 import { merchantProfileRouter } from "./routers/merchantProfile";
 import { crisisScenariosRouter } from "./routers/crisisScenarios";
-import { getAllSubscribers, getSubscriberByEmail, insertSubscriber } from "./db";
+import {
+  getAllSubscribers,
+  getSubscriberByEmail,
+  insertSubscriber,
+} from "./db";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
+  // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -46,7 +50,10 @@ export const appRouter = router({
       .input(
         z.object({
           name: z.string().min(1, "Name is required").max(255),
-          email: z.string().email("Please enter a valid email address").max(320),
+          email: z
+            .string()
+            .email("Please enter a valid email address")
+            .max(320),
         })
       )
       .mutation(async ({ input }) => {

@@ -20,8 +20,11 @@ function getResend(): Resend {
 
 // ─── HTML email template ──────────────────────────────────────────────────────
 
-function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string {
-  const criticalItems = items.filter((i) => i.severity === "critical");
+function buildAlertEmailHtml(
+  items: NewsItem[],
+  subscriberName: string
+): string {
+  const criticalItems = items.filter(i => i.severity === "critical");
   const now = new Date().toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -33,7 +36,7 @@ function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string 
 
   const itemsHtml = criticalItems
     .map(
-      (item) => `
+      item => `
     <tr>
       <td style="padding: 16px 0; border-bottom: 1px solid #1e2a3a;">
         <div style="display: flex; align-items: flex-start; gap: 12px;">
@@ -182,8 +185,11 @@ function buildAlertEmailHtml(items: NewsItem[], subscriberName: string): string 
 
 // ─── plain text fallback ──────────────────────────────────────────────────────
 
-function buildAlertEmailText(items: NewsItem[], subscriberName: string): string {
-  const criticalItems = items.filter((i) => i.severity === "critical");
+function buildAlertEmailText(
+  items: NewsItem[],
+  subscriberName: string
+): string {
+  const criticalItems = items.filter(i => i.severity === "critical");
   const lines = [
     `Hi ${subscriberName},`,
     ``,
@@ -220,7 +226,11 @@ export async function sendAlertEmail(
   criticalItems: NewsItem[]
 ): Promise<AlertEmailResult> {
   if (criticalItems.length === 0) {
-    return { email: subscriberEmail, success: false, error: "No critical items to send" };
+    return {
+      email: subscriberEmail,
+      success: false,
+      error: "No critical items to send",
+    };
   }
 
   try {
@@ -248,7 +258,11 @@ export async function sendAlertEmail(
     return { email: subscriberEmail, success: true };
   } catch (err: any) {
     console.error(`[alerts] Exception sending to ${subscriberEmail}:`, err);
-    return { email: subscriberEmail, success: false, error: err?.message ?? String(err) };
+    return {
+      email: subscriberEmail,
+      success: false,
+      error: err?.message ?? String(err),
+    };
   }
 }
 
@@ -262,7 +276,9 @@ export async function broadcastAlertEmails(
 ): Promise<AlertEmailResult[]> {
   if (subscribers.length === 0 || criticalItems.length === 0) return [];
 
-  console.log(`[alerts] Broadcasting to ${subscribers.length} subscriber(s) — ${criticalItems.length} critical item(s)`);
+  console.log(
+    `[alerts] Broadcasting to ${subscribers.length} subscriber(s) — ${criticalItems.length} critical item(s)`
+  );
 
   // Send in batches of 5 to respect Resend rate limits
   const results: AlertEmailResult[] = [];
@@ -271,17 +287,19 @@ export async function broadcastAlertEmails(
   for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
     const batch = subscribers.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.all(
-      batch.map((sub) => sendAlertEmail(sub.email, sub.name, criticalItems))
+      batch.map(sub => sendAlertEmail(sub.email, sub.name, criticalItems))
     );
     results.push(...batchResults);
 
     // Small delay between batches
     if (i + BATCH_SIZE < subscribers.length) {
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 300));
     }
   }
 
-  const successCount = results.filter((r) => r.success).length;
-  console.log(`[alerts] Broadcast complete: ${successCount}/${subscribers.length} sent successfully`);
+  const successCount = results.filter(r => r.success).length;
+  console.log(
+    `[alerts] Broadcast complete: ${successCount}/${subscribers.length} sent successfully`
+  );
   return results;
 }

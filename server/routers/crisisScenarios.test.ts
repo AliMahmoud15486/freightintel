@@ -136,17 +136,21 @@ describe("crisisScenarios.getMatrix", () => {
     const caller = createCaller();
 
     await caller.getMatrix();
-    const fetchCallsAfterFirst = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
+    const fetchCallsAfterFirst = (global.fetch as ReturnType<typeof vi.fn>).mock
+      .calls.length;
 
     await caller.getMatrix();
-    const fetchCallsAfterSecond = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
+    const fetchCallsAfterSecond = (global.fetch as ReturnType<typeof vi.fn>)
+      .mock.calls.length;
 
     // No additional fetch calls on second invocation (cache hit)
     expect(fetchCallsAfterSecond).toBe(fetchCallsAfterFirst);
   });
 
   it("falls back to default prices when fetch fails", async () => {
-    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Network error"));
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("Network error")
+    );
     const caller = createCaller();
     const result = await caller.getMatrix();
 

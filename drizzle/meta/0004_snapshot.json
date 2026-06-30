@@ -85,9 +85,7 @@
       "compositePrimaryKeys": {
         "freight_lanes_id": {
           "name": "freight_lanes_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -161,9 +159,7 @@
       "compositePrimaryKeys": {
         "lane_carriers_id": {
           "name": "lane_carriers_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -252,9 +248,7 @@
       "compositePrimaryKeys": {
         "risk_forecasts_id": {
           "name": "risk_forecasts_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -314,17 +308,13 @@
       "compositePrimaryKeys": {
         "sent_alerts_id": {
           "name": "sent_alerts_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "sent_alerts_alertKey_unique": {
           "name": "sent_alerts_alertKey_unique",
-          "columns": [
-            "alertKey"
-          ]
+          "columns": ["alertKey"]
         }
       },
       "checkConstraint": {}
@@ -367,17 +357,13 @@
       "compositePrimaryKeys": {
         "subscribers_id": {
           "name": "subscribers_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "subscribers_email_unique": {
           "name": "subscribers_email_unique",
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "checkConstraint": {}
@@ -459,17 +445,13 @@
       "compositePrimaryKeys": {
         "users_id": {
           "name": "users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "users_openId_unique": {
           "name": "users_openId_unique",
-          "columns": [
-            "openId"
-          ]
+          "columns": ["openId"]
         }
       },
       "checkConstraint": {}

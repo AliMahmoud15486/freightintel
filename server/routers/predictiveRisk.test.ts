@@ -11,7 +11,9 @@ function clampProbability(value: number, min = 0, max = 100): number {
 }
 
 function seasonalRiskBonus(month: number, zones: string[]): number {
-  const hasRedSea = zones.some(z => z.includes("red_sea") || z.includes("suez") || z.includes("hormuz"));
+  const hasRedSea = zones.some(
+    z => z.includes("red_sea") || z.includes("suez") || z.includes("hormuz")
+  );
   const hasPacific = zones.some(z => z.includes("pacific"));
   const hasAtlantic = zones.some(z => z.includes("atlantic"));
 
@@ -22,7 +24,10 @@ function seasonalRiskBonus(month: number, zones: string[]): number {
   return Math.min(bonus, 30);
 }
 
-function deriveTrend(current30d: number, previous30d: number | null): "rising" | "stable" | "falling" {
+function deriveTrend(
+  current30d: number,
+  previous30d: number | null
+): "rising" | "stable" | "falling" {
   if (previous30d === null) return "stable";
   const delta = current30d - previous30d;
   if (delta >= 5) return "rising";
@@ -139,7 +144,10 @@ describe("probLabel", () => {
 
 describe("normaliseKeyRisks", () => {
   it("filters out non-string values", () => {
-    expect(normaliseKeyRisks([1, "valid", null, "also valid"])).toEqual(["valid", "also valid"]);
+    expect(normaliseKeyRisks([1, "valid", null, "also valid"])).toEqual([
+      "valid",
+      "also valid",
+    ]);
   });
   it("filters out empty strings", () => {
     expect(normaliseKeyRisks(["", "  ", "real risk"])).toEqual(["real risk"]);

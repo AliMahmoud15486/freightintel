@@ -15,6 +15,7 @@
 **Layout Paradigm:** Fixed-width left sidebar (nav), full-width top ticker bar, then a 3-column main grid: map takes 60%, right sidebar 20%, bottom panels split 50/50.
 
 **Signature Elements:**
+
 - Scanline texture overlay on map panels
 - Blinking dot indicators for live data
 - Amber glow on critical alert badges
@@ -43,6 +44,7 @@
 **Layout Paradigm:** Horizontal top bar → left nav rail (icon + label) → main content in asymmetric 2:1 split (map+charts left, action panel right).
 
 **Signature Elements:**
+
 - Thin 1px accent borders on panel headers
 - Horizontal rule dividers with color-coded left border accents
 - Compact tag chips for news categorization
@@ -71,6 +73,7 @@
 **Layout Paradigm:** Fixed left nav (192px) + top header bar + scrollable main area. Main area: full-width pulse ticker → map (full width, tall) → bottom row (charts 50% | news feed 50%) → right sidebar floats as a fixed panel.
 
 **Signature Elements:**
+
 - Glowing orange left border on active nav items
 - Pulsing red/orange radial gradients on map disruption hotspots
 - Glass-morphism card surfaces with subtle border highlights

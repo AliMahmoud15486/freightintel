@@ -16,14 +16,17 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+  }>({});
 
   const subscribe = trpc.subscribers.subscribe.useMutation({
     onSuccess: () => {
       setSubmitted(true);
       clarityEvent("subscribe_success");
     },
-    onError: (err) => {
+    onError: err => {
       if (err.message.includes("already subscribed")) {
         setFieldErrors({ email: "This email is already subscribed." });
       } else if (err.message.toLowerCase().includes("email")) {
@@ -79,7 +82,9 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
         justifyContent: "center",
         padding: "16px",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+      onClick={e => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
     >
       {/* Modal card */}
       <div
@@ -89,7 +94,8 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
           borderRadius: "12px",
           width: "100%",
           maxWidth: "420px",
-          boxShadow: "0 0 40px rgba(233,30,140,0.12), 0 20px 60px rgba(0,0,0,0.6)",
+          boxShadow:
+            "0 0 40px rgba(233,30,140,0.12), 0 20px 60px rgba(0,0,0,0.6)",
           overflow: "hidden",
           position: "relative",
         }}
@@ -165,7 +171,12 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                   marginBottom: "20px",
                 }}
               >
-                Thanks, <strong style={{ color: "rgba(255,255,255,0.8)" }}>{name}</strong>. We'll keep you updated on critical supply chain disruptions and margin risks.
+                Thanks,{" "}
+                <strong style={{ color: "rgba(255,255,255,0.8)" }}>
+                  {name}
+                </strong>
+                . We'll keep you updated on critical supply chain disruptions
+                and margin risks.
               </div>
               <button
                 onClick={handleClose}
@@ -190,7 +201,14 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
             /* ── Form state ── */
             <>
               {/* Header */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "6px",
+                }}
+              >
                 <div
                   style={{
                     width: "36px",
@@ -240,7 +258,8 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                   paddingTop: "4px",
                 }}
               >
-                Enter your name and email to receive alerts when major supply chain disruptions affect your margin.
+                Enter your name and email to receive alerts when major supply
+                chain disruptions affect your margin.
               </div>
 
               <form onSubmit={handleSubmit} noValidate>
@@ -274,9 +293,10 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                     <input
                       type="text"
                       value={name}
-                      onChange={(e) => {
+                      onChange={e => {
                         setName(e.target.value);
-                        if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
+                        if (fieldErrors.name)
+                          setFieldErrors(p => ({ ...p, name: undefined }));
                       }}
                       placeholder="Jane Smith"
                       autoComplete="name"
@@ -293,12 +313,25 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                         boxSizing: "border-box",
                         transition: "border-color 0.15s",
                       }}
-                      onFocus={(e) => { e.target.style.borderColor = "rgba(233,30,140,0.5)"; }}
-                      onBlur={(e) => { e.target.style.borderColor = fieldErrors.name ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"; }}
+                      onFocus={e => {
+                        e.target.style.borderColor = "rgba(233,30,140,0.5)";
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = fieldErrors.name
+                          ? "rgba(239,68,68,0.5)"
+                          : "rgba(255,255,255,0.1)";
+                      }}
                     />
                   </div>
                   {fieldErrors.name && (
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "#ef4444", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: "0.68rem",
+                        color: "#ef4444",
+                        marginTop: "4px",
+                      }}
+                    >
                       {fieldErrors.name}
                     </div>
                   )}
@@ -334,9 +367,10 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => {
+                      onChange={e => {
                         setEmail(e.target.value);
-                        if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }));
+                        if (fieldErrors.email)
+                          setFieldErrors(p => ({ ...p, email: undefined }));
                       }}
                       placeholder="jane@company.com"
                       autoComplete="email"
@@ -353,12 +387,25 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                         boxSizing: "border-box",
                         transition: "border-color 0.15s",
                       }}
-                      onFocus={(e) => { e.target.style.borderColor = "rgba(233,30,140,0.5)"; }}
-                      onBlur={(e) => { e.target.style.borderColor = fieldErrors.email ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"; }}
+                      onFocus={e => {
+                        e.target.style.borderColor = "rgba(233,30,140,0.5)";
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = fieldErrors.email
+                          ? "rgba(239,68,68,0.5)"
+                          : "rgba(255,255,255,0.1)";
+                      }}
                     />
                   </div>
                   {fieldErrors.email && (
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.68rem", color: "#ef4444", marginTop: "4px" }}>
+                    <div
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: "0.68rem",
+                        color: "#ef4444",
+                        marginTop: "4px",
+                      }}
+                    >
                       {fieldErrors.email}
                     </div>
                   )}
@@ -430,7 +477,8 @@ export default function SubscribeModal({ isOpen, onClose }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      background: "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
+                      background:
+                        "linear-gradient(90deg, #E91E8C 0%, #f97316 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",

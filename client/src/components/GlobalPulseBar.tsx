@@ -24,24 +24,88 @@ interface DisplayTicker {
 // ─── static fallback (shown while loading or on API error) ───────────────────
 
 const FALLBACK: DisplayTicker[] = [
-  { label: "BRENT CRUDE",      value: "$84.50",  changePct: "+3.1%",  trend: "up",      isLive: false },
-  { label: "WTI CRUDE",        value: "$80.25",  changePct: "+2.3%",  trend: "up",      isLive: false },
-  { label: "NATURAL GAS",      value: "$3.12",   changePct: "+10.3%", trend: "up",      isLive: false },
-  { label: "GOLD",             value: "$2,950",  changePct: "-0.3%",  trend: "down",    isLive: false },
-  { label: "DRY BULK FREIGHT", value: "$12.22",  changePct: "+3.8%",  trend: "up",      isLive: false },
-  { label: "ZIM SHIPPING",     value: "$28.83",  changePct: "+0.6%",  trend: "up",      isLive: false },
-  { label: "MAERSK",           value: "17,025",  changePct: "+11.0%", trend: "up",      isLive: false },
-  { label: "CH ROBINSON",      value: "$187.24", changePct: "+5.7%",  trend: "up",      isLive: false },
-  { label: "ENERGY ETF",       value: "$57.04",  changePct: "+3.4%",  trend: "up",      isLive: false },
-  { label: "US PORT CONGESTION", value: "", changePct: "", trend: "neutral", status: "Amber", statusColor: "#f59e0b", isLive: false },
+  {
+    label: "BRENT CRUDE",
+    value: "$84.50",
+    changePct: "+3.1%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "WTI CRUDE",
+    value: "$80.25",
+    changePct: "+2.3%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "NATURAL GAS",
+    value: "$3.12",
+    changePct: "+10.3%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "GOLD",
+    value: "$2,950",
+    changePct: "-0.3%",
+    trend: "down",
+    isLive: false,
+  },
+  {
+    label: "DRY BULK FREIGHT",
+    value: "$12.22",
+    changePct: "+3.8%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "ZIM SHIPPING",
+    value: "$28.83",
+    changePct: "+0.6%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "MAERSK",
+    value: "17,025",
+    changePct: "+11.0%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "CH ROBINSON",
+    value: "$187.24",
+    changePct: "+5.7%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "ENERGY ETF",
+    value: "$57.04",
+    changePct: "+3.4%",
+    trend: "up",
+    isLive: false,
+  },
+  {
+    label: "US PORT CONGESTION",
+    value: "",
+    changePct: "",
+    trend: "neutral",
+    status: "Amber",
+    statusColor: "#f59e0b",
+    isLive: false,
+  },
 ];
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function fmtPrice(price: number, unit: string): string {
   const prefix = unit.startsWith("$") ? "$" : unit.startsWith("€") ? "€" : "";
-  if (price >= 10000) return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  if (price >= 100)   return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (price >= 10000)
+    return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (price >= 100)
+    return prefix + price.toLocaleString("en-US", { maximumFractionDigits: 2 });
   return prefix + price.toFixed(2);
 }
 
@@ -57,7 +121,11 @@ function portColor(level: 1 | 2 | 3): string {
 
 function TickerCell({ item }: { item: DisplayTicker }) {
   const trendColor =
-    item.trend === "up" ? "#10b981" : item.trend === "down" ? "#ef4444" : "#6b7280";
+    item.trend === "up"
+      ? "#10b981"
+      : item.trend === "down"
+        ? "#ef4444"
+        : "#6b7280";
 
   return (
     <div className="flex items-center gap-2 px-5 border-r border-white/10 shrink-0">
@@ -147,29 +215,34 @@ export default function GlobalPulseBar() {
   const [dismissed, setDismissed] = useState(false);
   const { isMobile } = useBreakpoint();
 
-  const { data, isLoading, refetch, dataUpdatedAt } = trpc.marketData.pulseBar.useQuery(undefined, {
-    refetchInterval: 60_000, // refresh every 60 seconds
-    staleTime: 55_000,
-  });
+  const { data, isLoading, refetch, dataUpdatedAt } =
+    trpc.marketData.pulseBar.useQuery(undefined, {
+      refetchInterval: 60_000, // refresh every 60 seconds
+      staleTime: 55_000,
+    });
 
   // Build display items from live tickers
   const liveItems: DisplayTicker[] = data
     ? [
-        ...data.tickers.map((t) => ({
-          label:     t.label,
-          value:     fmtPrice(t.price, t.unit),
+        ...data.tickers.map(t => ({
+          label: t.label,
+          value: fmtPrice(t.price, t.unit),
           changePct: fmtPct(t.changePct),
-          trend:     (t.changePct > 0 ? "up" : t.changePct < 0 ? "down" : "neutral") as "up" | "down" | "neutral",
-          isLive:    true,
+          trend: (t.changePct > 0
+            ? "up"
+            : t.changePct < 0
+              ? "down"
+              : "neutral") as "up" | "down" | "neutral",
+          isLive: true,
         })),
         {
-          label:       data.usPortCongestion.label,
-          value:       "",
-          changePct:   "",
-          trend:       "neutral" as const,
-          status:      data.usPortCongestion.status,
+          label: data.usPortCongestion.label,
+          value: "",
+          changePct: "",
+          trend: "neutral" as const,
+          status: data.usPortCongestion.status,
           statusColor: portColor(data.usPortCongestion.level),
-          isLive:      true,
+          isLive: true,
         },
       ]
     : FALLBACK;
@@ -222,8 +295,15 @@ export default function GlobalPulseBar() {
 
       {/* Live indicator — clickable to force refresh */}
       <button
-        onClick={() => { refetch(); clarityEvent("pulse_bar_refreshed"); }}
-        title={data ? `Live — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}. Click to refresh.` : "Click to refresh prices"}
+        onClick={() => {
+          refetch();
+          clarityEvent("pulse_bar_refreshed");
+        }}
+        title={
+          data
+            ? `Live — updated ${new Date(dataUpdatedAt).toLocaleTimeString()}. Click to refresh.`
+            : "Click to refresh prices"
+        }
         style={{
           background: "none",
           border: "none",
@@ -235,7 +315,11 @@ export default function GlobalPulseBar() {
         }}
       >
         {isLoading ? (
-          <RefreshCw size={12} className="animate-spin" style={{ color: "#E91E8C" }} />
+          <RefreshCw
+            size={12}
+            className="animate-spin"
+            style={{ color: "#E91E8C" }}
+          />
         ) : (
           <div
             className="animate-blink"

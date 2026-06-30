@@ -16,11 +16,11 @@ import { checkAndSendAlerts } from "../_core/alertTrigger";
 // ─── types ────────────────────────────────────────────────────────────────────
 
 export interface DisruptionLocation {
-  name: string;        // e.g. "Strait of Hormuz"
+  name: string; // e.g. "Strait of Hormuz"
   lat: number;
   lng: number;
   severity: "critical" | "warning" | "info";
-  delayDays?: number;  // estimated delay in days
+  delayDays?: number; // estimated delay in days
   costImpact?: string; // e.g. "+10%"
   description: string; // short description for tooltip
 }
@@ -61,16 +61,25 @@ const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 // ─── RSS fetcher ──────────────────────────────────────────────────────────────
 
 const RSS_FEEDS = [
-  { url: "https://www.supplychaindive.com/feeds/news/", name: "Supply Chain Dive" },
+  {
+    url: "https://www.supplychaindive.com/feeds/news/",
+    name: "Supply Chain Dive",
+  },
   { url: "https://www.ft.com/commodities?format=rss", name: "FT Commodities" },
   { url: "https://splash247.com/feed/", name: "Splash247" },
   { url: "https://www.freightwaves.com/news/feed", name: "FreightWaves" },
-  { url: "https://www.hellenicshippingnews.com/feed/", name: "Hellenic Shipping News" },
+  {
+    url: "https://www.hellenicshippingnews.com/feed/",
+    name: "Hellenic Shipping News",
+  },
   { url: "https://theloadstar.com/feed/", name: "The Loadstar" },
   { url: "https://www.joc.com/rss.xml", name: "Journal of Commerce" },
 ];
 
-async function fetchRssFeed(url: string, sourceName: string): Promise<RawFeedItem[]> {
+async function fetchRssFeed(
+  url: string,
+  sourceName: string
+): Promise<RawFeedItem[]> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
@@ -78,8 +87,10 @@ async function fetchRssFeed(url: string, sourceName: string): Promise<RawFeedIte
     const resp = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
       },
     });
@@ -95,12 +106,19 @@ async function fetchRssFeed(url: string, sourceName: string): Promise<RawFeedIte
     while ((match = itemRegex.exec(xml)) !== null) {
       const block = match[1];
       const title = extractXmlText(block, "title");
-      const link = extractXmlText(block, "link") || extractXmlAttr(block, "link", "href");
+      const link =
+        extractXmlText(block, "link") || extractXmlAttr(block, "link", "href");
       const pubDate = extractXmlText(block, "pubDate");
       const description = stripHtml(extractXmlText(block, "description") || "");
 
       if (title && link) {
-        items.push({ title, description: description.slice(0, 300), link, pubDate, source: sourceName });
+        items.push({
+          title,
+          description: description.slice(0, 300),
+          link,
+          pubDate,
+          source: sourceName,
+        });
       }
     }
 
@@ -113,9 +131,15 @@ async function fetchRssFeed(url: string, sourceName: string): Promise<RawFeedIte
 }
 
 function extractXmlText(xml: string, tag: string): string {
-  const cdataMatch = new RegExp(`<${tag}>[\\s]*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>[\\s]*<\\/${tag}>`, "i").exec(xml);
+  const cdataMatch = new RegExp(
+    `<${tag}>[\\s]*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>[\\s]*<\\/${tag}>`,
+    "i"
+  ).exec(xml);
   if (cdataMatch) return cdataMatch[1].trim();
-  const textMatch = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i").exec(xml);
+  const textMatch = new RegExp(
+    `<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`,
+    "i"
+  ).exec(xml);
   if (textMatch) return textMatch[1].trim();
   return "";
 }
@@ -126,7 +150,10 @@ function extractXmlAttr(xml: string, tag: string, attr: string): string {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // ─── LLM classifier ───────────────────────────────────────────────────────────
@@ -173,14 +200,19 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
   try {
     const response = await invokeLLM({
       messages: [
-        { role: "system", content: "You are a supply chain analyst. Always respond with valid JSON only." },
+        {
+          role: "system",
+          content:
+            "You are a supply chain analyst. Always respond with valid JSON only.",
+        },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" } as any,
     });
 
     const rawContent = response?.choices?.[0]?.message?.content ?? "{}";
-    const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+    const content =
+      typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
     let parsed: any;
 
     try {
@@ -193,24 +225,33 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
     const classifications: any[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray(parsed.items)
-      ? parsed.items
-      : Array.isArray(parsed.classifications)
-      ? parsed.classifications
-      : [];
+        ? parsed.items
+        : Array.isArray(parsed.classifications)
+          ? parsed.classifications
+          : [];
 
     return batch.map((raw, i) => {
       const cls = classifications.find((c: any) => c.index === i) ?? {};
       const rawLocs: any[] = Array.isArray(cls.locations) ? cls.locations : [];
       const locations: DisruptionLocation[] = rawLocs
-        .filter((l: any) => l.name && typeof l.lat === "number" && typeof l.lng === "number")
+        .filter(
+          (l: any) =>
+            l.name && typeof l.lat === "number" && typeof l.lng === "number"
+        )
         .map((l: any) => ({
           name: l.name,
           lat: l.lat,
           lng: l.lng,
-          severity: (l.severity as DisruptionLocation["severity"]) || cls.severity || "info",
+          severity:
+            (l.severity as DisruptionLocation["severity"]) ||
+            cls.severity ||
+            "info",
           delayDays: typeof l.delayDays === "number" ? l.delayDays : undefined,
           costImpact: l.costImpact || cls.costImpact || undefined,
-          description: l.description || cls.summary?.slice(0, 60) || raw.title.slice(0, 60),
+          description:
+            l.description ||
+            cls.summary?.slice(0, 60) ||
+            raw.title.slice(0, 60),
         }));
 
       return {
@@ -222,7 +263,9 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
         publishedAt: raw.pubDate || new Date().toUTCString(),
         severity: (cls.severity as NewsItem["severity"]) || "info",
         tags: Array.isArray(cls.tags) ? cls.tags : [],
-        affectedCategories: Array.isArray(cls.affectedCategories) ? cls.affectedCategories : [],
+        affectedCategories: Array.isArray(cls.affectedCategories)
+          ? cls.affectedCategories
+          : [],
         etaImpact: cls.etaImpact || undefined,
         costImpact: cls.costImpact || undefined,
         locations: locations.length > 0 ? locations : undefined,
@@ -249,8 +292,14 @@ Respond with ONLY a valid JSON array, no markdown, no explanation.`;
 
 function heuristicSeverity(title: string): NewsItem["severity"] {
   const t = title.toLowerCase();
-  if (/blockage|closure|strike|war|conflict|surge|spike|disruption|halt|ban/.test(t)) return "critical";
-  if (/delay|slow|rise|increase|shortage|congestion|tension|warning/.test(t)) return "warning";
+  if (
+    /blockage|closure|strike|war|conflict|surge|spike|disruption|halt|ban/.test(
+      t
+    )
+  )
+    return "critical";
+  if (/delay|slow|rise|increase|shortage|congestion|tension|warning/.test(t))
+    return "warning";
   return "info";
 }
 
@@ -268,7 +317,9 @@ function heuristicTags(title: string): string[] {
 
 // ─── aggregate disruption locations ──────────────────────────────────────────
 
-export function aggregateDisruptionLocations(items: NewsItem[]): DisruptionLocation[] {
+export function aggregateDisruptionLocations(
+  items: NewsItem[]
+): DisruptionLocation[] {
   const locationMap = new Map<string, DisruptionLocation>();
 
   for (const item of items) {
@@ -306,14 +357,16 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
   console.log("[news] Fetching RSS feeds...");
 
   const feedResults = await Promise.all(
-    RSS_FEEDS.map((f) => fetchRssFeed(f.url, f.name))
+    RSS_FEEDS.map(f => fetchRssFeed(f.url, f.name))
   );
 
   const allRaw: RawFeedItem[] = feedResults
     .flat()
     .filter((item, idx, arr) => {
       const key = item.title.slice(0, 60).toLowerCase();
-      return arr.findIndex((x) => x.title.slice(0, 60).toLowerCase() === key) === idx;
+      return (
+        arr.findIndex(x => x.title.slice(0, 60).toLowerCase() === key) === idx
+      );
     })
     .sort((a, b) => {
       const da = a.pubDate ? new Date(a.pubDate).getTime() : 0;
@@ -338,13 +391,17 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
   console.log(`[news] Cached ${sorted.length} classified news items`);
 
   // Fire alert emails asynchronously — do not block the news response
-  checkAndSendAlerts(sorted).then((result) => {
-    if (result.triggered) {
-      console.log(`[news] Alert triggered: ${result.criticalCount} critical items → ${result.successCount}/${result.subscriberCount} emails sent`);
-    }
-  }).catch((err) => {
-    console.error("[news] Alert trigger failed:", err);
-  });
+  checkAndSendAlerts(sorted)
+    .then(result => {
+      if (result.triggered) {
+        console.log(
+          `[news] Alert triggered: ${result.criticalCount} critical items → ${result.successCount}/${result.subscriberCount} emails sent`
+        );
+      }
+    })
+    .catch(err => {
+      console.error("[news] Alert trigger failed:", err);
+    });
 
   return sorted;
 }
@@ -353,29 +410,161 @@ async function fetchAndClassifyNews(): Promise<NewsItem[]> {
 
 const CARRIER_LIST = [
   // Marine
-  { id: "maersk",       name: "Maersk",                    country: "Denmark",     type: "marine", routes: ["Asia–Europe", "Trans-Pacific", "Trans-Atlantic"] },
-  { id: "msc",          name: "MSC",                       country: "Switzerland", type: "marine", routes: ["Asia–Europe (Suez)", "Trans-Atlantic", "South America"] },
-  { id: "cmacgm",       name: "CMA CGM",                   country: "France",      type: "marine", routes: ["Asia–Europe", "Trans-Pacific", "Indian Ocean"] },
-  { id: "cosco",        name: "COSCO Shipping",            country: "China",       type: "marine", routes: ["Trans-Pacific", "Intra-Asia", "Asia–Europe"] },
-  { id: "evergreen",    name: "Evergreen",                 country: "Taiwan",      type: "marine", routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
-  { id: "hapag",        name: "Hapag-Lloyd",               country: "Germany",     type: "marine", routes: ["Asia–Europe", "Trans-Atlantic", "US Gulf"] },
-  { id: "one",          name: "Ocean Network Express",     country: "Japan",       type: "marine", routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
-  { id: "yangming",     name: "Yang Ming",                 country: "Taiwan",      type: "marine", routes: ["Trans-Pacific", "Intra-Asia"] },
-  { id: "zim",          name: "ZIM",                       country: "Israel",      type: "marine", routes: ["Asia–Europe (Suez)", "Trans-Pacific", "Mediterranean"] },
-  { id: "pil",          name: "Pacific Int'l Lines",       country: "Singapore",   type: "marine", routes: ["Intra-Asia", "Indian Ocean", "Africa"] },
-  { id: "hmmm",         name: "HMM (Hyundai)",             country: "South Korea", type: "marine", routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
-  { id: "wan-hai",      name: "Wan Hai Lines",             country: "Taiwan",      type: "marine", routes: ["Intra-Asia", "Trans-Pacific"] },
+  {
+    id: "maersk",
+    name: "Maersk",
+    country: "Denmark",
+    type: "marine",
+    routes: ["Asia–Europe", "Trans-Pacific", "Trans-Atlantic"],
+  },
+  {
+    id: "msc",
+    name: "MSC",
+    country: "Switzerland",
+    type: "marine",
+    routes: ["Asia–Europe (Suez)", "Trans-Atlantic", "South America"],
+  },
+  {
+    id: "cmacgm",
+    name: "CMA CGM",
+    country: "France",
+    type: "marine",
+    routes: ["Asia–Europe", "Trans-Pacific", "Indian Ocean"],
+  },
+  {
+    id: "cosco",
+    name: "COSCO Shipping",
+    country: "China",
+    type: "marine",
+    routes: ["Trans-Pacific", "Intra-Asia", "Asia–Europe"],
+  },
+  {
+    id: "evergreen",
+    name: "Evergreen",
+    country: "Taiwan",
+    type: "marine",
+    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
+  },
+  {
+    id: "hapag",
+    name: "Hapag-Lloyd",
+    country: "Germany",
+    type: "marine",
+    routes: ["Asia–Europe", "Trans-Atlantic", "US Gulf"],
+  },
+  {
+    id: "one",
+    name: "Ocean Network Express",
+    country: "Japan",
+    type: "marine",
+    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
+  },
+  {
+    id: "yangming",
+    name: "Yang Ming",
+    country: "Taiwan",
+    type: "marine",
+    routes: ["Trans-Pacific", "Intra-Asia"],
+  },
+  {
+    id: "zim",
+    name: "ZIM",
+    country: "Israel",
+    type: "marine",
+    routes: ["Asia–Europe (Suez)", "Trans-Pacific", "Mediterranean"],
+  },
+  {
+    id: "pil",
+    name: "Pacific Int'l Lines",
+    country: "Singapore",
+    type: "marine",
+    routes: ["Intra-Asia", "Indian Ocean", "Africa"],
+  },
+  {
+    id: "hmmm",
+    name: "HMM (Hyundai)",
+    country: "South Korea",
+    type: "marine",
+    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
+  },
+  {
+    id: "wan-hai",
+    name: "Wan Hai Lines",
+    country: "Taiwan",
+    type: "marine",
+    routes: ["Intra-Asia", "Trans-Pacific"],
+  },
   // Air cargo
-  { id: "emirates-cargo",     name: "Emirates SkyCargo",       country: "UAE",          type: "air",    routes: ["Asia–Europe", "Middle East Hub", "Trans-Pacific"] },
-  { id: "fedex",              name: "FedEx Express",            country: "USA",          type: "air",    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"] },
-  { id: "dhl",                name: "DHL Aviation",             country: "Germany",      type: "air",    routes: ["Asia–Europe", "Middle East", "Africa"] },
-  { id: "cargolux",           name: "Cargolux",                 country: "Luxembourg",   type: "air",    routes: ["Trans-Atlantic", "Asia–Europe", "Americas"] },
-  { id: "cathay-cargo",       name: "Cathay Cargo",             country: "Hong Kong",    type: "air",    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"] },
-  { id: "korean-air-cargo",   name: "Korean Air Cargo",         country: "South Korea",  type: "air",    routes: ["Trans-Pacific", "Intra-Asia", "Europe"] },
-  { id: "qatar-cargo",        name: "Qatar Airways Cargo",      country: "Qatar",        type: "air",    routes: ["Asia–Europe", "Middle East Hub", "Africa"] },
-  { id: "ups-airlines",       name: "UPS Airlines",             country: "USA",          type: "air",    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"] },
-  { id: "lufthansa-cargo",    name: "Lufthansa Cargo",          country: "Germany",      type: "air",    routes: ["Trans-Atlantic", "Asia–Europe", "Middle East"] },
-  { id: "air-france-cargo",   name: "Air France-KLM Cargo",     country: "France",       type: "air",    routes: ["Trans-Atlantic", "Asia–Europe", "Africa"] },
+  {
+    id: "emirates-cargo",
+    name: "Emirates SkyCargo",
+    country: "UAE",
+    type: "air",
+    routes: ["Asia–Europe", "Middle East Hub", "Trans-Pacific"],
+  },
+  {
+    id: "fedex",
+    name: "FedEx Express",
+    country: "USA",
+    type: "air",
+    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"],
+  },
+  {
+    id: "dhl",
+    name: "DHL Aviation",
+    country: "Germany",
+    type: "air",
+    routes: ["Asia–Europe", "Middle East", "Africa"],
+  },
+  {
+    id: "cargolux",
+    name: "Cargolux",
+    country: "Luxembourg",
+    type: "air",
+    routes: ["Trans-Atlantic", "Asia–Europe", "Americas"],
+  },
+  {
+    id: "cathay-cargo",
+    name: "Cathay Cargo",
+    country: "Hong Kong",
+    type: "air",
+    routes: ["Trans-Pacific", "Asia–Europe", "Intra-Asia"],
+  },
+  {
+    id: "korean-air-cargo",
+    name: "Korean Air Cargo",
+    country: "South Korea",
+    type: "air",
+    routes: ["Trans-Pacific", "Intra-Asia", "Europe"],
+  },
+  {
+    id: "qatar-cargo",
+    name: "Qatar Airways Cargo",
+    country: "Qatar",
+    type: "air",
+    routes: ["Asia–Europe", "Middle East Hub", "Africa"],
+  },
+  {
+    id: "ups-airlines",
+    name: "UPS Airlines",
+    country: "USA",
+    type: "air",
+    routes: ["Trans-Pacific", "Trans-Atlantic", "Intra-Americas"],
+  },
+  {
+    id: "lufthansa-cargo",
+    name: "Lufthansa Cargo",
+    country: "Germany",
+    type: "air",
+    routes: ["Trans-Atlantic", "Asia–Europe", "Middle East"],
+  },
+  {
+    id: "air-france-cargo",
+    name: "Air France-KLM Cargo",
+    country: "France",
+    type: "air",
+    routes: ["Trans-Atlantic", "Asia–Europe", "Africa"],
+  },
 ];
 
 export interface CarrierStatus {
@@ -392,17 +581,25 @@ export interface CarrierStatus {
 
 // Separate cache for shipping lines — 5 hour TTL as requested
 const SHIPPING_LINES_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour (refresh more frequently for accuracy)
-let shippingLinesCache: { carriers: CarrierStatus[]; fetchedAt: number } | null = null;
+let shippingLinesCache: {
+  carriers: CarrierStatus[];
+  fetchedAt: number;
+} | null = null;
 
-async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierStatus[]> {
+async function classifyCarrierImpacts(
+  newsHeadlines: string[]
+): Promise<CarrierStatus[]> {
   // Use cached result if fresh
-  if (shippingLinesCache && Date.now() - shippingLinesCache.fetchedAt < SHIPPING_LINES_CACHE_TTL_MS) {
+  if (
+    shippingLinesCache &&
+    Date.now() - shippingLinesCache.fetchedAt < SHIPPING_LINES_CACHE_TTL_MS
+  ) {
     return shippingLinesCache.carriers;
   }
 
   if (newsHeadlines.length === 0) {
     // No news — all carriers operating normally
-    return CARRIER_LIST.map((c) => ({
+    return CARRIER_LIST.map(c => ({
       ...c,
       type: c.type as "marine" | "air",
       affected: false,
@@ -412,13 +609,16 @@ async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierS
     }));
   }
 
-  const headlineText = newsHeadlines.slice(0, 10).map((h, i) => `${i + 1}. ${h}`).join("\n");
-  const carrierNames = CARRIER_LIST.map((c) => c.name).join(", ");
+  const headlineText = newsHeadlines
+    .slice(0, 10)
+    .map((h, i) => `${i + 1}. ${h}`)
+    .join("\n");
+  const carrierNames = CARRIER_LIST.map(c => c.name).join(", ");
 
   try {
     const response = await invokeLLM({
       messages: [
-          {
+        {
           role: "system" as const,
           content: [
             "You are a supply chain analyst. Based on current news headlines, determine which shipping carriers are affected by disruptions. Return ONLY valid JSON.",
@@ -457,13 +657,25 @@ async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierS
                 items: {
                   type: "object",
                   properties: {
-                    id:             { type: "string" },
-                    affected:       { type: "boolean" },
-                    affectedRoutes: { type: "array", items: { type: "string" } },
-                    reason:         { type: "string" },
-                    severity:       { type: "string", enum: ["critical", "warning", "none"] },
+                    id: { type: "string" },
+                    affected: { type: "boolean" },
+                    affectedRoutes: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                    reason: { type: "string" },
+                    severity: {
+                      type: "string",
+                      enum: ["critical", "warning", "none"],
+                    },
                   },
-                  required: ["id", "affected", "affectedRoutes", "reason", "severity"],
+                  required: [
+                    "id",
+                    "affected",
+                    "affectedRoutes",
+                    "reason",
+                    "severity",
+                  ],
                   additionalProperties: false,
                 },
               },
@@ -477,16 +689,22 @@ async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierS
 
     const rawContent = response.choices[0].message.content as string;
     const raw = JSON.parse(rawContent) as {
-      carriers: { id: string; affected: boolean; affectedRoutes: string[]; reason: string; severity: string }[];
+      carriers: {
+        id: string;
+        affected: boolean;
+        affectedRoutes: string[];
+        reason: string;
+        severity: string;
+      }[];
     };
     // Merge LLM results with static carrier data
     // The LLM may return display names (e.g. "Maersk") instead of IDs (e.g. "maersk")
     // Build a lookup map that matches on both id and name (case-insensitive)
-    const llmByIdOrName = new Map<string, typeof raw.carriers[0]>();
+    const llmByIdOrName = new Map<string, (typeof raw.carriers)[0]>();
     for (const c of raw.carriers) {
       llmByIdOrName.set(c.id.toLowerCase(), c);
     }
-    const result: CarrierStatus[] = CARRIER_LIST.map((carrier) => {
+    const result: CarrierStatus[] = CARRIER_LIST.map(carrier => {
       // Try by exact id first, then by lowercase id, then by lowercase name
       const llm =
         llmByIdOrName.get(carrier.id) ??
@@ -495,19 +713,22 @@ async function classifyCarrierImpacts(newsHeadlines: string[]): Promise<CarrierS
       return {
         ...carrier,
         type: carrier.type as "marine" | "air",
-        affected:       llm?.affected       ?? false,
+        affected: llm?.affected ?? false,
         affectedRoutes: llm?.affectedRoutes ?? [],
-        reason:         llm?.reason         ?? "",
-        severity:       (llm?.severity as CarrierStatus["severity"]) ?? "none",
+        reason: llm?.reason ?? "",
+        severity: (llm?.severity as CarrierStatus["severity"]) ?? "none",
       };
     });
 
     shippingLinesCache = { carriers: result, fetchedAt: Date.now() };
     return result;
   } catch (err) {
-    console.warn("[shippingLines] LLM classification failed, falling back to zone matching:", err);
+    console.warn(
+      "[shippingLines] LLM classification failed, falling back to zone matching:",
+      err
+    );
     // Fallback: use geographic zone matching from disruption locations
-    return CARRIER_LIST.map((c) => ({
+    return CARRIER_LIST.map(c => ({
       ...c,
       type: c.type as "marine" | "air",
       affected: false,
@@ -526,15 +747,17 @@ export const newsRouter = router({
       const items = await fetchAndClassifyNews();
       return {
         items,
-        lastUpdated: cache?.fetchedAt ? new Date(cache.fetchedAt).toISOString() : new Date().toISOString(),
-        sources: RSS_FEEDS.map((f) => f.name),
+        lastUpdated: cache?.fetchedAt
+          ? new Date(cache.fetchedAt).toISOString()
+          : new Date().toISOString(),
+        sources: RSS_FEEDS.map(f => f.name),
       };
     } catch (err) {
       console.error("[news] Feed query failed:", err);
       return {
         items: [] as NewsItem[],
         lastUpdated: new Date().toISOString(),
-        sources: RSS_FEEDS.map((f) => f.name),
+        sources: RSS_FEEDS.map(f => f.name),
       };
     }
   }),
@@ -545,9 +768,11 @@ export const newsRouter = router({
       const locations = aggregateDisruptionLocations(items);
       return {
         locations,
-        lastUpdated: cache?.fetchedAt ? new Date(cache.fetchedAt).toISOString() : new Date().toISOString(),
+        lastUpdated: cache?.fetchedAt
+          ? new Date(cache.fetchedAt).toISOString()
+          : new Date().toISOString(),
         totalItems: items.length,
-        criticalCount: items.filter((i) => i.severity === "critical").length,
+        criticalCount: items.filter(i => i.severity === "critical").length,
       };
     } catch (err) {
       console.error("[news] Disruptions query failed:", err);
@@ -563,20 +788,20 @@ export const newsRouter = router({
   shippingLines: publicProcedure.query(async () => {
     try {
       const items = await fetchAndClassifyNews();
-      const headlines = items.map((i) => i.title);
+      const headlines = items.map(i => i.title);
       const carriers = await classifyCarrierImpacts(headlines);
       return {
         carriers,
         lastUpdated: shippingLinesCache?.fetchedAt
           ? new Date(shippingLinesCache.fetchedAt).toISOString()
           : new Date().toISOString(),
-        affectedCount: carriers.filter((c) => c.affected).length,
-        criticalCount: carriers.filter((c) => c.severity === "critical").length,
+        affectedCount: carriers.filter(c => c.affected).length,
+        criticalCount: carriers.filter(c => c.severity === "critical").length,
       };
     } catch (err) {
       console.error("[shippingLines] Query failed:", err);
       return {
-        carriers: CARRIER_LIST.map((c) => ({
+        carriers: CARRIER_LIST.map(c => ({
           ...c,
           type: c.type as "marine" | "air",
           affected: false,

@@ -79,10 +79,10 @@ export const systemRouter = router({
       const newsItems = await fetchAndClassifyNewsPublic();
 
       // Use critical items if available, otherwise use top 3 items as "critical" for preview
-      let previewItems = newsItems.filter((i) => i.severity === "critical");
+      let previewItems = newsItems.filter(i => i.severity === "critical");
       if (previewItems.length === 0) {
         // Promote top items to critical for preview purposes only
-        previewItems = newsItems.slice(0, 3).map((item) => ({
+        previewItems = newsItems.slice(0, 3).map(item => ({
           ...item,
           severity: "critical" as const,
         }));
@@ -91,11 +91,16 @@ export const systemRouter = router({
       if (previewItems.length === 0) {
         return {
           success: false,
-          error: "No news items available to preview. Try again after the news feed loads.",
+          error:
+            "No news items available to preview. Try again after the news feed loads.",
         };
       }
 
-      const result = await sendAlertEmail(input.toEmail, input.toName, previewItems);
+      const result = await sendAlertEmail(
+        input.toEmail,
+        input.toName,
+        previewItems
+      );
       return {
         success: result.success,
         error: result.error,
