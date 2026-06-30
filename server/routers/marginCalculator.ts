@@ -8,25 +8,12 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
+import { getQuotePrice } from "../_core/yahooQuote";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-async function fetchYahooPrice(symbol: string): Promise<number | null> {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as {
-      chart: { result: Array<{ meta: { regularMarketPrice: number } }> | null };
-    };
-    return json.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
-  } catch {
-    return null;
-  }
-}
+// Shared, cached + singleflight single-price fetcher (dedupes overlapping symbols).
+const fetchYahooPrice = getQuotePrice;
 
 // ─── router ───────────────────────────────────────────────────────────────────
 

@@ -66,6 +66,9 @@ interface RecCache {
 
 const recCache = new Map<string, RecCache>();
 const REC_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+// Per-key singleflight so concurrent callers for the same lane pair share one
+// LLM-scored computation instead of each re-running it against a cold cache.
+const inflightRec = new Map<string, Promise<RecommendationResult | null>>();
 
 // ─── Scoring helpers ──────────────────────────────────────────────────────────
 
@@ -310,38 +313,78 @@ export const carrierRecommendationRouter = router({
     )
     .query(async ({ input }) => {
       const cacheKey = `${input.originRegion}:${input.destinationRegion}`;
+      const now = Date.now();
 
-      if (!input.forceRefresh) {
-        const cached = recCache.get(cacheKey);
-        if (cached && Date.now() - cached.fetchedAt < REC_CACHE_TTL_MS) {
-          return cached.result;
-        }
+      if (input.forceRefresh) {
+        // Force a genuinely fresh computation past any in-flight call.
+        inflightRec.delete(cacheKey);
+        return refreshRec(
+          cacheKey,
+          input.originRegion,
+          input.destinationRegion
+        );
       }
 
-      const db = await getDb();
-      if (!db) return null;
-
-      // Find the best matching lane
-      const allLanes = await db.select().from(freightLanes);
-      const matchingLane = allLanes.find(
-        (l: FreightLane) =>
-          l.originRegion === input.originRegion &&
-          l.destinationRegion === input.destinationRegion
-      );
-
-      if (!matchingLane) return null;
-
-      const carriers = await db
-        .select()
-        .from(laneCarriers)
-        .where(eq(laneCarriers.laneId, matchingLane.id));
-
-      const result = await scoreCarriersForLane(matchingLane, carriers);
-
-      if (result) {
-        recCache.set(cacheKey, { result, fetchedAt: Date.now() });
+      const cached = recCache.get(cacheKey);
+      if (cached && now - cached.fetchedAt < REC_CACHE_TTL_MS) {
+        return cached.result; // fresh
+      }
+      if (cached) {
+        // Stale — serve stale instantly and refresh in the background.
+        refreshRec(cacheKey, input.originRegion, input.destinationRegion).catch(
+          () => {}
+        );
+        return cached.result;
       }
 
-      return result;
+      // Cold — coalesce concurrent callers for this lane pair onto one compute.
+      return refreshRec(cacheKey, input.originRegion, input.destinationRegion);
     }),
 });
+
+/** Coalesce concurrent computations for one lane pair onto a single run. */
+function refreshRec(
+  cacheKey: string,
+  originRegion: string,
+  destinationRegion: string
+): Promise<RecommendationResult | null> {
+  const existing = inflightRec.get(cacheKey);
+  if (existing) return existing;
+
+  const p = computeRec(originRegion, destinationRegion).then(result => {
+    if (result) {
+      recCache.set(cacheKey, { result, fetchedAt: Date.now() });
+    }
+    return result;
+  });
+  inflightRec.set(cacheKey, p);
+  void p.finally(() => {
+    if (inflightRec.get(cacheKey) === p) inflightRec.delete(cacheKey);
+  });
+  return p;
+}
+
+async function computeRec(
+  originRegion: string,
+  destinationRegion: string
+): Promise<RecommendationResult | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Find the best matching lane
+  const allLanes = await db.select().from(freightLanes);
+  const matchingLane = allLanes.find(
+    (l: FreightLane) =>
+      l.originRegion === originRegion &&
+      l.destinationRegion === destinationRegion
+  );
+
+  if (!matchingLane) return null;
+
+  const carriers = await db
+    .select()
+    .from(laneCarriers)
+    .where(eq(laneCarriers.laneId, matchingLane.id));
+
+  return scoreCarriersForLane(matchingLane, carriers);
+}

@@ -59,11 +59,15 @@ interface PulseCache {
 
 let pulseCache: PulseCache | null = null;
 const PULSE_CACHE_TTL = 60_000; // 60 seconds
+// Coalesces concurrent cold-cache callers onto one Yahoo fetch (singleflight).
+let inflightPulse: Promise<PulseBarData> | null = null;
 
 /** Exposed only for unit tests — clears all in-memory caches */
 export function _resetCacheForTesting() {
   pulseCache = null;
   fertilizerCache = null;
+  inflightPulse = null;
+  inflightFertilizer = null;
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -166,6 +170,8 @@ interface FertilizerCache {
 }
 let fertilizerCache: FertilizerCache | null = null;
 const FERTILIZER_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+// Coalesces concurrent cold-cache callers onto one Yahoo fetch (singleflight).
+let inflightFertilizer: Promise<FertilizerData> | null = null;
 
 interface PulseBarData {
   tickers: TickerItem[];
@@ -356,9 +362,17 @@ export const marketDataRouter = router({
     if (pulseCache && Date.now() - pulseCache.fetchedAt < PULSE_CACHE_TTL) {
       return pulseCache.data;
     }
-    const data = await buildPulseBarData();
-    pulseCache = { data, fetchedAt: Date.now() };
-    return data;
+    if (!inflightPulse) {
+      const p = buildPulseBarData().then(data => {
+        pulseCache = { data, fetchedAt: Date.now() };
+        return data;
+      });
+      inflightPulse = p;
+      void p.finally(() => {
+        if (inflightPulse === p) inflightPulse = null;
+      });
+    }
+    return inflightPulse;
   }),
 
   /** 6-month weekly historical data for WTI and Brent (line chart) */
@@ -384,9 +398,17 @@ export const marketDataRouter = router({
     ) {
       return fertilizerCache.data;
     }
-    const data = await buildFertilizerData();
-    fertilizerCache = { data, fetchedAt: Date.now() };
-    return data;
+    if (!inflightFertilizer) {
+      const p = buildFertilizerData().then(data => {
+        fertilizerCache = { data, fetchedAt: Date.now() };
+        return data;
+      });
+      inflightFertilizer = p;
+      void p.finally(() => {
+        if (inflightFertilizer === p) inflightFertilizer = null;
+      });
+    }
+    return inflightFertilizer;
   }),
 
   /** Current spot prices for margin calculations */

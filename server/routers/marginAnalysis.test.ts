@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { appRouter } from "../routers";
 import type { TrpcContext } from "../_core/context";
 import { _resetMarginAnalysisCache } from "./marginAnalysis";
+import { _resetYahooQuoteCache } from "../_core/yahooQuote";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,7 @@ describe("marginAnalysis.getAnalysis", () => {
   beforeEach(() => {
     originalFetch = globalThis.fetch;
     _resetMarginAnalysisCache();
+    _resetYahooQuoteCache();
   });
 
   afterEach(() => {

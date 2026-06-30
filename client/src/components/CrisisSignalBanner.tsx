@@ -25,8 +25,10 @@ const SEVERITY_BG: Record<string, string> = {
 export default function CrisisSignalBanner() {
   const { data, isLoading, refetch, isFetching } =
     trpc.crisisScenarios.getMatrix.useQuery(undefined, {
-      refetchInterval: 5 * 60 * 60 * 1000, // 5 hours
-      staleTime: 4 * 60 * 60 * 1000,
+      // 30-min cadence matches the server cache TTL and the other getMatrix
+      // consumers, so the shared query refreshes on one consistent schedule.
+      refetchInterval: 30 * 60 * 1000,
+      staleTime: 28 * 60 * 1000,
     });
 
   const score = data?.overallCrisisScore ?? 0;

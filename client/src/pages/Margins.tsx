@@ -295,12 +295,14 @@ export default function Margins() {
   // Oil history for the trend chart — 5-hour refresh
   const { data: oilHistory, refetch: refetchOilHistory } = useOilHistory(6);
 
-  // Crisis scenario data — used to annotate categories with live crisis signals
+  // Crisis scenario data — used to annotate categories with live crisis signals.
+  // 30-min cadence matches the server cache TTL (and the Crisis Scenarios page),
+  // so all getMatrix consumers refresh on one consistent schedule.
   const { data: crisisData } = trpc.crisisScenarios.getMatrix.useQuery(
     undefined,
     {
-      refetchInterval: FIVE_HOURS_MS,
-      staleTime: FIVE_HOURS_MS - 60_000,
+      refetchInterval: 30 * 60 * 1000,
+      staleTime: 28 * 60 * 1000,
     }
   );
 

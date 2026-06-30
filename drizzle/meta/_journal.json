@@ -50,6 +50,13 @@
       "when": 1773230402206,
       "tag": "0006_square_ego",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1782837068924,
+      "tag": "0007_nasty_wither",
+      "breakpoints": true
     }
   ]
 }

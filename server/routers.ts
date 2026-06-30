@@ -12,6 +12,8 @@ import { marginCalculatorRouter } from "./routers/marginCalculator";
 import { marginAnalysisRouter } from "./routers/marginAnalysis";
 import { merchantProfileRouter } from "./routers/merchantProfile";
 import { crisisScenariosRouter } from "./routers/crisisScenarios";
+import { analystRouter } from "./routers/analyst";
+import { playbooksRouter } from "./routers/playbooks";
 import {
   getAllSubscribers,
   getSubscriberByEmail,
@@ -40,6 +42,8 @@ export const appRouter = router({
   marginAnalysis: marginAnalysisRouter,
   merchantProfile: merchantProfileRouter,
   crisisScenarios: crisisScenariosRouter,
+  analyst: analystRouter,
+  playbooks: playbooksRouter,
 
   subscribers: router({
     /**

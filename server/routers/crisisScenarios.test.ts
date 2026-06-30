@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { crisisScenariosRouter, _resetScenarioCache } from "./crisisScenarios";
+import { _resetYahooQuoteCache } from "../_core/yahooQuote";
 
 // ─── Mock fetch ───────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ function createCaller() {
 describe("crisisScenarios.getMatrix", () => {
   beforeEach(() => {
     _resetScenarioCache();
+    _resetYahooQuoteCache();
     vi.clearAllMocks();
   });
 
@@ -120,6 +122,7 @@ describe("crisisScenarios.getMatrix", () => {
     const callerLow = createCaller();
     const resultLow = await callerLow.getMatrix();
     _resetScenarioCache();
+    _resetYahooQuoteCache();
 
     // High oil: $100 (well above $80 threshold)
     setupFetchMocks([100, 95, 15, 35, 22, 32, 5.5, 6.0]);

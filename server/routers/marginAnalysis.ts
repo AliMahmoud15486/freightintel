@@ -9,6 +9,7 @@
  *   getAnalysis  → full analysis: KPIs, waterfall, categories, SKU table
  */
 import { publicProcedure, router } from "../_core/trpc";
+import { getQuotePrice } from "../_core/yahooQuote";
 
 // ─── cache (5-hour TTL) ───────────────────────────────────────────────────────
 
@@ -19,9 +20,12 @@ interface AnalysisCache {
 
 let analysisCache: AnalysisCache | null = null;
 const CACHE_TTL_MS = 5 * 60 * 60 * 1000; // 5 hours
+// Coalesces concurrent cold/stale-cache callers onto one build (singleflight).
+let inflightAnalysis: Promise<MarginAnalysisResult> | null = null;
 
 export function _resetMarginAnalysisCache() {
   analysisCache = null;
+  inflightAnalysis = null;
 }
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -201,28 +205,9 @@ const BASE_LANDED_MULTIPLIER: Record<string, number> = {
   "Customs & Trade": 1.15, // insurance + documentation; spikes sharply with war risk
 };
 
-// ─── Yahoo Finance helper ─────────────────────────────────────────────────────
+// ─── Yahoo Finance helper (shared, cached + singleflight) ────────────────────
 
-async function fetchYahooPrice(symbol: string): Promise<number | null> {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as {
-      chart: { result: Array<{ meta: { regularMarketPrice: number } }> | null };
-    };
-    return json.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
-  } catch {
-    return null;
-  }
-}
+const fetchYahooPrice = getQuotePrice;
 
 // ─── computation engine ───────────────────────────────────────────────────────
 
@@ -430,38 +415,63 @@ export const marginAnalysisRouter = router({
    * Server-side cache: 5 hours. Frontend should also set refetchInterval to 5 hours.
    */
   getAnalysis: publicProcedure.query(async () => {
-    // Return cached data if still fresh
-    if (analysisCache && Date.now() - analysisCache.fetchedAt < CACHE_TTL_MS) {
+    const now = Date.now();
+
+    // Fresh cache — serve immediately.
+    if (analysisCache && now - analysisCache.fetchedAt < CACHE_TTL_MS) {
       return analysisCache.data;
     }
 
-    // Fetch live prices in parallel
-    const [brent, wti, bdry, zim] = await Promise.all([
-      fetchYahooPrice("BZ=F"),
-      fetchYahooPrice("CL=F"),
-      fetchYahooPrice("BDRY"),
-      fetchYahooPrice("ZIM"),
-    ]);
+    // Stale cache — serve stale instantly and refresh in the background.
+    if (analysisCache) {
+      refreshAnalysis().catch(() => {});
+      return analysisCache.data;
+    }
 
-    const brentPrice = brent ?? 84.5;
-    const wtiPrice = wti ?? 80.25;
-    const bdryPrice = bdry ?? 12.22;
-    const zimPrice = zim ?? 28.83;
-
-    // Derive disruption count from ZIM price proxy
-    // ZIM > $35 = high disruption (3), $20–35 = medium (2), < $20 = low (1)
-    const disruptionCount =
-      zimPrice > 35 ? 5 : zimPrice > 25 ? 3 : zimPrice > 20 ? 2 : 1;
-
-    const data = computeAnalysis(
-      brentPrice,
-      wtiPrice,
-      bdryPrice,
-      zimPrice,
-      disruptionCount
-    );
-
-    analysisCache = { data, fetchedAt: Date.now() };
-    return data;
+    // Cold cache — coalesce concurrent callers onto one build.
+    return refreshAnalysis();
   }),
 });
+
+/** Coalesce concurrent refreshes onto a single in-flight build (singleflight). */
+function refreshAnalysis(): Promise<MarginAnalysisResult> {
+  if (!inflightAnalysis) {
+    const p = buildAnalysis().then(data => {
+      analysisCache = { data, fetchedAt: Date.now() };
+      return data;
+    });
+    inflightAnalysis = p;
+    void p.finally(() => {
+      if (inflightAnalysis === p) inflightAnalysis = null;
+    });
+  }
+  return inflightAnalysis;
+}
+
+async function buildAnalysis(): Promise<MarginAnalysisResult> {
+  // Fetch live prices in parallel (shared cache dedupes overlapping symbols).
+  const [brent, wti, bdry, zim] = await Promise.all([
+    fetchYahooPrice("BZ=F"),
+    fetchYahooPrice("CL=F"),
+    fetchYahooPrice("BDRY"),
+    fetchYahooPrice("ZIM"),
+  ]);
+
+  const brentPrice = brent ?? 84.5;
+  const wtiPrice = wti ?? 80.25;
+  const bdryPrice = bdry ?? 12.22;
+  const zimPrice = zim ?? 28.83;
+
+  // Derive disruption count from ZIM price proxy
+  // ZIM > $35 = high disruption (3), $20–35 = medium (2), < $20 = low (1)
+  const disruptionCount =
+    zimPrice > 35 ? 5 : zimPrice > 25 ? 3 : zimPrice > 20 ? 2 : 1;
+
+  return computeAnalysis(
+    brentPrice,
+    wtiPrice,
+    bdryPrice,
+    zimPrice,
+    disruptionCount
+  );
+}
