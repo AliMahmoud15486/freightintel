@@ -51,8 +51,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -93,8 +91,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -112,4 +108,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Check formatting
-        run: pnpm format --check
+        run: pnpm exec prettier --check .
