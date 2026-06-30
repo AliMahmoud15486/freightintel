@@ -49,6 +49,13 @@ export interface LaneForecast {
 
 const FORECAST_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
+// In-memory snapshot of the full all-lanes sweep, with singleflight so the
+// (potentially 20-LLM-call) cold sweep can't be triggered by every concurrent
+// caller, and stale-while-revalidate so an expired snapshot returns instantly.
+let allForecastsCache: { forecasts: LaneForecast[]; fetchedAt: number } | null =
+  null;
+let inflightAllForecasts: Promise<LaneForecast[]> | null = null;
+
 // ─── Seasonal risk adjustment ─────────────────────────────────────────────────
 
 function seasonalRiskBonus(month: number, zones: string[]): number {
@@ -399,31 +406,39 @@ export const predictiveRiskRouter = router({
       const db = await getDb();
       if (!db) return { forecasts: [], generatedAt: new Date().toISOString() };
 
-      const lanes = await db.select().from(freightLanes);
       const forceRefresh = input?.forceRefresh ?? false;
+      const now = Date.now();
 
-      // Process in batches of 5 to avoid LLM rate limits
-      const results: LaneForecast[] = [];
-      const batchSize = 5;
-      for (let i = 0; i < lanes.length; i += batchSize) {
-        const batch = lanes.slice(i, i + batchSize);
-        const batchResults = await Promise.all(
-          batch.map((lane: FreightLane) => computeForecast(lane, forceRefresh))
-        );
-        results.push(...batchResults);
-        // Small delay between batches to avoid rate limiting
-        if (i + batchSize < lanes.length) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      if (forceRefresh) {
+        // Force a fresh sweep past any in-flight one, but still singleflight it.
+        inflightAllForecasts = null;
+        const forecasts = await refreshAllForecasts(true);
+        return { forecasts, generatedAt: snapshotTimestamp() };
       }
 
-      // Sort by 30d probability descending
-      results.sort((a, b) => b.probability30d - a.probability30d);
+      // Fresh snapshot — serve immediately.
+      if (
+        allForecastsCache &&
+        now - allForecastsCache.fetchedAt < FORECAST_CACHE_TTL_MS
+      ) {
+        return {
+          forecasts: allForecastsCache.forecasts,
+          generatedAt: snapshotTimestamp(),
+        };
+      }
 
-      return {
-        forecasts: results,
-        generatedAt: new Date().toISOString(),
-      };
+      // Stale snapshot — serve stale instantly and refresh in the background.
+      if (allForecastsCache) {
+        refreshAllForecasts(false).catch(() => {});
+        return {
+          forecasts: allForecastsCache.forecasts,
+          generatedAt: snapshotTimestamp(),
+        };
+      }
+
+      // Cold — coalesce concurrent callers onto one sweep and await it.
+      const forecasts = await refreshAllForecasts(false);
+      return { forecasts, generatedAt: snapshotTimestamp() };
     }),
 
   /**
@@ -449,3 +464,50 @@ export const predictiveRiskRouter = router({
       return computeForecast(rows[0], input.forceRefresh);
     }),
 });
+
+function snapshotTimestamp(): string {
+  return new Date(allForecastsCache?.fetchedAt ?? Date.now()).toISOString();
+}
+
+/** Coalesce concurrent sweeps onto a single in-flight run (singleflight). */
+function refreshAllForecasts(forceRefresh: boolean): Promise<LaneForecast[]> {
+  if (!inflightAllForecasts) {
+    const p = computeAllForecasts(forceRefresh).then(forecasts => {
+      allForecastsCache = { forecasts, fetchedAt: Date.now() };
+      return forecasts;
+    });
+    inflightAllForecasts = p;
+    void p.finally(() => {
+      if (inflightAllForecasts === p) inflightAllForecasts = null;
+    });
+  }
+  return inflightAllForecasts;
+}
+
+async function computeAllForecasts(
+  forceRefresh: boolean
+): Promise<LaneForecast[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const lanes = await db.select().from(freightLanes);
+
+  // Process in batches of 5 to avoid LLM rate limits
+  const results: LaneForecast[] = [];
+  const batchSize = 5;
+  for (let i = 0; i < lanes.length; i += batchSize) {
+    const batch = lanes.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map((lane: FreightLane) => computeForecast(lane, forceRefresh))
+    );
+    results.push(...batchResults);
+    // Small delay between batches to avoid rate limiting
+    if (i + batchSize < lanes.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
+  // Sort by 30d probability descending
+  results.sort((a, b) => b.probability30d - a.probability30d);
+  return results;
+}

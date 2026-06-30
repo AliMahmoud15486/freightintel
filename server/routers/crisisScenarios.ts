@@ -21,6 +21,7 @@
  * Server-side cache: 30 minutes.
  */
 import { publicProcedure, router } from "../_core/trpc";
+import { getQuotePriceOr } from "../_core/yahooQuote";
 
 // ─── cache ────────────────────────────────────────────────────────────────────
 
@@ -31,9 +32,12 @@ interface ScenarioCache {
 
 let scenarioCache: ScenarioCache | null = null;
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+// Coalesces concurrent cold/stale-cache callers onto one build (singleflight).
+let inflightScenario: Promise<CrisisMatrixResult> | null = null;
 
 export function _resetScenarioCache() {
   scenarioCache = null;
+  inflightScenario = null;
 }
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -101,28 +105,9 @@ export interface CrisisMatrixResult {
   lastUpdated: string;
 }
 
-// ─── Yahoo Finance helper ─────────────────────────────────────────────────────
+// ─── Yahoo Finance helper (shared, cached + singleflight) ────────────────────
 
-async function fetchPrice(symbol: string, fallback: number): Promise<number> {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return fallback;
-    const json = (await res.json()) as {
-      chart: { result: Array<{ meta: { regularMarketPrice: number } }> | null };
-    };
-    return json.chart?.result?.[0]?.meta?.regularMarketPrice ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
+const fetchPrice = getQuotePriceOr;
 
 // ─── computation engine ───────────────────────────────────────────────────────
 
@@ -894,24 +879,51 @@ function computeMatrix(
 export const crisisScenariosRouter = router({
   /** Full Hormuz Crisis impact matrix — cached 30 min */
   getMatrix: publicProcedure.query(async () => {
-    if (scenarioCache && Date.now() - scenarioCache.fetchedAt < CACHE_TTL_MS) {
+    const now = Date.now();
+
+    // Fresh cache — serve immediately.
+    if (scenarioCache && now - scenarioCache.fetchedAt < CACHE_TTL_MS) {
       return scenarioCache.data;
     }
 
-    // Fetch all live prices in parallel
-    const [brent, wti, bdry, zim, uan, mos, corn, wheat] = await Promise.all([
-      fetchPrice("BZ=F", 84.5),
-      fetchPrice("CL=F", 80.25),
-      fetchPrice("BDRY", 12.22),
-      fetchPrice("ZIM", 28.83),
-      fetchPrice("UAN", 18.5),
-      fetchPrice("MOS", 28.4),
-      fetchPrice("ZC=F", 4.85),
-      fetchPrice("ZW=F", 5.42),
-    ]);
+    // Stale cache — serve stale instantly and refresh in the background.
+    if (scenarioCache) {
+      refreshScenario().catch(() => {});
+      return scenarioCache.data;
+    }
 
-    const data = computeMatrix(brent, wti, bdry, zim, uan, mos, corn, wheat);
-    scenarioCache = { data, fetchedAt: Date.now() };
-    return data;
+    // Cold cache — coalesce concurrent callers onto one build.
+    return refreshScenario();
   }),
 });
+
+/** Coalesce concurrent refreshes onto a single in-flight build (singleflight). */
+function refreshScenario(): Promise<CrisisMatrixResult> {
+  if (!inflightScenario) {
+    const p = buildMatrix().then(data => {
+      scenarioCache = { data, fetchedAt: Date.now() };
+      return data;
+    });
+    inflightScenario = p;
+    void p.finally(() => {
+      if (inflightScenario === p) inflightScenario = null;
+    });
+  }
+  return inflightScenario;
+}
+
+async function buildMatrix(): Promise<CrisisMatrixResult> {
+  // Fetch all live prices in parallel (shared cache dedupes overlapping symbols).
+  const [brent, wti, bdry, zim, uan, mos, corn, wheat] = await Promise.all([
+    fetchPrice("BZ=F", 84.5),
+    fetchPrice("CL=F", 80.25),
+    fetchPrice("BDRY", 12.22),
+    fetchPrice("ZIM", 28.83),
+    fetchPrice("UAN", 18.5),
+    fetchPrice("MOS", 28.4),
+    fetchPrice("ZC=F", 4.85),
+    fetchPrice("ZW=F", 5.42),
+  ]);
+
+  return computeMatrix(brent, wti, bdry, zim, uan, mos, corn, wheat);
+}
