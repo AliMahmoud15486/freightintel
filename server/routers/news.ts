@@ -349,11 +349,44 @@ export async function fetchAndClassifyNewsPublic(): Promise<NewsItem[]> {
   return fetchAndClassifyNews();
 }
 
+// Tracks the in-flight RSS+LLM pipeline so concurrent callers (feed,
+// disruptions, shippingLines all fire on dashboard load) share one fetch
+// instead of each running the full pipeline against a cold cache.
+let inflightNews: Promise<NewsItem[]> | null = null;
+
+/** Coalesce concurrent refreshes onto a single in-flight pipeline (singleflight). */
+function refreshNews(): Promise<NewsItem[]> {
+  if (!inflightNews) {
+    const p = doFetchAndClassifyNews();
+    inflightNews = p;
+    // Clear the slot once settled, guarding against clobbering a newer run.
+    void p.finally(() => {
+      if (inflightNews === p) inflightNews = null;
+    });
+  }
+  return inflightNews;
+}
+
 async function fetchAndClassifyNews(): Promise<NewsItem[]> {
-  if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
+  const now = Date.now();
+
+  // Fresh cache — serve immediately.
+  if (cache && now - cache.fetchedAt < CACHE_TTL_MS) {
     return cache.items;
   }
 
+  // Stale cache — serve stale instantly and refresh in the background
+  // (stale-while-revalidate) so an expired cache never blocks a request.
+  if (cache) {
+    refreshNews().catch(() => {}); // swallow bg errors; stale data already returned
+    return cache.items;
+  }
+
+  // Cold cache — coalesce all concurrent callers onto one pipeline and await it.
+  return refreshNews();
+}
+
+async function doFetchAndClassifyNews(): Promise<NewsItem[]> {
   console.log("[news] Fetching RSS feeds...");
 
   const feedResults = await Promise.all(
@@ -586,17 +619,48 @@ let shippingLinesCache: {
   fetchedAt: number;
 } | null = null;
 
+// Tracks the in-flight carrier-classification LLM call so concurrent
+// shippingLines callers share one request instead of stacking Gemini calls.
+let inflightCarriers: Promise<CarrierStatus[]> | null = null;
+
+/** Coalesce concurrent carrier refreshes onto a single in-flight LLM call. */
+function refreshCarriers(headlines: string[]): Promise<CarrierStatus[]> {
+  if (!inflightCarriers) {
+    const p = doClassifyCarrierImpacts(headlines);
+    inflightCarriers = p;
+    void p.finally(() => {
+      if (inflightCarriers === p) inflightCarriers = null;
+    });
+  }
+  return inflightCarriers;
+}
+
 async function classifyCarrierImpacts(
   newsHeadlines: string[]
 ): Promise<CarrierStatus[]> {
-  // Use cached result if fresh
+  const now = Date.now();
+
+  // Fresh cache — serve immediately.
   if (
     shippingLinesCache &&
-    Date.now() - shippingLinesCache.fetchedAt < SHIPPING_LINES_CACHE_TTL_MS
+    now - shippingLinesCache.fetchedAt < SHIPPING_LINES_CACHE_TTL_MS
   ) {
     return shippingLinesCache.carriers;
   }
 
+  // Stale cache — serve stale instantly, refresh in the background.
+  if (shippingLinesCache) {
+    refreshCarriers(newsHeadlines).catch(() => {});
+    return shippingLinesCache.carriers;
+  }
+
+  // Cold cache — coalesce concurrent callers onto one LLM call.
+  return refreshCarriers(newsHeadlines);
+}
+
+async function doClassifyCarrierImpacts(
+  newsHeadlines: string[]
+): Promise<CarrierStatus[]> {
   if (newsHeadlines.length === 0) {
     // No news — all carriers operating normally
     return CARRIER_LIST.map(c => ({
@@ -819,6 +883,9 @@ export const newsRouter = router({
   refresh: publicProcedure.mutation(async () => {
     cache = null;
     shippingLinesCache = null;
+    // Drop any in-flight pipelines so this forces a genuinely fresh fetch.
+    inflightNews = null;
+    inflightCarriers = null;
     const items = await fetchAndClassifyNews();
     return { success: true, count: items.length };
   }),
