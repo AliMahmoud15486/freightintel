@@ -12,6 +12,7 @@ import CookieConsent from "./components/CookieConsent";
 const Margins = lazy(() => import("./pages/Margins"));
 const MerchantProfile = lazy(() => import("./pages/MerchantProfile"));
 const CrisisScenarios = lazy(() => import("./pages/CrisisScenarios"));
+const Analyst = lazy(() => import("./pages/Analyst"));
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -20,6 +21,7 @@ function Router() {
       <Switch>
         <Route path={"/"} component={Home} />
         <Route path={"/margins"} component={Margins} />
+        <Route path={"/analyst"} component={Analyst} />
         <Route path={"/profile"} component={MerchantProfile} />
         <Route path={"/scenarios"} component={CrisisScenarios} />
         <Route path={"/404"} component={NotFound} />

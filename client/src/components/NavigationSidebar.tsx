@@ -17,6 +17,7 @@ import {
   Zap,
   User,
   Flame,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
@@ -129,6 +130,13 @@ export default function NavigationSidebar({
       label: "Margins",
       id: "margins",
       href: "/margins",
+      implemented: true,
+    },
+    {
+      icon: <Brain size={16} />,
+      label: "AI Analyst",
+      id: "analyst",
+      href: "/analyst",
       implemented: true,
     },
     {
