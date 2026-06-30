@@ -4,12 +4,14 @@
  * Tablet:  KPI 3-col, charts stacked, sidebar below news
  * Desktop: full layout with right sidebar
  */
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import TopHeader from "@/components/TopHeader";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import GlobalPulseBar from "@/components/GlobalPulseBar";
 import AlertsSystem from "@/components/AlertsSystem";
-import SupplyChainMap from "@/components/SupplyChainMap";
+// Lazy-loaded: the map is the single largest component (~2k lines + map assets);
+// code-splitting it keeps it out of the initial dashboard bundle.
+const SupplyChainMap = lazy(() => import("@/components/SupplyChainMap"));
 import CostInflationDrivers from "@/components/CostInflationDrivers";
 import ImpactNewsFeed from "@/components/ImpactNewsFeed";
 import RetailerActionPanel from "@/components/RetailerActionPanel";
@@ -217,7 +219,15 @@ export default function Dashboard() {
           >
             {/* Full-width Supply Chain Disruption Map (includes ShippingLinesPanel below it) */}
             <div id="section-map">
-              <SupplyChainMap />
+              <Suspense
+                fallback={
+                  <div className="flex h-[460px] w-full items-center justify-center rounded-lg border border-border bg-card text-sm text-muted-foreground">
+                    Loading map…
+                  </div>
+                }
+              >
+                <SupplyChainMap />
+              </Suspense>
             </div>
 
             {/* Full-width Retailer Action Panel (Shipping Companies + Alerts + Categories) */}

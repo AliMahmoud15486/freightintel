@@ -1,5 +1,6 @@
 import {
   float,
+  index,
   int,
   mysqlEnum,
   mysqlTable,
@@ -74,26 +75,36 @@ export type InsertSentAlert = typeof sentAlerts.$inferInsert;
  * FreightLanes — major trade routes used by the Carrier Recommendation Engine.
  * Each lane represents an origin→destination port pair with baseline transit data.
  */
-export const freightLanes = mysqlTable("freight_lanes", {
-  id: int("id").autoincrement().primaryKey(),
-  /** Human-readable lane name, e.g. "Shanghai → Rotterdam" */
-  name: varchar("name", { length: 255 }).notNull(),
-  /** Origin region key, e.g. "china", "india", "uae" */
-  originRegion: varchar("originRegion", { length: 64 }).notNull(),
-  /** Destination region key, e.g. "uk", "usa", "germany" */
-  destinationRegion: varchar("destinationRegion", { length: 64 }).notNull(),
-  /** Origin port name */
-  originPort: varchar("originPort", { length: 128 }).notNull(),
-  /** Destination port name */
-  destinationPort: varchar("destinationPort", { length: 128 }).notNull(),
-  /** Baseline transit time in days (no disruption) */
-  baseTransitDays: int("baseTransitDays").notNull(),
-  /** Relative cost index: 1=low, 2=medium, 3=high */
-  costIndex: int("costIndex").notNull().default(2),
-  /** Disruption zones this lane passes through, comma-separated */
-  zones: varchar("zones", { length: 512 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+export const freightLanes = mysqlTable(
+  "freight_lanes",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    /** Human-readable lane name, e.g. "Shanghai → Rotterdam" */
+    name: varchar("name", { length: 255 }).notNull(),
+    /** Origin region key, e.g. "china", "india", "uae" */
+    originRegion: varchar("originRegion", { length: 64 }).notNull(),
+    /** Destination region key, e.g. "uk", "usa", "germany" */
+    destinationRegion: varchar("destinationRegion", { length: 64 }).notNull(),
+    /** Origin port name */
+    originPort: varchar("originPort", { length: 128 }).notNull(),
+    /** Destination port name */
+    destinationPort: varchar("destinationPort", { length: 128 }).notNull(),
+    /** Baseline transit time in days (no disruption) */
+    baseTransitDays: int("baseTransitDays").notNull(),
+    /** Relative cost index: 1=low, 2=medium, 3=high */
+    costIndex: int("costIndex").notNull().default(2),
+    /** Disruption zones this lane passes through, comma-separated */
+    zones: varchar("zones", { length: 512 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    // Carrier Recommendation matches a lane by origin + destination region.
+    index("freight_lanes_region_idx").on(
+      table.originRegion,
+      table.destinationRegion
+    ),
+  ]
+);
 
 export type FreightLane = typeof freightLanes.$inferSelect;
 export type InsertFreightLane = typeof freightLanes.$inferInsert;
@@ -102,21 +113,28 @@ export type InsertFreightLane = typeof freightLanes.$inferInsert;
  * LaneCarriers — junction table mapping freight lanes to the carriers that operate them.
  * Also stores carrier-specific baseline data for that lane.
  */
-export const laneCarriers = mysqlTable("lane_carriers", {
-  id: int("id").autoincrement().primaryKey(),
-  laneId: int("laneId").notNull(),
-  /** Carrier ID matching the existing ShippingLines carrier list, e.g. "maersk" */
-  carrierId: varchar("carrierId", { length: 64 }).notNull(),
-  /** Display name, e.g. "Maersk" */
-  carrierName: varchar("carrierName", { length: 128 }).notNull(),
-  /** Carrier-specific transit days on this lane (may differ from lane baseline) */
-  transitDays: int("transitDays").notNull(),
-  /** Relative reliability score 0–100 (static seed, higher = more reliable) */
-  reliabilityScore: int("reliabilityScore").notNull().default(70),
-  /** Carrier-specific cost index for this lane: 1=cheap, 2=mid, 3=premium */
-  costIndex: int("costIndex").notNull().default(2),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+export const laneCarriers = mysqlTable(
+  "lane_carriers",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    laneId: int("laneId").notNull(),
+    /** Carrier ID matching the existing ShippingLines carrier list, e.g. "maersk" */
+    carrierId: varchar("carrierId", { length: 64 }).notNull(),
+    /** Display name, e.g. "Maersk" */
+    carrierName: varchar("carrierName", { length: 128 }).notNull(),
+    /** Carrier-specific transit days on this lane (may differ from lane baseline) */
+    transitDays: int("transitDays").notNull(),
+    /** Relative reliability score 0–100 (static seed, higher = more reliable) */
+    reliabilityScore: int("reliabilityScore").notNull().default(70),
+    /** Carrier-specific cost index for this lane: 1=cheap, 2=mid, 3=premium */
+    costIndex: int("costIndex").notNull().default(2),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    // Carriers are loaded by laneId for every recommendation.
+    index("lane_carriers_lane_idx").on(table.laneId),
+  ]
+);
 
 export type LaneCarrier = typeof laneCarriers.$inferSelect;
 export type InsertLaneCarrier = typeof laneCarriers.$inferInsert;
@@ -126,28 +144,38 @@ export type InsertLaneCarrier = typeof laneCarriers.$inferInsert;
  * Cached for 30 minutes to avoid excessive LLM calls.
  * Accumulates over time to enable sparkline trend history.
  */
-export const riskForecasts = mysqlTable("risk_forecasts", {
-  id: int("id").autoincrement().primaryKey(),
-  laneId: int("laneId").notNull(),
-  laneName: varchar("laneName", { length: 255 }).notNull(),
-  /** Probability of significant disruption in next 30 days, 0–100 */
-  probability30d: int("probability30d").notNull(),
-  /** Probability of significant disruption in next 60 days, 0–100 */
-  probability60d: int("probability60d").notNull(),
-  /** Whether risk is rising, stable, or falling vs. previous forecast */
-  trend: mysqlEnum("trend", ["rising", "stable", "falling"])
-    .notNull()
-    .default("stable"),
-  /** JSON array of key risk factor strings */
-  keyRisks: text("keyRisks"),
-  /** LLM confidence in this forecast */
-  confidence: mysqlEnum("confidence", ["high", "medium", "low"])
-    .notNull()
-    .default("medium"),
-  /** Short summary sentence for the forecast */
-  summary: text("summary"),
-  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
-});
+export const riskForecasts = mysqlTable(
+  "risk_forecasts",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    laneId: int("laneId").notNull(),
+    laneName: varchar("laneName", { length: 255 }).notNull(),
+    /** Probability of significant disruption in next 30 days, 0–100 */
+    probability30d: int("probability30d").notNull(),
+    /** Probability of significant disruption in next 60 days, 0–100 */
+    probability60d: int("probability60d").notNull(),
+    /** Whether risk is rising, stable, or falling vs. previous forecast */
+    trend: mysqlEnum("trend", ["rising", "stable", "falling"])
+      .notNull()
+      .default("stable"),
+    /** JSON array of key risk factor strings */
+    keyRisks: text("keyRisks"),
+    /** LLM confidence in this forecast */
+    confidence: mysqlEnum("confidence", ["high", "medium", "low"])
+      .notNull()
+      .default("medium"),
+    /** Short summary sentence for the forecast */
+    summary: text("summary"),
+    generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  },
+  table => [
+    // Recent-forecast and sparkline lookups query by lane, newest first.
+    index("risk_forecasts_lane_generated_idx").on(
+      table.laneId,
+      table.generatedAt
+    ),
+  ]
+);
 
 export type RiskForecast = typeof riskForecasts.$inferSelect;
 export type InsertRiskForecast = typeof riskForecasts.$inferInsert;
@@ -193,25 +221,32 @@ export type InsertMerchantProfile = typeof merchantProfiles.$inferInsert;
  * MarginHistory — monthly margin snapshots per user.
  * Used to render the historical margin trend sparkline on the profile page.
  */
-export const marginHistory = mysqlTable("margin_history", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  /** YYYY-MM label, e.g. "2026-02" */
-  month: varchar("month", { length: 7 }).notNull(),
-  /** Average portfolio margin % that month */
-  avgMargin: float("avgMargin").notNull(),
-  /** Best performing category margin % */
-  bestMargin: float("bestMargin"),
-  /** Worst performing category margin % */
-  worstMargin: float("worstMargin"),
-  /** Brent crude average that month */
-  avgBrentPrice: float("avgBrentPrice"),
-  /** Number of critical SKUs that month */
-  criticalSkuCount: int("criticalSkuCount").default(0),
-  /** Optional note */
-  note: text("note"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+export const marginHistory = mysqlTable(
+  "margin_history",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    /** YYYY-MM label, e.g. "2026-02" */
+    month: varchar("month", { length: 7 }).notNull(),
+    /** Average portfolio margin % that month */
+    avgMargin: float("avgMargin").notNull(),
+    /** Best performing category margin % */
+    bestMargin: float("bestMargin"),
+    /** Worst performing category margin % */
+    worstMargin: float("worstMargin"),
+    /** Brent crude average that month */
+    avgBrentPrice: float("avgBrentPrice"),
+    /** Number of critical SKUs that month */
+    criticalSkuCount: int("criticalSkuCount").default(0),
+    /** Optional note */
+    note: text("note"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    // Margin history is read per user, ordered by month.
+    index("margin_history_user_month_idx").on(table.userId, table.month),
+  ]
+);
 
 export type MarginHistory = typeof marginHistory.$inferSelect;
 export type InsertMarginHistory = typeof marginHistory.$inferInsert;
